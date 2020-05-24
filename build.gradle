@@ -1,0 +1,64 @@
+/*
+ * The MIT License
+ *
+ * Copyright 2020 Noor Dawod. All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+group = 'org.noordawod.kotlin.orm'
+version = '1.0.0'
+description = 'Defines reusable contracts for OrmLite that requires entities and models to exist.'
+
+apply plugin: 'kotlinx-serialization'
+
+buildscript {
+    apply from: 'gradle/config.gradle'
+
+    repositories {
+        jcenter()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
+        classpath "org.jetbrains.kotlin:kotlin-serialization:${versions.kotlin}"
+        classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${versions.detekt}"
+    }
+}
+
+repositories {
+    mavenCentral()
+    jcenter()
+    maven {
+        url 'https://jitpack.io'
+    }
+}
+
+apply from: 'gradle/jvm.gradle'
+apply from: 'gradle/kotlin.gradle'
+apply from: 'gradle/detekt.gradle'
+
+dependencies {
+    implementation "com.github.ndawod:kotlin-core:${versions.ndawod_kotlin_core}"
+    implementation "com.j256.ormlite:ormlite-core:${versions.ormlite}"
+    implementation "com.j256.ormlite:ormlite-jdbc:${versions.ormlite}"
+    implementation "net.moznion:uribuilder-tiny:${versions.uribuilder_tiny}"
+}
