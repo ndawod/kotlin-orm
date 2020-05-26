@@ -34,11 +34,11 @@ import net.moznion.uribuildertiny.URIBuilderTiny
 /**
  * A lightweight wrapper around JDBC's database driver.
  *
- * @property config database configuration to use
- * @property driver name of the JDBC database driver
- * @property ageMillis how long, in milliseconds, to keep an idle connection open before closing it
- * @property maxFree how many concurrent open connections to keep open
- * @property healthCheckMillis interval between health checks of the database connection
+ * @param config database configuration to use
+ * @param driver name of the JDBC database driver
+ * @param ageMillis how long, in milliseconds, to keep an idle connection open before closing it
+ * @param maxFree how many concurrent open connections to keep open
+ * @param healthCheckMillis interval between health checks of the database connection
  */
 @Suppress("CanBeParameter", "unused")
 open class MySQLDatabase constructor(

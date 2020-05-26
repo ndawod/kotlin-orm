@@ -30,13 +30,13 @@ import org.noordawod.kotlin.orm.MySQLDatabase
 /**
  * Generic database configuration suitable for most database drivers.
  *
- * @property protocol associated URI protocol (scheme) for this JDBC driver
- * @property ipAddr IP address of the database server
- * @property host host name of the database server
- * @property port server's connection port
- * @property user username to authenticate against the database server
- * @property pass password to authenticate against the database server
- * @property schema main database schema name to attach to
+ * @param protocol associated URI protocol (scheme) for this JDBC driver
+ * @param ipAddr IP address of the database server
+ * @param host host name of the database server
+ * @param port server's connection port
+ * @param user username to authenticate against the database server
+ * @param pass password to authenticate against the database server
+ * @param schema main database schema name to attach to
  */
 @kotlinx.serialization.Serializable
 data class DatabaseConfiguration constructor(
@@ -57,14 +57,14 @@ data class DatabaseConfiguration constructor(
 /**
  * Generic database configuration for file-based migrations.
  *
- * @property protocol associated URI protocol (scheme) for this JDBC driver
- * @property ipAddr IP address of the database server
- * @property host host name of the database server
- * @property port server's connection port
- * @property user username to authenticate against the database server
- * @property pass password to authenticate against the database server
- * @property schema main database schema name to attach to
- * @property basePath where the migrations plans are stored
+ * @param protocol associated URI protocol (scheme) for this JDBC driver
+ * @param ipAddr IP address of the database server
+ * @param host host name of the database server
+ * @param port server's connection port
+ * @param user username to authenticate against the database server
+ * @param pass password to authenticate against the database server
+ * @param schema main database schema name to attach to
+ * @param basePath where the migrations plans are stored
  */
 @kotlinx.serialization.Serializable
 data class DatabaseMigrationConfiguration constructor(
@@ -86,14 +86,14 @@ data class DatabaseMigrationConfiguration constructor(
 /**
  * Generic database configuration for pool-backed database server.
  *
- * @property protocol associated URI protocol (scheme) for this JDBC driver
- * @property ipAddr IP address of the database server
- * @property host host name of the database server
- * @property port server's connection port
- * @property user username to authenticate against the database server
- * @property pass password to authenticate against the database server
- * @property schema main database schema name to attach to
- * @property pool connection pool configuration
+ * @param protocol associated URI protocol (scheme) for this JDBC driver
+ * @param ipAddr IP address of the database server
+ * @param host host name of the database server
+ * @param port server's connection port
+ * @param user username to authenticate against the database server
+ * @param pass password to authenticate against the database server
+ * @param schema main database schema name to attach to
+ * @param pool connection pool configuration
  */
 @kotlinx.serialization.Serializable
 data class DatabasePoolConfiguration constructor(
@@ -115,9 +115,9 @@ data class DatabasePoolConfiguration constructor(
 /**
  * Database pool configuration.
  *
- * @property ageMillis how long, in milliseconds, to keep an idle connection open before closing it
- * @property maxFree how many concurrent open connections to keep open
- * @property healthCheckMillis how many milliseconds between connection health checks
+ * @param ageMillis how long, in milliseconds, to keep an idle connection open before closing it
+ * @param maxFree how many concurrent open connections to keep open
+ * @param healthCheckMillis how many milliseconds between connection health checks
  */
 @kotlinx.serialization.Serializable
 data class PoolConfiguration constructor(

@@ -19,8 +19,8 @@ import org.noordawod.kotlin.orm.entity.BaseKeyEntity
 /**
  * All DAO instances which have primary keys must extend this base class.
  *
- * @property ID type of entity key this DAO is managing
- * @property T type of model this DAO is managing
+ * @param ID type of entity key this DAO is managing
+ * @param T type of model this DAO is managing
  */
 @Suppress("TooManyFunctions", "MemberVisibilityCanBePrivate")
 abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
