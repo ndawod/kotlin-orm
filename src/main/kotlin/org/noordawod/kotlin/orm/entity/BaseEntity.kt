@@ -28,17 +28,32 @@ abstract class BaseEntity protected constructor() {
     const val FK_PREFIX: String = "fk_"
 
     /**
-     * The field name suffix used for storing the creation time of records.
+     * The field name used for storing an IP address.
+     */
+    const val IP_ADDR: String = "ip_addr"
+
+    /**
+     * The field name used for storing a geolocation latitude.
+     */
+    const val LATITUDE: String = "latitude"
+
+    /**
+     * The field name used for storing a geolocation longitude.
+     */
+    const val LONGITUDE: String = "longitude"
+
+    /**
+     * The field name used for storing the creation time of records.
      */
     const val CREATED: String = "created"
 
     /**
-     * The field name suffix used for storing the updated time of records.
+     * The field name used for storing the updated time of records.
      */
     const val UPDATED: String = "updated"
 
     /**
-     * The field name suffix used for distinguishing the active state of a record.
+     * The field name used for distinguishing the active state of a record.
      */
     const val ACTIVE: String = "active"
   }
