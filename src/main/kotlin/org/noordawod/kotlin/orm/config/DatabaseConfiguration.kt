@@ -64,7 +64,7 @@ data class DatabaseConfiguration constructor(
  * @param user username to authenticate against the database server
  * @param pass password to authenticate against the database server
  * @param schema main database schema name to attach to
- * @param basePath where the migrations plans are stored
+ * @param paths a list of paths indicating where the migrations plans are stored
  */
 @kotlinx.serialization.Serializable
 data class DatabaseMigrationConfiguration constructor(
@@ -75,7 +75,7 @@ data class DatabaseMigrationConfiguration constructor(
   val user: String,
   val pass: String,
   val schema: String,
-  val basePath: String
+  val paths: Collection<String>
 ) {
   /**
    * Returns the connection URI string for this instance.

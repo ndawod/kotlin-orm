@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+1.0.4 (June 20 2020)
+    Allow DatabaseMigrationConfiguration to include more than one base path.
+
 1.0.1-1.0.3 (May 26 2020)
     Remove fromModel() and toModel() from DAOs, this must be done by host app.
     Use @param instead of @property in KDoc.
