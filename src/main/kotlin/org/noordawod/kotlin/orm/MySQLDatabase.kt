@@ -173,6 +173,7 @@ open class MySQLDatabase constructor(
         "user" to user,
         "password" to pass,
         "useUnicode" to true.toString(),
+        "allowPublicKeyRetrieval" to true.toString(),
         "useSSL" to false.toString(),
         "useCompression" to false.toString(),
         "autoReconnect" to true.toString()

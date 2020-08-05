@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+1.0.5 (August 5 2020)
+    Add `allowPublicKeyRetrieval=true` to MySQL connection capabilities.
+
 1.0.4 (June 20 2020)
     Allow DatabaseMigrationConfiguration to include more than one base path.
 
