@@ -39,6 +39,11 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
   abstract fun publicId(id: ID): PublicId
 
   /**
+   * Returns the internal identifier for the provided public [id].
+   */
+  abstract fun internalId(id: PublicId): ID
+
+  /**
    * Queries the database for distinct records having the specified ID equal to the
    * specified field.
    */

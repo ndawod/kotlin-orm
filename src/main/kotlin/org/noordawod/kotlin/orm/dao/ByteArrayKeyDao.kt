@@ -26,6 +26,8 @@ abstract class ByteArrayKeyDao<T : ByteArrayKeyEntity> protected constructor(
 ) : BaseKeyDao<ByteArray, T>(connection, dataClass) {
   override fun publicId(id: ByteArray): PublicId = id.base62()
 
+  override fun internalId(id: PublicId): ByteArray = id.base62()
+
   override fun Collection<T>?.toMap(): ByteArrayMap<T>? =
     this?.let { instances ->
       ByteArrayMap<T>().apply {
