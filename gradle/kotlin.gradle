@@ -37,6 +37,6 @@ compileTestKotlin {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${versions.kotlin}"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:${versions.kotlinx}"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:${versions.kotlin_coroutines}"
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:${versions.kotlin_serialization}"
 }

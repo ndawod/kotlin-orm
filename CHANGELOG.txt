@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+1.0.7 (Oct 8 2020)
+    Upgrade dependencies.
+
 1.0.6 (Aug 11 2020)
     Add a new method internalId() in BaseDaoImpl.kt.
 

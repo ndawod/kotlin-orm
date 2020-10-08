@@ -161,9 +161,9 @@ abstract class BaseDatabase constructor(
    */
   @Throws(java.sql.SQLException::class)
   fun connect(): ConnectionSource = internalConnection ?: run {
-      connectImpl().apply {
-        internalConnection = this
-      }
+    connectImpl().apply {
+      internalConnection = this
+    }
   }
 
   /**
