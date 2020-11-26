@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+1.0.8 (Nov 26 2020)
+    Fix a migrator bug that caused an error not to be printed.
+
 1.0.7 (Oct 8 2020)
     Upgrade dependencies.
 

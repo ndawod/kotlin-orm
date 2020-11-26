@@ -32,6 +32,8 @@ class Migrator constructor(
   private val tableName: String = TABLE_NAME,
   private val basePath: File
 ) {
+  private var lastErroneousCommand: String? = null
+
   private val isLocked: Boolean
     get() {
       try {
@@ -89,19 +91,16 @@ class Migrator constructor(
         println("- Running migrations:")
       }
 
-      // The last command that caused the exception.
-      var lastCommand: String? = null
-
       // Error that may occur for this migration.
       var migrationError: SQLException? = null
 
       // Perform the upgrade command.
       try {
-        lastCommand = performMigration(migration, nextVersion)
+        performMigration(migration, nextVersion)
       } catch (e: SQLException) {
         migrationError = e
       } finally {
-        performFinally(migration, migrationError, lastCommand)
+        performFinally(migration, migrationError)
       }
     }
 
@@ -125,11 +124,10 @@ class Migrator constructor(
   }
 
   @Throws(SQLException::class)
-  private fun performMigration(
-    migration: Migration,
-    nextVersion: Int
-  ): String? {
-    var lastCommand: String? = null
+  private fun performMigration(migration: Migration, nextVersion: Int) {
+    // Start with a clean slate.
+    lastErroneousCommand = null
+
     // Start a new transaction.
     connection.execute("SET autocommit = 0")
     connection.execute("START TRANSACTION")
@@ -157,11 +155,10 @@ class Migrator constructor(
     var progress = 0
     var percent = 0
     for (command in commands) {
-      lastCommand = command
+      lastErroneousCommand = command
       connection.execute(command)
       progress++
-      val nextPercent =
-        (progress.toFloat() / commands.size.toFloat() * 100f).toInt()
+      val nextPercent = (progress.toFloat() / commands.size.toFloat() * 100f).toInt()
       if (10 <= nextPercent - percent) {
         percent += 10
         print(" $percent%")
@@ -178,16 +175,10 @@ class Migrator constructor(
 
     // Release the lock for this version.
     unlockMigration(migration)
-
-    return lastCommand
   }
 
   @Throws(SQLException::class)
-  private fun performFinally(
-    migration: Migration,
-    migrationError: SQLException?,
-    lastCommand: String?
-  ) {
+  private fun performFinally(migration: Migration, migrationError: SQLException?) {
     println(".")
     // Issue the final command to either commit and rollback the transaction.
     val isCommit = null == migrationError
@@ -213,11 +204,13 @@ class Migrator constructor(
       deleteMigration(migration)
 
       // If there was an exception, report the last command which caused the exception.
-      if (null != lastCommand) {
+      val lastErroneousCommandLocked = lastErroneousCommand
+      lastErroneousCommand = null
+      if (null != lastErroneousCommandLocked) {
         println("")
         println("Unhandled exception while executing this SQL command:")
         println("")
-        println(lastCommand.trim { it <= ' ' })
+        println(lastErroneousCommandLocked.trim { it <= ' ' })
         println("")
       }
       throw migrationError
@@ -260,7 +253,7 @@ class Migrator constructor(
   @Throws(IOException::class)
   private fun readFile(upgradeFile: File): String? {
     val bytes: ByteArray = Files.readAllBytes(Paths.get(upgradeFile.toURI()))
-    return String(bytes)
+    return if (bytes.isEmpty()) null else String(bytes)
   }
 
   private fun parseCommands(commands: String): List<String> {
@@ -286,7 +279,7 @@ class Migrator constructor(
   private fun ensureMigrationsTable() {
     try {
       connection.execute(
-        "CREATE TABLE IF NOT EXISTS `$tableName` (" +
+        "CREATE TABLE `$tableName` (" +
           "`${MigrationField.ID}` smallint UNSIGNED NOT NULL PRIMARY KEY," +
           "`${MigrationField.DESCRIPTION}` tinytext CHARACTER SET ascii NOT NULL," +
           "`${MigrationField.FILE}` tinytext CHARACTER SET ascii NOT NULL," +
