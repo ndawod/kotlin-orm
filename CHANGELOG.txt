@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+1.1.0 (Dec 6 2020)
+    Bump Kotlin plugin and libraries versions.
+
 1.0.7 (Oct 8 2020)
     Upgrade dependencies.
 
