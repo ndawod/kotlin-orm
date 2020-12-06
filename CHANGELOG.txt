@@ -6,6 +6,9 @@ This documents the changes between versions:
 1.1.0 (Dec 6 2020)
     Bump Kotlin plugin and libraries versions.
 
+1.0.8 (Nov 26 2020)
+    Fix a migrator bug that caused an error not to be printed.
+
 1.0.7 (Oct 8 2020)
     Upgrade dependencies.
 
