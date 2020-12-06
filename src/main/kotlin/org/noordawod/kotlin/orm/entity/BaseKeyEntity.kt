@@ -7,7 +7,7 @@
  * INTENDED PUBLICATION OF SUCH SOURCE CODE.
  */
 
-@file:Suppress("unused", "MemberVisibilityCanBePrivate", "VariableMinLength")
+@file:Suppress("MemberVisibilityCanBePrivate")
 
 package org.noordawod.kotlin.orm.entity
 
@@ -19,11 +19,11 @@ typealias PublicId = String
 /**
  * Base ORM class for all tables that have a key (primary or unique).
  */
-@Suppress("UnnecessaryAbstractClass")
 abstract class BaseKeyEntity<ID> protected constructor() : BaseEntity() {
   /**
    * Returns the unique ID of this ORM entity.
    */
+  @Suppress("VariableMinLength")
   abstract var id: ID
 
   override fun toString(): String = id.toString()
@@ -36,6 +36,7 @@ abstract class BaseKeyEntity<ID> protected constructor() : BaseEntity() {
     /**
      * Just the "id" characters that appears at the end of keys.
      */
+    @Suppress("VariableMinLength")
     const val ID: String = "id"
 
     /**

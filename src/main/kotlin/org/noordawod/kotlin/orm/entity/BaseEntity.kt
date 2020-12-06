@@ -7,7 +7,7 @@
  * INTENDED PUBLICATION OF SUCH SOURCE CODE.
  */
 
-@file:Suppress("unused", "MemberVisibilityCanBePrivate")
+@file:Suppress("MemberVisibilityCanBePrivate")
 
 package org.noordawod.kotlin.orm.entity
 

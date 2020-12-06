@@ -21,8 +21,6 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-@file:Suppress("unused")
-
 package org.noordawod.kotlin.orm.config
 
 import org.noordawod.kotlin.orm.MySQLDatabase
@@ -31,8 +29,8 @@ import org.noordawod.kotlin.orm.MySQLDatabase
  * Generic database configuration suitable for most database drivers.
  *
  * @param protocol associated URI protocol (scheme) for this JDBC driver
- * @param ipAddr IP address of the database server
  * @param host host name of the database server
+ * @param ipAddr IP address of the database server
  * @param port server's connection port
  * @param user username to authenticate against the database server
  * @param pass password to authenticate against the database server

@@ -7,7 +7,7 @@
  * INTENDED PUBLICATION OF SUCH SOURCE CODE.
  */
 
-@file:Suppress("unused", "MagicNumber")
+@file:Suppress("MagicNumber")
 
 package org.noordawod.kotlin.orm.migration
 
@@ -112,7 +112,6 @@ class Migrator constructor(
   /**
    * Returns the latest version of the database.
    */
-  @Suppress("MemberVisibilityCanBePrivate")
   fun version(): Int {
     try {
       return connection.queryForLong(

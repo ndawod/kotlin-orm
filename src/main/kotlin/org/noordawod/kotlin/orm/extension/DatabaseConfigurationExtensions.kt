@@ -21,8 +21,6 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-@file:Suppress("unused", "DuplicatedCode")
-
 package org.noordawod.kotlin.orm.extension
 
 import org.noordawod.kotlin.orm.BaseDatabase
@@ -34,6 +32,7 @@ import org.noordawod.kotlin.orm.config.DatabasePoolConfiguration
  * Generates a [configuration][BaseDatabase.Configuration] suitable for [BaseDatabase]'s
  * instantiation from a [DatabaseConfiguration] instance.
  */
+@Suppress("DuplicatedCode")
 fun DatabaseConfiguration.config(
   collation: String,
   connectTimeout: Long,
@@ -56,6 +55,7 @@ fun DatabaseConfiguration.config(
  * Generates a [configuration][BaseDatabase.Configuration] suitable for [BaseDatabase]'s
  * instantiation from a [DatabaseMigrationConfiguration] instance.
  */
+@Suppress("DuplicatedCode")
 fun DatabaseMigrationConfiguration.config(
   collation: String,
   connectTimeout: Long,
@@ -78,6 +78,7 @@ fun DatabaseMigrationConfiguration.config(
  * Generates a [configuration][BaseDatabase.Configuration] suitable for [BaseDatabase]'s
  * instantiation from a [DatabasePoolConfiguration] instance.
  */
+@Suppress("DuplicatedCode")
 fun DatabasePoolConfiguration.config(
   collation: String,
   connectTimeout: Long,

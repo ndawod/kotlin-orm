@@ -7,8 +7,6 @@
  * INTENDED PUBLICATION OF SUCH SOURCE CODE.
  */
 
-@file:Suppress("unused", "MemberVisibilityCanBePrivate")
-
 package org.noordawod.kotlin.orm.dao
 
 import com.j256.ormlite.dao.GenericRawResults

@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-@file:Suppress("unused", "MemberVisibilityCanBePrivate")
+@file:Suppress("MemberVisibilityCanBePrivate")
 
 package org.noordawod.kotlin.orm
 
@@ -40,7 +40,6 @@ import net.moznion.uribuildertiny.URIBuilderTiny
  * @param maxFree how many concurrent open connections to keep open
  * @param healthCheckMillis interval between health checks of the database connection
  */
-@Suppress("CanBeParameter", "unused")
 open class MySQLDatabase constructor(
   config: Configuration,
   driver: String = JDBC_DRIVER,

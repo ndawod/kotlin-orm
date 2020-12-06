@@ -7,7 +7,7 @@
  * INTENDED PUBLICATION OF SUCH SOURCE CODE.
  */
 
-@file:Suppress("unused", "MemberVisibilityCanBePrivate")
+@file:Suppress("MemberVisibilityCanBePrivate")
 
 package org.noordawod.kotlin.orm.entity
 
@@ -18,7 +18,6 @@ import org.noordawod.kotlin.security.ByteUtils
 /**
  * Generic top-level class for all entities having an [ByteArray].
  */
-@Suppress("UnnecessaryAbstractClass")
 abstract class ByteArrayKeyEntity protected constructor() : BaseKeyEntity<ByteArray>() {
   override fun toString(): String = id.publicId()
 

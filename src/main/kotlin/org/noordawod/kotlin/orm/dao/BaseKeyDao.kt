@@ -7,8 +7,6 @@
  * INTENDED PUBLICATION OF SUCH SOURCE CODE.
  */
 
-@file:Suppress("unused")
-
 package org.noordawod.kotlin.orm.dao
 
 import com.j256.ormlite.support.ConnectionSource
@@ -22,7 +20,7 @@ import org.noordawod.kotlin.orm.entity.BaseKeyEntity
  * @param ID type of entity key this DAO is managing
  * @param T type of model this DAO is managing
  */
-@Suppress("TooManyFunctions", "MemberVisibilityCanBePrivate")
+@Suppress("TooManyFunctions")
 abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
   connection: ConnectionSource,
   dataClass: Class<T>
