@@ -26,6 +26,11 @@ abstract class BaseKeyEntity<ID> protected constructor() : BaseEntity() {
   @Suppress("VariableMinLength")
   abstract var id: ID
 
+  /**
+   * Whether this entity has been populated from the database.
+   */
+  var populated: Boolean = false
+
   override fun toString(): String = id.toString()
 
   override fun hashCode(): Int = toString().hashCode()

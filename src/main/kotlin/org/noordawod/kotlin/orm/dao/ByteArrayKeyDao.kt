@@ -45,4 +45,5 @@ abstract class ByteArrayKeyDao<T : ByteArrayKeyEntity> protected constructor(
     .where()
     .eq(primaryKey, id)
     .queryForFirst()
+    ?.also { it.populated = true }
 }

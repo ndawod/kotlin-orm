@@ -9,7 +9,6 @@
 
 package org.noordawod.kotlin.orm.dao
 
-import com.j256.ormlite.dao.GenericRawResults
 import com.j256.ormlite.support.ConnectionSource
 import org.noordawod.kotlin.orm.entity.BaseKeyEntity
 import org.noordawod.kotlin.orm.entity.PublicId
@@ -27,9 +26,9 @@ abstract class NumericKeyDao<ID : Number, T : BaseKeyEntity<ID>> protected const
    * Returns the primary ID of the last insert operation.
    */
   @Throws(java.sql.SQLException::class)
-  open fun insertId(): Long {
-    val results: GenericRawResults<Array<String>> = queryRaw("SELECT LAST_INSERT_ID()")
-    val values = results.firstResult
-    return if (1 == values?.size) values[0].toLong() else 0L
+  open fun insertId(): Long = try {
+    queryRawValue("SELECT LAST_INSERT_ID()")
+  } catch (ignored: java.sql.SQLException) {
+    0L
   }
 }

@@ -9,6 +9,7 @@
 
 package org.noordawod.kotlin.orm.dao
 
+import com.j256.ormlite.stmt.PreparedQuery
 import com.j256.ormlite.support.ConnectionSource
 import org.noordawod.kotlin.core.extension.mutableMapWith
 import org.noordawod.kotlin.orm.BaseDatabase.Companion.INITIAL_CAPACITY
@@ -35,6 +36,21 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
    */
   abstract fun randomId(entity: T): ID
 
+  /**
+   * Optionally populate this entity with fresh details from the database if needed, does
+   * nothing otherwise. Will return the populated entity on success, null otherwise.
+   */
+  open fun populateIfNeeded(entity: T?, force: Boolean = false): T? =
+    if (null == entity) {
+      null
+    } else {
+      if (!force && entity.populated) {
+        entity
+      } else {
+        queryFor(entity)?.also { it.populated = true }
+      }
+    }
+
   override fun delete(data: T): Int = deleteById(data.id)
 
   /**
@@ -51,6 +67,7 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
         entity.id = randomId(entity)
         super.create(entity)
         return queryForId(entity.id)
+          ?: throw java.sql.SQLException("Unable to insert row after $tries tries.")
       } catch (e: java.sql.SQLException) {
         lastError = e
         thisTry--
@@ -73,7 +90,7 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
    * were actually inserted.
    */
   @Throws(java.sql.SQLException::class)
-  open fun insertIfNew(instances: Collection<T>): Collection<T>? {
+  open fun insertIfNew(instances: Collection<T>): List<T>? {
     val results = ArrayList<T>(INITIAL_CAPACITY)
     for (instance in instances) {
       if (null == queryForId(instance.id)) {
@@ -107,6 +124,45 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
   @Throws(java.sql.SQLException::class)
   open fun exists(ids: Collection<ID>): Boolean = ids.size == queryForIds(ids)?.size
 
+  override fun queryForId(id: ID): T? =
+    super.queryForId(id)?.also { it.populated = true }
+
+  override fun queryForAll(): List<T>? {
+    val result = super.queryForAll()
+    return if (result.isNullOrEmpty()) null else result.onEach { it.populated = true }
+  }
+
+  override fun queryForEq(fieldName: String, value: Any?): List<T>? {
+    val result = super.queryForEq(fieldName, value)
+    return if (result.isNullOrEmpty()) null else result.onEach { it.populated = true }
+  }
+
+  override fun queryForFirst(preparedQuery: PreparedQuery<T>): T? =
+    super.queryForFirst(preparedQuery)?.also { it.populated = true }
+
+  override fun queryForFieldValues(fieldValues: MutableMap<String, Any>): List<T>? {
+    val result = super.queryForFieldValues(fieldValues)
+    return if (result.isNullOrEmpty()) null else result.onEach { it.populated = true }
+  }
+
+  override fun queryForFieldValuesArgs(fieldValues: MutableMap<String, Any>): List<T>? {
+    val result = super.queryForFieldValuesArgs(fieldValues)
+    return if (result.isNullOrEmpty()) null else result.onEach { it.populated = true }
+  }
+
+  override fun queryForMatching(matchObj: T): List<T>? {
+    val result = super.queryForMatching(matchObj)
+    return if (result.isNullOrEmpty()) null else result.onEach { it.populated = true }
+  }
+
+  override fun queryForMatchingArgs(matchObj: T): List<T>? {
+    val result = super.queryForMatchingArgs(matchObj)
+    return if (result.isNullOrEmpty()) null else result.onEach { it.populated = true }
+  }
+
+  override fun queryForSameId(data: T?): T? =
+    super.queryForSameId(data)?.also { it.populated = true }
+
   /**
    * Queries the database for the single record matching the provided [instance].
    */
@@ -126,14 +182,15 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
    * equal to [primaryKey] field.
    */
   @Throws(java.sql.SQLException::class)
-  open fun queryForIds(ids: Collection<ID>): Collection<T>? = queryForIds(primaryKey, ids)
+  open fun queryForIds(ids: Collection<ID>): List<T>? =
+    queryForIds(primaryKey, ids)?.onEach { it.populated = true }
 
   /**
    * Queries the database for the specified [identifiers][ids] and sorts the result
    * ascending by the specified sort order field.
    */
   @Throws(java.sql.SQLException::class)
-  open fun queryForIds(ids: Collection<ID>, orderField: String): Collection<T>? =
+  open fun queryForIds(ids: Collection<ID>, orderField: String): List<T>? =
     queryForIds(ids, 0, orderField, true)
 
   /**
@@ -146,7 +203,8 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
     limit: Long = 0,
     orderField: String,
     ascending: Boolean
-  ): Collection<T>? = queryForIds(primaryKey, ids, limit, orderField, ascending)
+  ): List<T>? =
+    queryForIds(primaryKey, ids, limit, orderField, ascending)?.onEach { it.populated = true }
 
   /**
    * Queries the database for distinct records having the specified [identifiers][ids]
