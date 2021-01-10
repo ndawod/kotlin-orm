@@ -12,7 +12,7 @@ package org.noordawod.kotlin.orm.dao
 import com.j256.ormlite.stmt.PreparedQuery
 import com.j256.ormlite.support.ConnectionSource
 import org.noordawod.kotlin.core.extension.mutableMapWith
-import org.noordawod.kotlin.orm.BaseDatabase.Companion.INITIAL_CAPACITY
+import org.noordawod.kotlin.orm.BaseDatabase
 import org.noordawod.kotlin.orm.entity.BaseKeyEntity
 
 /**
@@ -91,7 +91,7 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
    */
   @Throws(java.sql.SQLException::class)
   open fun insertIfNew(instances: Collection<T>): List<T>? {
-    val results = ArrayList<T>(INITIAL_CAPACITY)
+    val results = ArrayList<T>(BaseDatabase.INITIAL_CAPACITY)
     for (instance in instances) {
       if (null == queryForId(instance.id)) {
         results.add(insert(instance))
@@ -140,12 +140,12 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
   override fun queryForFirst(preparedQuery: PreparedQuery<T>): T? =
     super.queryForFirst(preparedQuery)?.also { it.populated = true }
 
-  override fun queryForFieldValues(fieldValues: MutableMap<String, Any>): List<T>? {
+  override fun queryForFieldValues(fieldValues: Map<String, Any>): List<T>? {
     val result = super.queryForFieldValues(fieldValues)
     return if (result.isNullOrEmpty()) null else result.onEach { it.populated = true }
   }
 
-  override fun queryForFieldValuesArgs(fieldValues: MutableMap<String, Any>): List<T>? {
+  override fun queryForFieldValuesArgs(fieldValues: Map<String, Any>): List<T>? {
     val result = super.queryForFieldValuesArgs(fieldValues)
     return if (result.isNullOrEmpty()) null else result.onEach { it.populated = true }
   }

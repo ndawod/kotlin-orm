@@ -13,8 +13,7 @@ package org.noordawod.kotlin.orm.dao
 
 import com.j256.ormlite.dao.Dao
 import com.j256.ormlite.support.ConnectionSource
-import org.noordawod.kotlin.orm.BaseDatabase.Companion.INITIAL_CAPACITY
-import org.noordawod.kotlin.orm.BaseDatabase.Companion.MAX_TRIES
+import org.noordawod.kotlin.orm.BaseDatabase
 import org.noordawod.kotlin.orm.entity.PublicId
 
 /**
@@ -193,28 +192,29 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
    * Creates a new [entity] in the database.
    */
   @Throws(java.sql.SQLException::class)
-  fun insert(entity: T): T = insert(entity, MAX_TRIES)
+  fun insert(entity: T): T = insert(entity, BaseDatabase.MAX_TRIES)
 
   /**
    * Creates a new [entity] in the database and optionally tries the specified number
    * of times to set the correct insert ID in it before failing.
    */
   @Throws(java.sql.SQLException::class)
-  open fun insert(entity: T, tries: Int = MAX_TRIES): T = create(entity).let { entity }
+  open fun insert(entity: T, tries: Int = BaseDatabase.MAX_TRIES): T =
+    create(entity).let { entity }
 
   /**
    * Creates new [entities] in the database.
    */
   @Throws(java.sql.SQLException::class)
-  fun insert(entities: Collection<T>): List<T> = insert(entities, MAX_TRIES)
+  fun insert(entities: Collection<T>): List<T> = insert(entities, BaseDatabase.MAX_TRIES)
 
   /**
    * Creates new [entities] in the database and optionally tries the specified number
    * of times to set the correct insert ID in each before failing.
    */
   @Throws(java.sql.SQLException::class)
-  open fun insert(entities: Collection<T>, tries: Int = MAX_TRIES): List<T> {
-    val results = ArrayList<T>(INITIAL_CAPACITY)
+  open fun insert(entities: Collection<T>, tries: Int = BaseDatabase.MAX_TRIES): List<T> {
+    val results = ArrayList<T>(BaseDatabase.INITIAL_CAPACITY)
     for (entry in entities) {
       results.add(insert(entry, tries))
     }
