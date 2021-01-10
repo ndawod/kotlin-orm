@@ -140,12 +140,12 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
   override fun queryForFirst(preparedQuery: PreparedQuery<T>): T? =
     super.queryForFirst(preparedQuery)?.also { it.populated = true }
 
-  override fun queryForFieldValues(fieldValues: Map<String, Any>): List<T>? {
+  override fun queryForFieldValues(fieldValues: Map<String, Any?>): List<T>? {
     val result = super.queryForFieldValues(fieldValues)
     return if (result.isNullOrEmpty()) null else result.onEach { it.populated = true }
   }
 
-  override fun queryForFieldValuesArgs(fieldValues: Map<String, Any>): List<T>? {
+  override fun queryForFieldValuesArgs(fieldValues: Map<String, Any?>): List<T>? {
     val result = super.queryForFieldValuesArgs(fieldValues)
     return if (result.isNullOrEmpty()) null else result.onEach { it.populated = true }
   }

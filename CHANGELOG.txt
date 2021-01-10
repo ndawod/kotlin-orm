@@ -3,7 +3,7 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
-1.2.0-1.2.1 (Jan 10 2021)
+1.2.0-1.2.2 (Jan 10 2021)
     Add a new property "populated" in BaseKeyEntity.kt.
 
 1.1.0-1.1.1 (Dec 6 2020)
