@@ -25,8 +25,8 @@
 
 package org.noordawod.kotlin.orm
 
-import com.j256.ormlite.db.MysqlDatabaseType
 import com.j256.ormlite.jdbc.JdbcPooledConnectionSource
+import com.j256.ormlite.jdbc.db.MysqlDatabaseType
 import com.j256.ormlite.support.ConnectionSource
 import com.j256.ormlite.support.DatabaseConnection
 import net.moznion.uribuildertiny.URIBuilderTiny

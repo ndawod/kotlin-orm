@@ -24,11 +24,11 @@
 ext.encoding = 'UTF-8'
 ext.versions = [
     jdk: JavaVersion.VERSION_1_8,
-    detekt: '1.14.1',
-    kotlin: '1.4.20',
-    kotlin_coroutines: '1.4.1',
-    kotlin_serialization: '1.0.1',
-    ndawod_kotlin_core: '2.3.1',
+    detekt: '1.16.0',
+    kotlin: '1.4.31',
+    kotlin_coroutines: '1.4.2',
+    kotlin_serialization: '1.1.0',
+    ndawod_kotlin_core: '2.3.7',
     uribuilder_tiny: '2.7.1',
-    ormlite: '5.1'
+    ormlite: '5.3'
 ]
