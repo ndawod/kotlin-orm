@@ -22,22 +22,25 @@
  */
 
 group = 'org.noordawod.kotlin.orm'
-version = '1.2.3'
+version = '1.2.4'
 description = 'Defines reusable contracts for OrmLite that requires entities and models to exist.'
 
 apply plugin: 'kotlinx-serialization'
+apply plugin: 'com.github.ben-manes.versions'
 
 buildscript {
     apply from: 'gradle/config.gradle'
 
     repositories {
         jcenter()
+        gradlePluginPortal()
         maven {
             url "https://plugins.gradle.org/m2/"
         }
     }
 
     dependencies {
+        classpath "com.github.ben-manes:gradle-versions-plugin:${versions.versions_outdated}"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
         classpath "org.jetbrains.kotlin:kotlin-serialization:${versions.kotlin}"
         classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${versions.detekt}"
