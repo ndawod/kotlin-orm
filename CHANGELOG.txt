@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+1.2.5 (Mar 26 2021)
+    Adjust the database migrator's runner.
+
 1.2.3-1.2.4 (Mar 21 2021)
     Bump up dependencies versions.
 
