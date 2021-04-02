@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-@file:Suppress("MemberVisibilityCanBePrivate")
+@file:Suppress("unused", "MemberVisibilityCanBePrivate")
 
 package org.noordawod.kotlin.orm
 
@@ -49,7 +49,7 @@ abstract class BaseDatabase constructor(
   init {
     if (null != driver) {
       try {
-        Class.forName(driver).newInstance()
+        Class.forName(driver).getDeclaredConstructor().newInstance()
       } catch (e: ClassNotFoundException) {
         throw java.sql.SQLException("Unable to locale a compatible database driver: $driver", e)
       } catch (e: IllegalAccessException) {

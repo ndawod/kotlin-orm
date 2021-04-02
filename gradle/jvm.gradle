@@ -34,3 +34,9 @@ javadoc {
         docEncoding = encoding
     }
 }
+
+dependencies {
+    implementation "javax.xml.bind:jaxb-api:${versions.java_ee}"
+    implementation "com.sun.xml.bind:jaxb-core:${versions.java_ee}"
+    implementation "com.sun.xml.bind:jaxb-impl:${versions.java_ee}"
+}

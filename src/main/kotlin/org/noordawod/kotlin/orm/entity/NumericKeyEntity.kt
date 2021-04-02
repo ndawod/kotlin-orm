@@ -7,6 +7,8 @@
  * INTENDED PUBLICATION OF SUCH SOURCE CODE.
  */
 
+@file:Suppress("unused")
+
 package org.noordawod.kotlin.orm.entity
 
 /**

@@ -25,6 +25,8 @@ apply from: 'gradle/config.gradle'
 
 apply plugin: 'io.gitlab.arturbosch.detekt'
 
+final _kotlinxHtmlJvm = '0.7.3'
+
 detekt {
     baseline = file('detekt-baseline.xml')
     config = files('detekt.yml')
@@ -37,4 +39,26 @@ detekt {
 dependencies {
     detektPlugins "io.gitlab.arturbosch.detekt:detekt-formatting:${versions.detekt}"
     detekt "io.gitlab.arturbosch.detekt:detekt-cli:${versions.detekt}"
+    implementation "org.jetbrains.kotlinx:kotlinx-html-jvm:$_kotlinxHtmlJvm"
+}
+
+repositories {
+    maven {
+        url "https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven"
+    }
+}
+
+// Until Detekt replaces jCenter with mavenCenter, we have to enforce a specific version
+// of 'org.jetbrains.kotlinx:kotlinx-html-jvm' as JetBrains was nice enough to host it on
+// their own repository.
+allprojects {
+    configurations.all {
+        resolutionStrategy {
+            preferProjectModules()
+            dependencySubstitution {
+                substitute(module('org.jetbrains.kotlinx:kotlinx-html-jvm'))
+                        .with(module("org.jetbrains.kotlinx:kotlinx-html-jvm:$_kotlinxHtmlJvm"))
+            }
+        }
+    }
 }

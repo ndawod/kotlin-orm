@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-@file:Suppress("VariableMinLength")
+@file:Suppress("unused", "VariableMinLength")
 
 package org.noordawod.kotlin.orm.migration
 

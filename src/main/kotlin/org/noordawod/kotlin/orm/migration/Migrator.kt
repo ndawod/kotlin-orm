@@ -7,7 +7,7 @@
  * INTENDED PUBLICATION OF SUCH SOURCE CODE.
  */
 
-@file:Suppress("MagicNumber")
+@file:Suppress("unused", "MagicNumber")
 
 package org.noordawod.kotlin.orm.migration
 
