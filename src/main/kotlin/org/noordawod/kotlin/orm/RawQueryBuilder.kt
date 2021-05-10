@@ -150,7 +150,7 @@ class RawQueryBuilder constructor(val fieldSeparator: Char, initialCapacity: Int
       append(" GROUP BY $groupByInternal")
     }
     if (!orderByInternal.isNullOrEmpty()) {
-      append(" ORDER BY $groupByInternal ${if (ascendingInternal) "ASC" else "DESC"}")
+      append(" ORDER BY $orderByInternal ${if (ascendingInternal) "ASC" else "DESC"}")
     }
     if (0 < limitInternal) {
       append(" LIMIT $limitInternal")
