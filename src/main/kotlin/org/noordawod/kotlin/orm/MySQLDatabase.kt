@@ -94,6 +94,7 @@ open class MySQLDatabase constructor(
       setCheckConnectionsEveryMillis(healthCheckMillis)
       setMaxConnectionAgeMillis(ageMillis)
       setMaxConnectionsFree(maxFree)
+      setTestBeforeGet(true)
 
       // Ensures that a connection is actually opened and a query is sent.
       var databaseConnection: DatabaseConnection? = null
@@ -175,7 +176,10 @@ open class MySQLDatabase constructor(
         "allowPublicKeyRetrieval" to true.toString(),
         "useSSL" to false.toString(),
         "useCompression" to false.toString(),
-        "autoReconnect" to true.toString()
+        "tcpKeepAlive" to true.toString(),
+        "tcpNoDelay" to true.toString(),
+        "autoReconnectForPools" to true.toString(),
+        "autoReconnect" to false.toString()
       )
       if (!collation.isNullOrBlank()) {
         params["connectionCollation"] = collation

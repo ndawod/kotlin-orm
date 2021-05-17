@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+1.4.3 (May 17 2021)
+    Bump up dependencies versions.
+
 1.4.2 (May 10 2021)
     Fix a bug in ORDER BY clause.
 
