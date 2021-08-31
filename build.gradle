@@ -26,7 +26,6 @@ version = '1.4.5'
 description = 'Defines reusable contracts for OrmLite that requires entities and models to exist.'
 
 apply plugin: 'kotlinx-serialization'
-apply plugin: 'maven-publish'
 apply plugin: 'com.github.ben-manes.versions'
 
 buildscript {

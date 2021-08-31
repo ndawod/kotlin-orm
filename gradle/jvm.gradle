@@ -25,6 +25,7 @@ apply from: 'gradle/config.gradle'
 
 apply plugin: 'java'
 apply plugin: 'java-library'
+apply plugin: 'maven-publish'
 
 sourceCompatibility = versions.jdk
 targetCompatibility = versions.jdk
