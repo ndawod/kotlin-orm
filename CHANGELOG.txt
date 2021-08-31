@@ -3,55 +3,58 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
-1.4.3-1.4.4 (May 17 2021)
+1.4.5 (May 17, 2021)
     Bump up dependencies versions.
 
-1.4.2 (May 10 2021)
+1.4.3-1.4.4 (May 17, 2021)
+    Bump up dependencies versions.
+
+1.4.2 (May 10, 2021)
     Fix a bug in ORDER BY clause.
 
-1.4.1 (May 4 2021)
+1.4.1 (May 4, 2021)
     Bump up dependencies versions.
 
-1.4.0 (May 1 2021)
+1.4.0 (May 1, 2021)
     Add a new simple raw query builder.
 
-1.3.1 (April 23 2021)
+1.3.1 (April 23, 2021)
     Bump up dependencies versions.
 
-1.3.0 (April 2 2021)
+1.3.0 (April 2, 2021)
     Include removed Java EE libraries necessary for Java 11 and beyond.
 
-1.2.5 (March 26 2021)
+1.2.5 (March 26, 2021)
     Adjust the database migrator's runner.
 
-1.2.3-1.2.4 (March 21 2021)
+1.2.3-1.2.4 (March 21, 2021)
     Bump up dependencies versions.
 
-1.2.0-1.2.2 (January 10 2021)
+1.2.0-1.2.2 (January 10, 2021)
     Add a new property "populated" in BaseKeyEntity.kt.
 
-1.1.0-1.1.1 (December 6 2020)
+1.1.0-1.1.1 (December 6, 2020)
     Bump Kotlin plugin and libraries versions.
 
-1.0.8 (November 26 2020)
+1.0.8 (November 26, 2020)
     Fix a migrator bug that caused an error not to be printed.
 
-1.0.7 (October 8 2020)
+1.0.7 (October 8, 2020)
     Upgrade dependencies.
 
-1.0.6 (August 11 2020)
+1.0.6 (August 11, 2020)
     Add a new method internalId() in BaseDaoImpl.kt.
 
-1.0.5 (August 5 2020)
+1.0.5 (August 5, 2020)
     Add `allowPublicKeyRetrieval=true` to MySQL connection capabilities.
 
-1.0.4 (June 20 2020)
+1.0.4 (June 20, 2020)
     Allow DatabaseMigrationConfiguration to include more than one base path.
 
-1.0.1-1.0.3 (May 26 2020)
+1.0.1-1.0.3 (May 26, 2020)
     Remove fromModel() and toModel() from DAOs, this must be done by host app.
     Use @param instead of @property in KDoc.
     Add few more constant values in BaseEntity describing commonly-used field names.
 
-1.0.0 (May 24 2020)
+1.0.0 (May 24, 2020)
     Initial commit.

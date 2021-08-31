@@ -29,9 +29,24 @@ package org.noordawod.kotlin.orm.migration
  * Lists fields used in the migrations table.
  */
 object MigrationField {
+  /**
+   * The field "migration_id" in the migrations table.
+   */
   const val ID: String = "migration_id"
+
+  /**
+   * The field "migration_description" in the migrations table.
+   */
   const val DESCRIPTION: String = "migration_description"
+
+  /**
+   * The field "migration_file" in the migrations table.
+   */
   const val FILE: String = "migration_file"
+
+  /**
+   * The field "migration_created" in the migrations table.
+   */
   const val CREATED: String = "migration_created"
 }
 

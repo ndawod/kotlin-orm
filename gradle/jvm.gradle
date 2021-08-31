@@ -24,19 +24,39 @@
 apply from: 'gradle/config.gradle'
 
 apply plugin: 'java'
+apply plugin: 'java-library'
 
 sourceCompatibility = versions.jdk
 targetCompatibility = versions.jdk
 
 javadoc {
+    // noinspection GroovyAssignabilityCheck
     options {
         charSet = encoding
         docEncoding = encoding
     }
 }
 
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+project.afterEvaluate {
+    publishing {
+        publications {
+            // noinspection GroovyAssignabilityCheck
+            maven(MavenPublication) {
+                // noinspection GroovyAssignabilityCheck
+                from components.java
+            }
+        }
+    }
+}
+
 dependencies {
     implementation "javax.xml.bind:jaxb-api:${versions.java_ee}"
     implementation "com.sun.xml.bind:jaxb-core:${versions.java_ee}"
+    // noinspection GradlePackageUpdate
     implementation "com.sun.xml.bind:jaxb-impl:${versions.java_ee}"
 }
