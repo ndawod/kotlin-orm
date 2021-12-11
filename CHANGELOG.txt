@@ -3,6 +3,12 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+1.5.0 (Dec 11, 2021)
+    This version has breaking changes!
+    - Remove `internalId()` and `publicId()` methods.
+    - Instead of using `ByteArray`, introduce a new typealias: `HashValue`
+    - Upgrade few dependencies.
+
 1.4.5 (May 17, 2021)
     Bump up dependencies versions.
 

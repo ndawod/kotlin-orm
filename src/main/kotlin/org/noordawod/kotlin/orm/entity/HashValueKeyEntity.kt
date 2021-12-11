@@ -16,34 +16,35 @@ import org.noordawod.kotlin.security.ByteArrayStrength
 import org.noordawod.kotlin.security.ByteUtils
 
 /**
- * Generic top-level class for all entities having an [ByteArray].
+ * Generic top-level class for all entities having a [HashValue].
  */
-abstract class ByteArrayKeyEntity protected constructor() : BaseKeyEntity<ByteArray>() {
+abstract class HashValueKeyEntity protected constructor() : BaseKeyEntity<HashValue>() {
   override fun toString(): String = id.publicId()
 
   @Suppress("RedundantOverride")
   override fun hashCode(): Int = super.hashCode()
 
   override fun equals(other: Any?): Boolean =
-    if (other is ByteArrayKeyEntity) id.contentEquals(other.id) else false
+    if (other is HashValueKeyEntity) id.contentEquals(other.id) else false
 
   companion object {
     /**
-     * Just an empty [ByteArray] for reuse.
+     * Just an empty [HashValue] for reuse.
      */
-    val EMPTY: ByteArray = byteArrayOf()
+    val EMPTY: HashValue = byteArrayOf()
 
     /**
-     * Generates a random [ByteArray] with length equal to specified value.
+     * Generates a random [HashValue] with a length corresponding with the provided [strength].
+     *
+     * @param strength determines the length of the [HashValue]
      */
-    fun randomId(strength: ByteArrayStrength): ByteArray =
-      randomId(
-        strength.length
-      )
+    fun randomId(strength: ByteArrayStrength): HashValue = randomId(strength.length)
 
     /**
-     * Generates a random [ByteArray] with length equal to specified value.
+     * Generates a random [HashValue] with length equal to specified value.
+     *
+     * @param length length of [HashValue]
      */
-    fun randomId(length: Int): ByteArray = ByteUtils.randomBytes(length)
+    fun randomId(length: Int): HashValue = ByteUtils.randomBytes(length)
   }
 }

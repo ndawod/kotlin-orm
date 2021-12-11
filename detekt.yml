@@ -647,7 +647,7 @@ style:
     active: true
     ignoreOverridableFunction: true
     excludedFunctions: 'describeContents'
-    excludeAnnotatedFunction:
+    ignoreAnnotated:
       - "dagger.Provides"
   LibraryCodeMustSpecifyReturnType:
     active: true
@@ -728,10 +728,10 @@ style:
     active: true
   UnderscoresInNumericLiterals:
     active: true
-    acceptableDecimalLength: 5
+    acceptableLength: 5
   UnnecessaryAbstractClass:
     active: true
-    excludeAnnotatedClasses:
+    ignoreAnnotated:
       - "dagger.Module"
   UnnecessaryAnnotationUseSiteTarget:
     active: true

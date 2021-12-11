@@ -14,7 +14,6 @@ package org.noordawod.kotlin.orm.dao
 import com.j256.ormlite.dao.Dao
 import com.j256.ormlite.support.ConnectionSource
 import org.noordawod.kotlin.orm.BaseDatabase
-import org.noordawod.kotlin.orm.entity.PublicId
 
 /**
  * Base DAO for all others to extend from. Includes helper methods for all DAOs.
@@ -29,16 +28,6 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
    */
   @get:Throws(java.sql.SQLException::class)
   val catalogName: String? get() = getCatalogName(this)
-
-  /**
-   * Returns the public identifier for the provided [id].
-   */
-  abstract fun publicId(id: ID): PublicId
-
-  /**
-   * Returns the internal identifier for the provided public [id].
-   */
-  abstract fun internalId(id: PublicId): ID
 
   /**
    * Queries the database for distinct records having the specified ID equal to the

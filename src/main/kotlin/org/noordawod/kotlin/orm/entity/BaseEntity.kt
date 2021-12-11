@@ -12,7 +12,7 @@
 package org.noordawod.kotlin.orm.entity
 
 /**
- * Base ORM class to describe all entities.
+ * Base ORM class that extends all entities.
  */
 @Suppress("UnnecessaryAbstractClass")
 abstract class BaseEntity protected constructor() {

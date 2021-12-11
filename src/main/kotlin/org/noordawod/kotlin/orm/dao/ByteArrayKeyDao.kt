@@ -13,20 +13,21 @@ package org.noordawod.kotlin.orm.dao
 
 import com.j256.ormlite.support.ConnectionSource
 import org.noordawod.kotlin.core.util.ByteArrayMap
-import org.noordawod.kotlin.orm.entity.ByteArrayKeyEntity
+import org.noordawod.kotlin.orm.entity.HashValue
+import org.noordawod.kotlin.orm.entity.HashValueKeyEntity
 import org.noordawod.kotlin.orm.entity.PublicId
 import org.noordawod.kotlin.security.base62
 
 /**
- * All DAOs with a [ByteArray] primary ID must extend this class.
+ * All DAOs with a [HashValue] primary ID must extend this class.
  */
-abstract class ByteArrayKeyDao<T : ByteArrayKeyEntity> protected constructor(
+abstract class ByteArrayKeyDao<T : HashValueKeyEntity> protected constructor(
   connection: ConnectionSource,
   dataClass: Class<T>
-) : BaseKeyDao<ByteArray, T>(connection, dataClass) {
-  override fun publicId(id: ByteArray): PublicId = id.base62()
+) : BaseKeyDao<HashValue, T>(connection, dataClass) {
+  fun publicId(id: HashValue): PublicId = id.base62()
 
-  override fun internalId(id: PublicId): ByteArray = id.base62()
+  fun internalId(id: PublicId): HashValue = id.base62()
 
   override fun Collection<T>?.toMap(): ByteArrayMap<T>? =
     this?.let { instances ->
@@ -41,7 +42,7 @@ abstract class ByteArrayKeyDao<T : ByteArrayKeyEntity> protected constructor(
    * Fetches the row associated with the supplied [id].
    */
   @Throws(java.sql.SQLException::class)
-  override fun queryForId(id: ByteArray): T? = queryBuilder()
+  override fun queryForId(id: HashValue): T? = queryBuilder()
     .where()
     .eq(primaryKey, id)
     .queryForFirst()

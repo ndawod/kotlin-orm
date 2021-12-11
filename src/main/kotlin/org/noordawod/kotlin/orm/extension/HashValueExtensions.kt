@@ -25,20 +25,21 @@
 
 package org.noordawod.kotlin.orm.extension
 
+import org.noordawod.kotlin.orm.entity.HashValue
 import org.noordawod.kotlin.orm.entity.PublicId
 import org.noordawod.kotlin.security.base62
 
 /**
- * Returns the internal identifier (encoded as a Base62 [ByteArray]) for this [ByteArray],
- * or uses a 0-length [ByteArray].
+ * Returns the corresponding [PublicId] for this [HashValue] on success, [fallback] otherwise.
+ *
+ * @param fallback value to return if this [HashValue] is null or empty
  */
-fun ByteArray?.publicId(fallback: PublicId = ""): PublicId =
+fun HashValue?.publicId(fallback: PublicId = ""): PublicId =
   if (true == this?.isNotEmpty()) base62() else fallback
 
 /**
- * Returns the internal identifier (encoded as a Base62 [ByteArray]) for this [ByteArray]
- * if it's not empty, or null otherwise.
+ * Returns the corresponding [PublicId] for this [HashValue] on success, null otherwise.
  */
-fun ByteArray?.optionalPublicId(): PublicId? = publicId().let {
-  if (it.isEmpty()) null else it
+fun HashValue?.optionalPublicId(): PublicId? = publicId().let {
+  it.ifEmpty { null }
 }

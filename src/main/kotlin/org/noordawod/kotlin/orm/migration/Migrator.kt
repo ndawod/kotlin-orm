@@ -47,7 +47,7 @@ class Migrator constructor(
    */
   @Throws(java.sql.SQLException::class, java.io.IOException::class)
   fun execute(migrations: Array<Migration>) {
-    // Make sure migrations table exists.
+    // Make sure migrations' table exists.
     ensureMigrationsTable()
 
     // Reusable variables.
@@ -60,7 +60,7 @@ class Migrator constructor(
 
     // Go over all migrations and run them one after the other.
     for (migration in migrations) {
-      // Check if the migrations table is locked.
+      // Check if the migrations' table is locked.
       if (isLocked) {
         throw java.sql.SQLException("Migration table is locked, is another process active?")
       }
@@ -256,7 +256,7 @@ class Migrator constructor(
       // Flatten the SQL commands into a giant one-liner ending with a LF.
       val sqlDump = CARRIAGE_RETURN.matcher(commands).replaceAll(" ") + "\n"
 
-      // Scan the string looking for individual commands ending with a semi colon.
+      // Scan the string looking for individual commands ending with a semicolon.
       var startFrom = 0
       var semiColonPos: Int = sqlDump.indexOf(";\n", startFrom)
       while (startFrom < semiColonPos) {
@@ -268,7 +268,7 @@ class Migrator constructor(
   }
 
   /**
-   * Creates the migrations table if it doesn't exist.
+   * Creates the migrations' table if it doesn't exist.
    */
   @Throws(java.sql.SQLException::class)
   private fun ensureMigrationsTable() {
