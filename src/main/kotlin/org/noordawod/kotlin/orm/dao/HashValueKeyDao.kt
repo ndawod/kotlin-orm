@@ -15,8 +15,6 @@ import com.j256.ormlite.support.ConnectionSource
 import org.noordawod.kotlin.core.util.ByteArrayMap
 import org.noordawod.kotlin.orm.entity.HashValue
 import org.noordawod.kotlin.orm.entity.HashValueKeyEntity
-import org.noordawod.kotlin.orm.entity.PublicId
-import org.noordawod.kotlin.security.base62
 
 /**
  * All DAOs with a [HashValue] primary ID must extend this class.
@@ -25,10 +23,6 @@ abstract class HashValueKeyDao<T : HashValueKeyEntity> protected constructor(
   connection: ConnectionSource,
   dataClass: Class<T>
 ) : BaseKeyDao<HashValue, T>(connection, dataClass) {
-  fun publicId(id: HashValue): PublicId = id.base62()
-
-  fun internalId(id: PublicId): HashValue = id.base62()
-
   override fun Collection<T>?.toMap(): ByteArrayMap<T>? =
     this?.let { instances ->
       ByteArrayMap<T>().apply {
