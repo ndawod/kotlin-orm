@@ -21,7 +21,7 @@ import org.noordawod.kotlin.security.base62
 /**
  * All DAOs with a [HashValue] primary ID must extend this class.
  */
-abstract class ByteArrayKeyDao<T : HashValueKeyEntity> protected constructor(
+abstract class HashValueKeyDao<T : HashValueKeyEntity> protected constructor(
   connection: ConnectionSource,
   dataClass: Class<T>
 ) : BaseKeyDao<HashValue, T>(connection, dataClass) {
