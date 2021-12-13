@@ -60,3 +60,19 @@ fun PublicId?.hashValueOr(fallback: HashValue): HashValue = hashValue() ?: fallb
  * It's worth noting that [EmptyHashValue] is, technically, invalid as it contains no bytes.
  */
 fun PublicId?.hashValueOrEmpty(): HashValue = hashValueOr(EmptyHashValue)
+
+/**
+ * Returns a new [Collection] that contains only non-null and non-empty [PublicId]s.
+ */
+fun Collection<PublicId?>?.filterNonEmpty(): Collection<PublicId>? =
+  if (null == this) {
+    null
+  } else {
+    val result = ArrayList<PublicId>(size)
+    forEach { entry ->
+      if (!entry.isNullOrEmpty()) {
+        result.add(entry)
+      }
+    }
+    if (result.isEmpty()) null else result
+  }

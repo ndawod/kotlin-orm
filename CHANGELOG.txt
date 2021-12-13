@@ -3,7 +3,7 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
-1.5.4 (December 13, 2021)
+1.5.4-1.5.5 (December 13, 2021)
     Breaking change: Few extension functions changed their signatures.
 
 1.5.1-1.5.3 (December 11, 2021)

@@ -48,3 +48,19 @@ fun HashValue?.publicIdOr(fallback: PublicId): PublicId = publicId() ?: fallback
  * an empty PublicId otherwise.
  */
 fun HashValue?.publicIdOrEmpty(): PublicId = publicIdOr("")
+
+/**
+ * Returns a new [Collection] that contains only non-null and non-empty [HashValue]s.
+ */
+fun Collection<HashValue?>?.filterNonEmpty(): Collection<HashValue>? =
+  if (null == this) {
+    null
+  } else {
+    val result = ArrayList<HashValue>(size)
+    forEach { entry ->
+      if (null != entry && entry.isNotEmpty()) {
+        result.add(entry)
+      }
+    }
+    if (result.isEmpty()) null else result
+  }
