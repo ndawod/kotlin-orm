@@ -25,22 +25,38 @@
 
 package org.noordawod.kotlin.orm.extension
 
+import org.noordawod.kotlin.orm.entity.EmptyHashValue
 import org.noordawod.kotlin.orm.entity.HashValue
-import org.noordawod.kotlin.orm.entity.HashValueKeyEntity
 import org.noordawod.kotlin.orm.entity.PublicId
 import org.noordawod.kotlin.security.base62
 
 /**
- * Returns the corresponding [HashValue] for this [PublicId] on success, [fallback] otherwise.
+ * Returns the corresponding [HashValue] for this [PublicId] on success,
+ * null otherwise.
+ *
+ * A valid HashValue is one that is non-null and that contains at least one byte. So a 0-byte
+ * HashValue is considered invalid, and the function will return null in such cases.
+ */
+fun PublicId?.hashValue(): HashValue? = if (null == this || isEmpty()) null else base62()
+
+/**
+ * Returns the corresponding [HashValue] for this [PublicId] on success,
+ * [fallback] otherwise.
+ *
+ * A valid HashValue is one that is non-null and that contains at least one byte. So a 0-byte
+ * HashValue is considered invalid, and the function will return null in such cases.
  *
  * @param fallback value to return if this [PublicId] is null or empty
  */
-fun PublicId?.hashValue(fallback: HashValue = HashValueKeyEntity.EMPTY): HashValue =
-  if (true == this?.isNotEmpty()) base62() else fallback
+fun PublicId?.hashValueOr(fallback: HashValue): HashValue = hashValue() ?: fallback
 
 /**
- * Returns the corresponding [HashValue] for this [PublicId] on success, null otherwise.
+ * Returns the corresponding [HashValue] for this [PublicId] on success,
+ * [EmptyHashValue] otherwise.
+ *
+ * A valid HashValue is one that is non-null and that contains at least one byte. So a 0-byte
+ * HashValue is considered invalid, and the function will return null in such cases.
+ *
+ * It's worth noting that [EmptyHashValue] is, technically, invalid as it contains no bytes.
  */
-fun PublicId?.optionalHashValue(): HashValue? = hashValue().let {
-  if (it.isEmpty()) null else it
-}
+fun PublicId?.hashValueOrEmpty(): HashValue = hashValueOr(EmptyHashValue)

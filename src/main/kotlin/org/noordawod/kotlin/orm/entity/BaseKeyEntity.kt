@@ -22,6 +22,11 @@ typealias PublicId = String
 typealias HashValue = ByteArray
 
 /**
+ * Corresponds to a [HashValue] that's 0-byte.
+ */
+val EmptyHashValue: HashValue = byteArrayOf()
+
+/**
  * Base ORM class for all tables that have a key (primary or unique).
  */
 abstract class BaseKeyEntity<ID> protected constructor() : BaseEntity() {
@@ -44,13 +49,13 @@ abstract class BaseKeyEntity<ID> protected constructor() : BaseEntity() {
 
   companion object {
     /**
-     * Just the "id" characters that appears at the end of keys.
+     * Just the "id" characters.
      */
     @Suppress("VariableMinLength")
     const val ID: String = "id"
 
     /**
-     * The "id" suffix applied to keys with an underscore.
+     * Just the "_id" characters.
      */
     const val ID_SUFFIX: String = "_$ID"
   }

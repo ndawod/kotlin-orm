@@ -11,7 +11,7 @@
 
 package org.noordawod.kotlin.orm.entity
 
-import org.noordawod.kotlin.orm.extension.publicId
+import org.noordawod.kotlin.orm.extension.publicIdOrEmpty
 import org.noordawod.kotlin.security.ByteArrayStrength
 import org.noordawod.kotlin.security.ByteUtils
 
@@ -19,7 +19,7 @@ import org.noordawod.kotlin.security.ByteUtils
  * Generic top-level class for all entities having a [HashValue].
  */
 abstract class HashValueKeyEntity protected constructor() : BaseKeyEntity<HashValue>() {
-  override fun toString(): String = id.publicId()
+  override fun toString(): String = id.publicIdOrEmpty()
 
   @Suppress("RedundantOverride")
   override fun hashCode(): Int = super.hashCode()
@@ -28,11 +28,6 @@ abstract class HashValueKeyEntity protected constructor() : BaseKeyEntity<HashVa
     if (other is HashValueKeyEntity) id.contentEquals(other.id) else false
 
   companion object {
-    /**
-     * Just an empty [HashValue] for reuse.
-     */
-    val EMPTY: HashValue = byteArrayOf()
-
     /**
      * Generates a random [HashValue] with a length corresponding with the provided [strength].
      *

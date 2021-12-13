@@ -30,16 +30,21 @@ import org.noordawod.kotlin.orm.entity.PublicId
 import org.noordawod.kotlin.security.base62
 
 /**
- * Returns the corresponding [PublicId] for this [HashValue] on success, [fallback] otherwise.
+ * Returns the corresponding [PublicId] for this [HashValue] on success,
+ * null otherwise.
+ */
+fun HashValue?.publicId(): PublicId? = if (null == this || isEmpty()) null else base62()
+
+/**
+ * Returns the corresponding [PublicId] for this [HashValue] on success,
+ * [fallback] otherwise.
  *
  * @param fallback value to return if this [HashValue] is null or empty
  */
-fun HashValue?.publicId(fallback: PublicId = ""): PublicId =
-  if (true == this?.isNotEmpty()) base62() else fallback
+fun HashValue?.publicIdOr(fallback: PublicId): PublicId = publicId() ?: fallback
 
 /**
- * Returns the corresponding [PublicId] for this [HashValue] on success, null otherwise.
+ * Returns the corresponding [PublicId] for this [HashValue] on success,
+ * an empty PublicId otherwise.
  */
-fun HashValue?.optionalPublicId(): PublicId? = publicId().let {
-  it.ifEmpty { null }
-}
+fun HashValue?.publicIdOrEmpty(): PublicId = publicIdOr("")
