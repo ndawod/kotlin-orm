@@ -78,6 +78,27 @@ fun Collection<PublicId?>?.filterNonEmpty(): Collection<PublicId>? =
   }
 
 /**
+ * Returns a new [Collection] that contains only non-null and non-empty [PublicId]s that
+ * are obtained through transforming them via [transform].
+ *
+ * @param T the type of values contained within this Collection
+ * @param transform a function that transforms a [T] value to [PublicId]
+ */
+fun <T> Collection<T?>?.filterNonEmpty(transform: ((T) -> PublicId?)): Collection<PublicId>? =
+  if (null == this) {
+    null
+  } else {
+    val result = ArrayList<PublicId>(size)
+    forEach { entry ->
+      val hashValue = if (null == entry) null else transform(entry)
+      if (null != hashValue && hashValue.isNotEmpty()) {
+        result.add(hashValue)
+      }
+    }
+    if (result.isEmpty()) null else result
+  }
+
+/**
  * Returns a new [Collection] that contains only non-empty [HashValue]s corresponding with
  * this [PublicId] [Collection], null otherwise.
  */
@@ -94,3 +115,13 @@ fun Collection<PublicId?>?.hashValue(): Collection<HashValue>? {
 
   return if (result.isEmpty()) null else result
 }
+
+/**
+ * Returns a new [Collection] that contains only non-empty [HashValue]s corresponding with
+ * this [Collection], null otherwise.
+ *
+ * @param T the type of values contained within this Collection
+ * @param transform a function that transforms a [T] value to [PublicId]
+ */
+fun <T> Collection<T?>?.hashValue(transform: ((T) -> PublicId?)): Collection<HashValue>? =
+  filterNonEmpty(transform)?.hashValue()
