@@ -76,3 +76,21 @@ fun Collection<PublicId?>?.filterNonEmpty(): Collection<PublicId>? =
     }
     if (result.isEmpty()) null else result
   }
+
+/**
+ * Returns a new [Collection] that contains only non-empty [HashValue]s corresponding with
+ * this [PublicId] [Collection], null otherwise.
+ */
+fun Collection<PublicId?>?.hashValue(): Collection<HashValue>? {
+  val nonEmptyPublicIds = filterNonEmpty() ?: return null
+  val result = ArrayList<HashValue>(nonEmptyPublicIds.size)
+
+  nonEmptyPublicIds.map { publicId ->
+    val hashValue = publicId.hashValue()
+    if (null != hashValue) {
+      result.add(hashValue)
+    }
+  }
+
+  return if (result.isEmpty()) null else result
+}
