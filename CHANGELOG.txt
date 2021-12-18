@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+1.5.8 (December 18, 2021)
+    Bump up dependencies versions.
+
 1.5.6-1.5.7 (December 14, 2021)
     Add new extension functions to deal with collections of PublicId/HashValue entries.
 
