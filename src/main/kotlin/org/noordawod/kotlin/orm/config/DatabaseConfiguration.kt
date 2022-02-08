@@ -26,12 +26,13 @@
 package org.noordawod.kotlin.orm.config
 
 import org.noordawod.kotlin.orm.MySQLDatabase
+import kotlinx.serialization.Serializable
 
 /**
  * Generic database configuration suitable for most database drivers.
  */
-@kotlinx.serialization.Serializable
-sealed class DatabaseConfiguration {
+@Serializable
+abstract class DatabaseConfiguration {
   /**
    * Associated URI protocol (scheme) for this JDBC driver.
    */
@@ -94,7 +95,7 @@ sealed class DatabaseConfiguration {
   /**
    * A default data class for [DatabaseConfiguration].
    */
-  @kotlinx.serialization.Serializable
+  @Serializable
   data class Default constructor(
     override val protocol: String,
     override val ipAddr: String,
@@ -109,8 +110,8 @@ sealed class DatabaseConfiguration {
 /**
  * Generic database configuration for file-based migrations.
  */
-@kotlinx.serialization.Serializable
-sealed class DatabaseMigrationConfiguration : DatabaseConfiguration() {
+@Serializable
+abstract class DatabaseMigrationConfiguration : DatabaseConfiguration() {
   /**
    * A list of paths indicating where the migrations plans are stored.
    */
@@ -126,7 +127,7 @@ sealed class DatabaseMigrationConfiguration : DatabaseConfiguration() {
   /**
    * A default data class for [DatabaseMigrationConfiguration].
    */
-  @kotlinx.serialization.Serializable
+  @Serializable
   data class Default constructor(
     override val protocol: String,
     override val ipAddr: String,
@@ -142,8 +143,8 @@ sealed class DatabaseMigrationConfiguration : DatabaseConfiguration() {
 /**
  * Generic database configuration for pool-backed database server.
  */
-@kotlinx.serialization.Serializable
-sealed class DatabasePoolConfiguration : DatabaseConfiguration() {
+@Serializable
+abstract class DatabasePoolConfiguration : DatabaseConfiguration() {
   /**
    * Connection pool configuration.
    */
@@ -159,7 +160,7 @@ sealed class DatabasePoolConfiguration : DatabaseConfiguration() {
   /**
    * A default data class for [DatabasePoolConfiguration].
    */
-  @kotlinx.serialization.Serializable
+  @Serializable
   data class Default constructor(
     override val protocol: String,
     override val ipAddr: String,
@@ -175,8 +176,8 @@ sealed class DatabasePoolConfiguration : DatabaseConfiguration() {
 /**
  * Database pool configuration.
  */
-@kotlinx.serialization.Serializable
-sealed class PoolConfiguration {
+@Serializable
+abstract class PoolConfiguration {
   /**
    * How long, in milliseconds, to keep an idle connection open before closing it.
    */
@@ -205,7 +206,7 @@ sealed class PoolConfiguration {
   /**
    * A default data class for [PoolConfiguration].
    */
-  @kotlinx.serialization.Serializable
+  @Serializable
   data class Default(
     override val ageMillis: Long,
     override val maxFree: Int,

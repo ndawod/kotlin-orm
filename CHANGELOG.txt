@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+1.6.2 (February 8, 2022)
+    Change sealed classes to abstract classes to allow inheritance of Serializable classes.
+
 1.6.1 (February 8, 2022)
     Change a few open classes to sealed classes, and provide default data class for each.
 
