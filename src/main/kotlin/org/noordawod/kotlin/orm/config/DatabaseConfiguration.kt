@@ -29,28 +29,48 @@ import org.noordawod.kotlin.orm.MySQLDatabase
 
 /**
  * Generic database configuration suitable for most database drivers.
- *
- * @param protocol associated URI protocol (scheme) for this JDBC driver
- * @param host host name of the database server
- * @param ipAddr IP address of the database server
- * @param port server's connection port
- * @param user username to authenticate against the database server
- * @param pass password to authenticate against the database server
- * @param schema main database schema name to attach to
  */
 @kotlinx.serialization.Serializable
-open class DatabaseConfiguration constructor(
-  val protocol: String,
-  val ipAddr: String,
-  val host: String,
-  val port: Int,
-  val user: String,
-  val pass: String,
-  val schema: String
-) {
+sealed class DatabaseConfiguration {
+  /**
+   * Associated URI protocol (scheme) for this JDBC driver.
+   */
+  abstract val protocol: String
+
+  /**
+   * IP address of the database server.
+   */
+  abstract val ipAddr: String
+
+  /**
+   * Host name of the database server.
+   */
+  abstract val host: String
+
+  /**
+   * Server's connection port.
+   */
+  abstract val port: Int
+
+  /**
+   * Username to authenticate against the database server.
+   */
+  abstract val user: String
+
+  /**
+   * Password to authenticate against the database server.
+   */
+  abstract val pass: String
+
+  /**
+   * Main database schema name to attach to.
+   */
+  abstract val schema: String
+
   /**
    * Returns the connection URI string for this instance.
    */
+  @Suppress("LeakingThis")
   val uri: String = MySQLDatabase.uri(protocol, host, port, user, pass, schema)
 
   override fun equals(other: Any?): Boolean = other is DatabaseConfiguration &&
@@ -70,119 +90,108 @@ open class DatabaseConfiguration constructor(
     user.hashCode() * 2087 +
     pass.hashCode() * 557 +
     schema.hashCode() * 1051
+
+  /**
+   * A default data class for [DatabaseConfiguration].
+   */
+  @kotlinx.serialization.Serializable
+  data class Default constructor(
+    override val protocol: String,
+    override val ipAddr: String,
+    override val host: String,
+    override val port: Int,
+    override val user: String,
+    override val pass: String,
+    override val schema: String
+  ) : DatabaseConfiguration()
 }
 
 /**
  * Generic database configuration for file-based migrations.
- *
- * @param protocol associated URI protocol (scheme) for this JDBC driver
- * @param ipAddr IP address of the database server
- * @param host host name of the database server
- * @param port server's connection port
- * @param user username to authenticate against the database server
- * @param pass password to authenticate against the database server
- * @param schema main database schema name to attach to
- * @param paths a list of paths indicating where the migrations plans are stored
  */
 @kotlinx.serialization.Serializable
-open class DatabaseMigrationConfiguration constructor(
-  val protocol: String,
-  val ipAddr: String,
-  val host: String,
-  val port: Int,
-  val user: String,
-  val pass: String,
-  val schema: String,
-  val paths: Collection<String>
-) {
+sealed class DatabaseMigrationConfiguration : DatabaseConfiguration() {
   /**
-   * Returns the connection URI string for this instance.
+   * A list of paths indicating where the migrations plans are stored.
    */
-  val uri: String = MySQLDatabase.uri(protocol, host, port, user, pass, schema)
+  abstract val paths: Collection<String>
 
   override fun equals(other: Any?): Boolean = other is DatabaseMigrationConfiguration &&
-    other.protocol == protocol &&
-    other.ipAddr == ipAddr &&
-    other.host == host &&
-    other.port == port &&
-    other.user == user &&
-    other.pass == pass &&
-    other.schema == schema &&
+    super.equals(other) &&
     other.paths == paths
 
   @Suppress("MagicNumber")
-  override fun hashCode(): Int = port +
-    protocol.hashCode() * 349 +
-    ipAddr.hashCode() * 907 +
-    host.hashCode() * 383 +
-    user.hashCode() * 2087 +
-    pass.hashCode() * 557 +
-    schema.hashCode() * 1051 +
-    paths.hashCode() * 181
+  override fun hashCode(): Int = super.hashCode() + paths.hashCode() * 181
+
+  /**
+   * A default data class for [DatabaseMigrationConfiguration].
+   */
+  @kotlinx.serialization.Serializable
+  data class Default constructor(
+    override val protocol: String,
+    override val ipAddr: String,
+    override val host: String,
+    override val port: Int,
+    override val user: String,
+    override val pass: String,
+    override val schema: String,
+    override val paths: Collection<String>
+  ) : DatabaseMigrationConfiguration()
 }
 
 /**
  * Generic database configuration for pool-backed database server.
- *
- * @param protocol associated URI protocol (scheme) for this JDBC driver
- * @param ipAddr IP address of the database server
- * @param host host name of the database server
- * @param port server's connection port
- * @param user username to authenticate against the database server
- * @param pass password to authenticate against the database server
- * @param schema main database schema name to attach to
- * @param pool connection pool configuration
  */
 @kotlinx.serialization.Serializable
-open class DatabasePoolConfiguration constructor(
-  val protocol: String,
-  val ipAddr: String,
-  val host: String,
-  val port: Int,
-  val user: String,
-  val pass: String,
-  val schema: String,
-  val pool: PoolConfiguration
-) {
+sealed class DatabasePoolConfiguration : DatabaseConfiguration() {
   /**
-   * Returns the connection URI string for this instance.
+   * Connection pool configuration.
    */
-  val uri: String = MySQLDatabase.uri(protocol, host, port, user, pass, schema)
+  abstract val pool: PoolConfiguration
 
   override fun equals(other: Any?): Boolean = other is DatabasePoolConfiguration &&
-    other.protocol == protocol &&
-    other.ipAddr == ipAddr &&
-    other.host == host &&
-    other.port == port &&
-    other.user == user &&
-    other.pass == pass &&
-    other.schema == schema &&
+    super.equals(other) &&
     other.pool == pool
 
   @Suppress("MagicNumber")
-  override fun hashCode(): Int = port +
-    protocol.hashCode() * 349 +
-    ipAddr.hashCode() * 907 +
-    host.hashCode() * 383 +
-    user.hashCode() * 2087 +
-    pass.hashCode() * 557 +
-    schema.hashCode() * 1051 +
-    pool.hashCode() * 181
+  override fun hashCode(): Int = super.hashCode() + pool.hashCode() * 181
+
+  /**
+   * A default data class for [DatabasePoolConfiguration].
+   */
+  @kotlinx.serialization.Serializable
+  data class Default constructor(
+    override val protocol: String,
+    override val ipAddr: String,
+    override val host: String,
+    override val port: Int,
+    override val user: String,
+    override val pass: String,
+    override val schema: String,
+    override val pool: PoolConfiguration
+  ) : DatabasePoolConfiguration()
 }
 
 /**
  * Database pool configuration.
- *
- * @param ageMillis how long, in milliseconds, to keep an idle connection open before closing it
- * @param maxFree how many concurrent open connections to keep open
- * @param healthCheckMillis how many milliseconds between connection health checks
  */
 @kotlinx.serialization.Serializable
-open class PoolConfiguration constructor(
-  val ageMillis: Long,
-  val maxFree: Int,
-  val healthCheckMillis: Long
-) {
+sealed class PoolConfiguration {
+  /**
+   * How long, in milliseconds, to keep an idle connection open before closing it.
+   */
+  abstract val ageMillis: Long
+
+  /**
+   * How many concurrent open connections to keep open.
+   */
+  abstract val maxFree: Int
+
+  /**
+   * How many milliseconds between connection health checks.
+   */
+  abstract val healthCheckMillis: Long
+
   override fun equals(other: Any?): Boolean = other is PoolConfiguration &&
     other.ageMillis == ageMillis &&
     other.maxFree == maxFree &&
@@ -192,4 +201,14 @@ open class PoolConfiguration constructor(
   override fun hashCode(): Int = ageMillis.toInt() +
     maxFree * 349 +
     healthCheckMillis.toInt() * 907
+
+  /**
+   * A default data class for [PoolConfiguration].
+   */
+  @kotlinx.serialization.Serializable
+  data class Default(
+    override val ageMillis: Long,
+    override val maxFree: Int,
+    override val healthCheckMillis: Long
+  ) : PoolConfiguration()
 }

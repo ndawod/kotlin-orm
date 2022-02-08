@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+1.6.1 (February 8, 2022)
+    Change a few open classes to sealed classes, and provide default data class for each.
+
 1.6.0 (February 8, 2022)
     Change a few data classes to open classes.
 
