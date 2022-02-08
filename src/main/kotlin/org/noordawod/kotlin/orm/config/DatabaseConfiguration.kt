@@ -25,8 +25,8 @@
 
 package org.noordawod.kotlin.orm.config
 
-import org.noordawod.kotlin.orm.MySQLDatabase
 import kotlinx.serialization.Serializable
+import org.noordawod.kotlin.orm.MySQLDatabase
 
 /**
  * Generic database configuration suitable for most database drivers.
@@ -71,8 +71,13 @@ abstract class DatabaseConfiguration {
   /**
    * Returns the connection URI string for this instance.
    */
-  @Suppress("LeakingThis")
-  val uri: String = MySQLDatabase.uri(protocol, host, port, user, pass, schema)
+  val uri: String
+    get() =
+      uriInternal ?: MySQLDatabase.uri(protocol, host, port, user, pass, schema).apply {
+        uriInternal = this
+      }
+
+  private var uriInternal: String? = null
 
   override fun equals(other: Any?): Boolean = other is DatabaseConfiguration &&
     other.protocol == protocol &&
@@ -103,7 +108,7 @@ abstract class DatabaseConfiguration {
     override val port: Int,
     override val user: String,
     override val pass: String,
-    override val schema: String
+    override val schema: String,
   ) : DatabaseConfiguration()
 }
 
@@ -136,7 +141,7 @@ abstract class DatabaseMigrationConfiguration : DatabaseConfiguration() {
     override val user: String,
     override val pass: String,
     override val schema: String,
-    override val paths: Collection<String>
+    override val paths: Collection<String>,
   ) : DatabaseMigrationConfiguration()
 }
 
@@ -169,7 +174,7 @@ abstract class DatabasePoolConfiguration : DatabaseConfiguration() {
     override val user: String,
     override val pass: String,
     override val schema: String,
-    override val pool: PoolConfiguration
+    override val pool: PoolConfiguration,
   ) : DatabasePoolConfiguration()
 }
 
@@ -210,6 +215,6 @@ abstract class PoolConfiguration {
   data class Default(
     override val ageMillis: Long,
     override val maxFree: Int,
-    override val healthCheckMillis: Long
+    override val healthCheckMillis: Long,
   ) : PoolConfiguration()
 }

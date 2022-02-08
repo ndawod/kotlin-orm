@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+1.6.3 (February 9, 2022)
+    Use a getter to retrieve a database's URI.
+
 1.6.2 (February 8, 2022)
     Change sealed classes to abstract classes to allow inheritance of Serializable classes.
 

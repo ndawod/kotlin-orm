@@ -64,7 +64,7 @@ open class MySQLDatabase constructor(
     0x1a.toChar()
   )
 
-  override val uri: String = uri(config)
+  override val uri: String get() = uri(config)
 
   /**
    * Returns the database connection URI string based on provided [config].
