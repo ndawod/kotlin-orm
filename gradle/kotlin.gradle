@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-apply from: 'gradle/config.gradle'
+apply from: "$rootDir/gradle/config.gradle"
 
 apply plugin: 'kotlin'
 

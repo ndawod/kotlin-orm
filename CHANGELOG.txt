@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+1.6.0 (February 8, 2022)
+    Change a few data classes to open classes.
+
 1.5.9-1.5.10 (December 30, 2021)
     Bump up dependencies versions.
 

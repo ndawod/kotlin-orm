@@ -181,28 +181,31 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
    * Creates a new [entity] in the database.
    */
   @Throws(java.sql.SQLException::class)
-  fun insert(entity: T): T = insert(entity, BaseDatabase.MAX_TRIES)
+  fun insert(entity: T): T = insert(entity, BaseDatabase.DEFAULT_INSERT_TRIES)
 
   /**
    * Creates a new [entity] in the database and optionally tries the specified number
    * of times to set the correct insert ID in it before failing.
    */
   @Throws(java.sql.SQLException::class)
-  open fun insert(entity: T, tries: Int = BaseDatabase.MAX_TRIES): T =
+  open fun insert(entity: T, tries: Int = BaseDatabase.DEFAULT_INSERT_TRIES): T =
     create(entity).let { entity }
 
   /**
    * Creates new [entities] in the database.
    */
   @Throws(java.sql.SQLException::class)
-  fun insert(entities: Collection<T>): List<T> = insert(entities, BaseDatabase.MAX_TRIES)
+  fun insert(entities: Collection<T>): List<T> = insert(entities, BaseDatabase.DEFAULT_INSERT_TRIES)
 
   /**
    * Creates new [entities] in the database and optionally tries the specified number
    * of times to set the correct insert ID in each before failing.
    */
   @Throws(java.sql.SQLException::class)
-  open fun insert(entities: Collection<T>, tries: Int = BaseDatabase.MAX_TRIES): List<T> {
+  open fun insert(
+    entities: Collection<T>,
+    tries: Int = BaseDatabase.DEFAULT_INSERT_TRIES,
+  ): List<T> {
     val results = ArrayList<T>(BaseDatabase.INITIAL_CAPACITY)
     for (entry in entities) {
       results.add(insert(entry, tries))

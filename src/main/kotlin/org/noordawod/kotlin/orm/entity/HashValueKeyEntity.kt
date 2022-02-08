@@ -21,11 +21,11 @@ import org.noordawod.kotlin.security.ByteUtils
 abstract class HashValueKeyEntity protected constructor() : BaseKeyEntity<HashValue>() {
   override fun toString(): String = id.publicIdOrEmpty()
 
-  @Suppress("RedundantOverride")
-  override fun hashCode(): Int = super.hashCode()
-
   override fun equals(other: Any?): Boolean =
     if (other is HashValueKeyEntity) id.contentEquals(other.id) else false
+
+  @Suppress("RedundantOverride")
+  override fun hashCode(): Int = super.hashCode()
 
   companion object {
     /**

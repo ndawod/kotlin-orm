@@ -98,3 +98,36 @@ fun DatabasePoolConfiguration.config(
   override val socketTimeout: Long = socketTimeout
   override val serverTimezone: String = serverTimezone
 }
+
+/**
+ * Default equals() implementation for [Configuration][BaseDatabase.Configuration] interface.
+ *
+ * @param other the other instance to compare this Configuration instance to
+ */
+fun BaseDatabase.Configuration.interfaceEquals(other: Any?): Boolean =
+  other is BaseDatabase.Configuration &&
+    other.protocol == protocol &&
+    other.host == host &&
+    other.port == port &&
+    other.user == user &&
+    other.pass == pass &&
+    other.schema == schema &&
+    other.collation == collation &&
+    other.connectTimeout == connectTimeout &&
+    other.socketTimeout == socketTimeout &&
+    other.serverTimezone == serverTimezone
+
+/**
+ * Default hashCode() implementation for [Configuration][BaseDatabase.Configuration] interface.
+ */
+@Suppress("MagicNumber")
+fun BaseDatabase.Configuration.interfaceHashCode(): Int = port +
+  protocol.hashCode() * 349 +
+  host.hashCode() * 383 +
+  user.hashCode() * 2087 +
+  pass.hashCode() * 557 +
+  schema.hashCode() * 1051 +
+  collation.hashCode() * 181 +
+  connectTimeout.hashCode() * 881 +
+  socketTimeout.hashCode() * 461 +
+  serverTimezone.hashCode() * 89

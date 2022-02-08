@@ -25,10 +25,11 @@
 
 package org.noordawod.kotlin.orm
 
-import com.j256.ormlite.misc.SqlExceptionUtil
 import com.j256.ormlite.misc.TransactionManager
 import com.j256.ormlite.support.ConnectionSource
 import com.j256.ormlite.support.DatabaseConnection
+import org.noordawod.kotlin.orm.extension.interfaceEquals
+import org.noordawod.kotlin.orm.extension.interfaceHashCode
 
 /**
  * A lightweight wrapper around JDBC's database driver.
@@ -39,12 +40,13 @@ import com.j256.ormlite.support.DatabaseConnection
  * @param maxFree how many concurrent open connections to keep open
  * @param healthCheckMillis interval between health checks of the database connection
  */
+@Suppress("TooManyFunctions")
 abstract class BaseDatabase constructor(
   val config: Configuration,
   val driver: String? = null,
   val ageMillis: Long = DEFAULT_AGE_MILLIS,
   val maxFree: Int = DEFAULT_MAX_FREE,
-  val healthCheckMillis: Long = DEFAULT_HEALTH_CHECK_INTERVAL
+  val healthCheckMillis: Long = DEFAULT_HEALTH_CHECK_INTERVAL,
 ) {
   init {
     if (null != driver) {
@@ -59,6 +61,20 @@ abstract class BaseDatabase constructor(
       }
     }
   }
+
+  override fun equals(other: Any?): Boolean = other is BaseDatabase &&
+    other.config.interfaceEquals(config) &&
+    other.driver == driver &&
+    other.ageMillis == ageMillis &&
+    other.maxFree == maxFree &&
+    other.healthCheckMillis == healthCheckMillis
+
+  @Suppress("MagicNumber")
+  override fun hashCode(): Int = ageMillis.toInt() +
+    config.interfaceHashCode() * 349 +
+    driver.hashCode() * 907 +
+    maxFree * 383 +
+    healthCheckMillis.toInt() * 2087
 
   /**
    * Database configuration suitable for most database drivers.
@@ -145,7 +161,7 @@ abstract class BaseDatabase constructor(
   /**
    * The connection source is implemented as a pool of connections.
    */
-  val connection: ConnectionSource get() = internalConnection ?: connectImpl()
+  val connection: ConnectionSource get() = connect()
 
   /**
    * Prints a list of database drivers currently loaded in the JVM and the ability of this
@@ -156,13 +172,40 @@ abstract class BaseDatabase constructor(
   }
 
   /**
-   * Connects to the database, if needed, thus ensuring that the connection is established.
+   * Connects to the database, when needed, of returns the cached connection.
+   *
+   * This method supports retrying a failed connection by specifying [maxRetries] and a
+   * [retryDelay] parameters which control its operation.
+   *
+   * @param maxRetries maximum number of retries
+   * @param retryDelay how long, in milliseconds, to wait between failed connection retries
    */
   @Throws(java.sql.SQLException::class)
-  fun connect(): ConnectionSource = internalConnection ?: run {
-    connectImpl().apply {
-      internalConnection = this
-    }
+  fun connect(
+    maxRetries: Int = DEFAULT_RECONNECT_TRIES,
+    retryDelay: Long = DEFAULT_RETRY_MILLIS,
+  ): ConnectionSource = internalConnection ?: run {
+    var retries = 0
+    var error: java.sql.SQLException?
+
+    do {
+      try {
+        val connection = connectImpl()
+        internalConnection = connection
+        return connection
+      } catch (e: java.sql.SQLException) {
+        error = e
+      }
+
+      Thread.sleep(retryDelay)
+    } while (maxRetries > retries++)
+
+    val retriesDebug = if (1 < maxRetries) "$maxRetries tries" else "$maxRetries try"
+
+    throw java.sql.SQLNonTransientConnectionException(
+      "Unable to connect to database after $retriesDebug: $uri",
+      error
+    )
   }
 
   /**
@@ -181,7 +224,7 @@ abstract class BaseDatabase constructor(
   fun <R> callWithLock(
     tableName: String,
     writeLock: Boolean,
-    callable: java.util.concurrent.Callable<R>
+    callable: java.util.concurrent.Callable<R>,
   ): R = callWithLock(connection, tableName, writeLock, callable)
 
   /**
@@ -194,7 +237,8 @@ abstract class BaseDatabase constructor(
     internalConnection = null
   }
 
-  abstract fun connectImpl(): ConnectionSource
+  @Throws(java.sql.SQLException::class)
+  protected abstract fun connectImpl(): ConnectionSource
 
   /**
    * Escapes the provided string value and returns the escaped value.
@@ -207,12 +251,12 @@ abstract class BaseDatabase constructor(
   /**
    * Escapes the provided string value and returns the escaped value.
    */
-  @Suppress("MagicNumber", "ComplexMethod")
+  @Suppress("MagicNumber", "ComplexMethod", "KotlinConstantConditions")
   fun escape(
     value: String,
     wrapper: Char?,
     alsoPercent: Boolean,
-    alsoLowDash: Boolean
+    alsoLowDash: Boolean,
   ): String {
     val length = value.length
     val builder = StringBuilder(value.length + 10)
@@ -291,7 +335,12 @@ abstract class BaseDatabase constructor(
     /**
      * Default maximum number of retries when inserting a new record.
      */
-    const val MAX_TRIES: Int = 25
+    const val DEFAULT_INSERT_TRIES: Int = 25
+
+    /**
+     * Default maximum number of retries when reconnecting to a database.
+     */
+    const val DEFAULT_RECONNECT_TRIES: Int = 5
 
     /**
      * Denotes just a one-try when inserting a new record.
@@ -302,6 +351,11 @@ abstract class BaseDatabase constructor(
      * How long, in milliseconds, to keep an idle connection open before closing it.
      */
     const val DEFAULT_AGE_MILLIS: Long = 2000L
+
+    /**
+     * How long, in milliseconds, to delay retrying a failed database operation.
+     */
+    const val DEFAULT_RETRY_MILLIS: Long = 5000L
 
     /**
      * How many concurrent open connections to keep open.
@@ -366,19 +420,20 @@ abstract class BaseDatabase constructor(
     @Throws(java.sql.SQLException::class)
     fun <R> transactional(
       connection: ConnectionSource,
-      callable: java.util.concurrent.Callable<R>
+      callable: java.util.concurrent.Callable<R>,
     ): R = TransactionManager.callInTransaction(connection, callable)
 
     /**
      * Performs all database actions executed in the callback while the specified table is
      * locked. If the callback throws any exceptions, NULL will be returned.
      */
+    @Suppress("KotlinConstantConditions")
     @Throws(java.sql.SQLException::class)
     fun <R> callWithLock(
       connection: ConnectionSource,
       tableName: String,
       writeLock: Boolean,
-      callable: java.util.concurrent.Callable<R>
+      callable: java.util.concurrent.Callable<R>,
     ): R {
       val writeConnection = connection.getReadWriteConnection(tableName)
       return try {
@@ -393,7 +448,8 @@ abstract class BaseDatabase constructor(
           writeConnection.commit(null)
           result
         } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
-          throw SqlExceptionUtil.create("Transaction callable threw non-SQL exception", e)
+          @Suppress("KotlinConstantConditions")
+          throw java.sql.SQLException("Transaction callable threw non-SQL exception", e)
         }
       } finally {
         // Try to restore if we are in auto-commit mode.

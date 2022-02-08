@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-apply from: 'gradle/config.gradle'
+apply from: "$rootDir/gradle/config.gradle"
 
 apply plugin: 'java'
 apply plugin: 'java-library'
@@ -58,6 +58,5 @@ project.afterEvaluate {
 dependencies {
     implementation "javax.xml.bind:jaxb-api:${versions.java_ee}"
     implementation "com.sun.xml.bind:jaxb-core:${versions.java_ee}"
-    // noinspection GradlePackageUpdate
     implementation "com.sun.xml.bind:jaxb-impl:${versions.java_ee}"
 }

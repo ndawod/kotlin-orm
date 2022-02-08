@@ -22,14 +22,14 @@
  */
 
 group = 'org.noordawod.kotlin.orm'
-version = '1.5.10'
+version = '1.6.0'
 description = 'Defines reusable contracts for OrmLite that requires entities and models to exist.'
 
 apply plugin: 'kotlinx-serialization'
 apply plugin: 'com.github.ben-manes.versions'
 
 buildscript {
-    apply from: 'gradle/config.gradle'
+    apply from: "$rootDir/gradle/config.gradle"
 
     repositories {
         mavenCentral()
@@ -56,9 +56,9 @@ repositories {
     }
 }
 
-apply from: 'gradle/jvm.gradle'
-apply from: 'gradle/kotlin.gradle'
-apply from: 'gradle/detekt.gradle'
+apply from: "$rootDir/gradle/jvm.gradle"
+apply from: "$rootDir/gradle/kotlin.gradle"
+apply from: "$rootDir/gradle/detekt.gradle"
 
 dependencies {
     implementation "com.github.ndawod:kotlin-core:${versions.ndawod_kotlin_core}"

@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-@file:Suppress("unused")
+@file:Suppress("unused", "MemberVisibilityCanBePrivate", "LongParameterList")
 
 package org.noordawod.kotlin.orm.config
 
@@ -39,7 +39,7 @@ import org.noordawod.kotlin.orm.MySQLDatabase
  * @param schema main database schema name to attach to
  */
 @kotlinx.serialization.Serializable
-data class DatabaseConfiguration constructor(
+open class DatabaseConfiguration constructor(
   val protocol: String,
   val ipAddr: String,
   val host: String,
@@ -52,6 +52,24 @@ data class DatabaseConfiguration constructor(
    * Returns the connection URI string for this instance.
    */
   val uri: String = MySQLDatabase.uri(protocol, host, port, user, pass, schema)
+
+  override fun equals(other: Any?): Boolean = other is DatabaseConfiguration &&
+    other.protocol == protocol &&
+    other.ipAddr == ipAddr &&
+    other.host == host &&
+    other.port == port &&
+    other.user == user &&
+    other.pass == pass &&
+    other.schema == schema
+
+  @Suppress("MagicNumber")
+  override fun hashCode(): Int = port +
+    protocol.hashCode() * 349 +
+    ipAddr.hashCode() * 907 +
+    host.hashCode() * 383 +
+    user.hashCode() * 2087 +
+    pass.hashCode() * 557 +
+    schema.hashCode() * 1051
 }
 
 /**
@@ -67,7 +85,7 @@ data class DatabaseConfiguration constructor(
  * @param paths a list of paths indicating where the migrations plans are stored
  */
 @kotlinx.serialization.Serializable
-data class DatabaseMigrationConfiguration constructor(
+open class DatabaseMigrationConfiguration constructor(
   val protocol: String,
   val ipAddr: String,
   val host: String,
@@ -81,6 +99,26 @@ data class DatabaseMigrationConfiguration constructor(
    * Returns the connection URI string for this instance.
    */
   val uri: String = MySQLDatabase.uri(protocol, host, port, user, pass, schema)
+
+  override fun equals(other: Any?): Boolean = other is DatabaseMigrationConfiguration &&
+    other.protocol == protocol &&
+    other.ipAddr == ipAddr &&
+    other.host == host &&
+    other.port == port &&
+    other.user == user &&
+    other.pass == pass &&
+    other.schema == schema &&
+    other.paths == paths
+
+  @Suppress("MagicNumber")
+  override fun hashCode(): Int = port +
+    protocol.hashCode() * 349 +
+    ipAddr.hashCode() * 907 +
+    host.hashCode() * 383 +
+    user.hashCode() * 2087 +
+    pass.hashCode() * 557 +
+    schema.hashCode() * 1051 +
+    paths.hashCode() * 181
 }
 
 /**
@@ -96,7 +134,7 @@ data class DatabaseMigrationConfiguration constructor(
  * @param pool connection pool configuration
  */
 @kotlinx.serialization.Serializable
-data class DatabasePoolConfiguration constructor(
+open class DatabasePoolConfiguration constructor(
   val protocol: String,
   val ipAddr: String,
   val host: String,
@@ -110,6 +148,26 @@ data class DatabasePoolConfiguration constructor(
    * Returns the connection URI string for this instance.
    */
   val uri: String = MySQLDatabase.uri(protocol, host, port, user, pass, schema)
+
+  override fun equals(other: Any?): Boolean = other is DatabasePoolConfiguration &&
+    other.protocol == protocol &&
+    other.ipAddr == ipAddr &&
+    other.host == host &&
+    other.port == port &&
+    other.user == user &&
+    other.pass == pass &&
+    other.schema == schema &&
+    other.pool == pool
+
+  @Suppress("MagicNumber")
+  override fun hashCode(): Int = port +
+    protocol.hashCode() * 349 +
+    ipAddr.hashCode() * 907 +
+    host.hashCode() * 383 +
+    user.hashCode() * 2087 +
+    pass.hashCode() * 557 +
+    schema.hashCode() * 1051 +
+    pool.hashCode() * 181
 }
 
 /**
@@ -120,8 +178,18 @@ data class DatabasePoolConfiguration constructor(
  * @param healthCheckMillis how many milliseconds between connection health checks
  */
 @kotlinx.serialization.Serializable
-data class PoolConfiguration constructor(
+open class PoolConfiguration constructor(
   val ageMillis: Long,
   val maxFree: Int,
   val healthCheckMillis: Long
-)
+) {
+  override fun equals(other: Any?): Boolean = other is PoolConfiguration &&
+    other.ageMillis == ageMillis &&
+    other.maxFree == maxFree &&
+    other.healthCheckMillis == healthCheckMillis
+
+  @Suppress("MagicNumber")
+  override fun hashCode(): Int = ageMillis.toInt() +
+    maxFree * 349 +
+    healthCheckMillis.toInt() * 907
+}
