@@ -28,7 +28,6 @@ package org.noordawod.kotlin.orm
 import com.j256.ormlite.jdbc.JdbcPooledConnectionSource
 import com.j256.ormlite.jdbc.db.MysqlDatabaseType
 import com.j256.ormlite.support.ConnectionSource
-import com.j256.ormlite.support.DatabaseConnection
 import net.moznion.uribuildertiny.URIBuilderTiny
 
 /**
@@ -87,25 +86,14 @@ open class MySQLDatabase constructor(
     config.serverTimezone
   )
 
-  override fun connectImpl(): ConnectionSource {
-    val targetUri = if (uri.startsWith(JDBC_PREFIX)) uri else "$JDBC_PREFIX$uri"
-
-    return JdbcPooledConnectionSource(targetUri, MysqlDatabaseType()).apply {
-      setCheckConnectionsEveryMillis(healthCheckMillis)
-      setMaxConnectionAgeMillis(ageMillis)
-      setMaxConnectionsFree(maxFree)
-      setTestBeforeGet(true)
-
-      // Ensures that a connection is actually opened and a query is sent.
-      var databaseConnection: DatabaseConnection? = null
-      try {
-        databaseConnection = getReadOnlyConnection(null).apply {
-          executeStatement("SELECT NOW()", DatabaseConnection.DEFAULT_RESULT_FLAGS)
-        }
-      } finally {
-        databaseConnection?.closeQuietly()
-      }
-    }
+  override fun connectImpl(): ConnectionSource = JdbcPooledConnectionSource(
+    if (uri.startsWith(JDBC_PREFIX)) uri else "$JDBC_PREFIX$uri",
+    MysqlDatabaseType()
+  ).apply {
+    setCheckConnectionsEveryMillis(healthCheckMillis)
+    setMaxConnectionAgeMillis(ageMillis)
+    setMaxConnectionsFree(maxFree)
+    setTestBeforeGet(true)
   }
 
   companion object {

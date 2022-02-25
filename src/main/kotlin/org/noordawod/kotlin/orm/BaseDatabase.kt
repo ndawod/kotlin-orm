@@ -159,11 +159,6 @@ abstract class BaseDatabase constructor(
   abstract val uri: String
 
   /**
-   * The connection source is implemented as a pool of connections.
-   */
-  val connection: ConnectionSource get() = connect()
-
-  /**
    * Prints a list of database drivers currently loaded in the JVM and the ability of this
    * instance with [config] to connect to any of them.
    */
@@ -184,15 +179,24 @@ abstract class BaseDatabase constructor(
   fun connect(
     maxRetries: Int = DEFAULT_RECONNECT_TRIES,
     retryDelay: Long = DEFAULT_RETRY_MILLIS,
-  ): ConnectionSource = internalConnection ?: run {
+  ): ConnectionSource {
+    internalConnection?.also { connection ->
+      if (connection.isOpen("")) {
+        return connection
+      }
+      internalConnection = null
+    }
+
     var retries = 0
-    var error: java.sql.SQLException?
+    var error: java.sql.SQLException? = null
 
     do {
       try {
         val connection = connectImpl()
-        internalConnection = connection
-        return connection
+        if (connection.isOpen("")) {
+          internalConnection = connection
+          return connection
+        }
       } catch (e: java.sql.SQLException) {
         error = e
       }
@@ -201,11 +205,13 @@ abstract class BaseDatabase constructor(
     } while (maxRetries > retries++)
 
     val retriesDebug = if (1 < maxRetries) "$maxRetries tries" else "$maxRetries try"
+    val errorMessage = "Unable to connect to database after $retriesDebug: $uri"
 
-    throw java.sql.SQLNonTransientConnectionException(
-      "Unable to connect to database after $retriesDebug: $uri",
-      error
-    )
+    if (null == error) {
+      throw java.sql.SQLNonTransientConnectionException(errorMessage)
+    } else {
+      throw java.sql.SQLNonTransientConnectionException(errorMessage, error)
+    }
   }
 
   /**
@@ -214,7 +220,7 @@ abstract class BaseDatabase constructor(
    */
   @Throws(java.sql.SQLException::class)
   fun <R> transactional(callable: java.util.concurrent.Callable<R>): R =
-    transactional(connection, callable)
+    transactional(connect(), callable)
 
   /**
    * Performs all database actions executed in the callback while the specified table is
@@ -225,7 +231,7 @@ abstract class BaseDatabase constructor(
     tableName: String,
     writeLock: Boolean,
     callable: java.util.concurrent.Callable<R>,
-  ): R = callWithLock(connection, tableName, writeLock, callable)
+  ): R = callWithLock(connect(), tableName, writeLock, callable)
 
   /**
    * Shuts down the database pool of connections. Any subsequent attempt to use the pool

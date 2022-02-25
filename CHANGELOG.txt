@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+1.6.4 (February 25, 2022)
+    Remove `connection` property in BaseDatabase.kt. To connect, use `connect()`.
+
 1.6.3 (February 9, 2022)
     Use a getter to retrieve a database's URI.
 
