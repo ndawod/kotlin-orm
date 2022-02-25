@@ -156,19 +156,15 @@ class Migrator constructor(
     return 0
   }
 
-  @Throws(java.sql.SQLException::class)
   private fun performCommitOrRollback(command: String) {
     try {
       connection.execute(command)
-    } catch (@Suppress("TooGenericExceptionCaught") error: Throwable) {
+    } catch (@Suppress("TooGenericExceptionCaught") ignored: Throwable) {
       // We have an exception while committing the SQL commands; probably a bigger
       // problem in the database :/
       println("")
       println("Unhandled exception issuing a $command to finalize the migration plan.")
       println("")
-
-      @Suppress("PrintStackTrace")
-      error.printStackTrace()
     }
   }
 
@@ -259,9 +255,12 @@ class Migrator constructor(
   }
 
   private fun deleteMigration(migration: Migration) {
-    connection.execute(
-      "DELETE FROM `$tableName` WHERE `${MigrationField.ID}`=${migration.version}"
-    )
+    try {
+      connection.execute(
+        "DELETE FROM `$tableName` WHERE `${MigrationField.ID}`=${migration.version}"
+      )
+    } catch (@Suppress("TooGenericExceptionCaught") ignored: Throwable) {
+    }
   }
 
   @Throws(java.io.IOException::class)
