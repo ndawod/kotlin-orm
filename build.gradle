@@ -22,7 +22,7 @@
  */
 
 group = 'org.noordawod.kotlin.orm'
-version = '1.6.4'
+version = '1.6.5'
 description = 'Defines reusable contracts for OrmLite that requires entities and models to exist.'
 
 apply plugin: 'kotlinx-serialization'

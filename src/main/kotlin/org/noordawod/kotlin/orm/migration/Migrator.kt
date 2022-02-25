@@ -45,6 +45,7 @@ class Migrator constructor(
   /**
    * Performs the migration steps.
    */
+  @Suppress("LongMethod")
   @Throws(java.sql.SQLException::class, java.io.IOException::class)
   fun execute(migrations: Array<Migration>) {
     // Make sure migrations' table exists.
@@ -55,8 +56,11 @@ class Migrator constructor(
 
     // Get current version
     var nextVersion: Int = version()
-
     println("- Current version: $nextVersion")
+
+    // Keep track of timing for all migrations.
+    val migrationsStart = java.util.Date()
+    println("- Started: $migrationsStart")
 
     // Go over all migrations and run them one after the other.
     for (migration in migrations) {
@@ -86,6 +90,9 @@ class Migrator constructor(
         println("- Running migrations:")
       }
 
+      // Keep track of timing for this migration.
+      val migrationStart = java.util.Date()
+
       // Perform the migration while catching any errors.
       try {
         // Each migration runs in its own transaction so in case it fails, we can roll back.
@@ -93,7 +100,7 @@ class Migrator constructor(
         connection.execute("START TRANSACTION")
 
         // Kick it!
-        performMigration(migration, nextVersion)
+        performMigration(migration, migrationStart, nextVersion)
 
         // All seems normal, commit the result.
         performCommitOrRollback("COMMIT")
@@ -116,11 +123,22 @@ class Migrator constructor(
         }
 
         throw error
+      } finally {
+        val migrationEnd = java.util.Date()
+        println("  - Ended: $migrationEnd")
+        println("  - Duration: ${migrationStart.time - migrationEnd.time} milliseconds")
       }
     }
 
+    val migrationsEnd = java.util.Date()
+
+    println("- Ended: $migrationsEnd")
+    println("- Duration: ")
     println("")
-    println("Database Migration finished.")
+    println(
+      "Database Migration finished in " +
+        "${migrationsEnd.time - migrationsStart.time} milliseconds."
+    )
     println("")
   }
 
@@ -147,16 +165,22 @@ class Migrator constructor(
       // problem in the database :/
       println("")
       println(
-        "Unhandled exception issuing a $command to finalize the migration plan. " +
-          "This may indicate a bigger problem that manifests the database itself!"
+        "Unhandled exception issuing a $command to finalize the migration plan (" +
+          "errorCode=${error.errorCode}, sqlState=${error.sqlState})"
       )
       println("")
-      throw error
+
+      @Suppress("PrintStackTrace")
+      error.printStackTrace()
     }
   }
 
   @Throws(java.sql.SQLException::class)
-  private fun performMigration(migration: Migration, nextVersion: Int) {
+  private fun performMigration(
+    migration: Migration,
+    migrationStart: java.util.Date,
+    nextVersion: Int
+  ) {
     // Start with a clean slate.
     lastErroneousCommand = null
 
@@ -164,7 +188,7 @@ class Migrator constructor(
     lockMigration(migration)
 
     // Debugging.
-    print("  v$nextVersion: ${migration.description}:")
+    print("  v$nextVersion [$migrationStart]: ${migration.description}:")
 
     try {
       // Where the upgrade file resides.
