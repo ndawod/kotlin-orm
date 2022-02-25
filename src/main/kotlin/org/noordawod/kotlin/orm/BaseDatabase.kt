@@ -463,7 +463,7 @@ abstract class BaseDatabase constructor(
           val result = callable.call()
           writeConnection.commit(null)
           result
-        } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+        } catch (@Suppress("TooGenericExceptionCaught") e: Throwable) {
           @Suppress("KotlinConstantConditions")
           throw java.sql.SQLException("Transaction callable threw non-SQL exception", e)
         }

@@ -126,7 +126,7 @@ class Migrator constructor(
       } finally {
         val migrationEnd = java.util.Date()
         println("  - Ended: $migrationEnd")
-        println("  - Duration: ${migrationStart.time - migrationEnd.time} milliseconds")
+        println("  - Duration: ${migrationEnd.time - migrationStart.time} milliseconds")
       }
     }
 
@@ -160,14 +160,11 @@ class Migrator constructor(
   private fun performCommitOrRollback(command: String) {
     try {
       connection.execute(command)
-    } catch (error: java.sql.SQLException) {
+    } catch (@Suppress("TooGenericExceptionCaught") error: Throwable) {
       // We have an exception while committing the SQL commands; probably a bigger
       // problem in the database :/
       println("")
-      println(
-        "Unhandled exception issuing a $command to finalize the migration plan (" +
-          "errorCode=${error.errorCode}, sqlState=${error.sqlState})"
-      )
+      println("Unhandled exception issuing a $command to finalize the migration plan.")
       println("")
 
       @Suppress("PrintStackTrace")
