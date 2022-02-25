@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+1.6.6 (February 25, 2022)
+    Enable MySQLDatabase to cache prepared statements.
+
 1.6.5 (February 25, 2022)
     Continue migrating after a failed ROLLBACK.
 

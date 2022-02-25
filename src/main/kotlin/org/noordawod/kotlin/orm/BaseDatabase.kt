@@ -339,6 +339,16 @@ abstract class BaseDatabase constructor(
     const val INITIAL_CAPACITY: Int = 50
 
     /**
+     * Default cache size for prepared statements.
+     */
+    const val DEFAULT_STATEMENTS_CACHE: Int = 500
+
+    /**
+     * Default maximum length of prepared statements.
+     */
+    const val DEFAULT_STATEMENTS_LENGTH: Int = 1024
+
+    /**
      * Default maximum number of retries when inserting a new record.
      */
     const val DEFAULT_INSERT_TRIES: Int = 25

@@ -166,6 +166,10 @@ open class MySQLDatabase constructor(
         "useCompression" to false.toString(),
         "tcpKeepAlive" to true.toString(),
         "tcpNoDelay" to true.toString(),
+        "useServerPrepStmts" to true.toString(),
+        "prepStmtCacheSize" to DEFAULT_STATEMENTS_CACHE.toString(),
+        "prepStmtCacheSqlLimit" to DEFAULT_STATEMENTS_LENGTH.toString(),
+        "cachePrepStmts" to true.toString(),
         "autoReconnectForPools" to true.toString(),
         "autoReconnect" to false.toString()
       )
