@@ -14,18 +14,19 @@ package org.noordawod.kotlin.orm.migration
 import org.noordawod.kotlin.core.extension.secondsSinceEpoch
 
 /**
- * Carriage-Return [Pattern][java.util.regex.Pattern] matcher.
- */
-private val CARRIAGE_RETURN = java.util.regex.Pattern.compile("\\r")
-
-/**
  * This class can migrate the database schema to its most recent defined version (above).
+ *
+ * @param connection the Connection implementation to use for querying the database
+ * @param tableName the table name to store meta-data about migrations
+ * @param basePath base path to where the Migrator will find migration plans
+ * @param commentPrefixes list of prefixes used for commenting migration plans
  */
 @Suppress("TooManyFunctions")
 class Migrator constructor(
   private val connection: Connection,
   private val tableName: String = TABLE_NAME,
-  private val basePath: java.io.File
+  private val basePath: java.io.File,
+  private val commentPrefixes: Collection<String> = DEFAULT_COMMENT_PREFIXES
 ) {
   private var lastErroneousCommand: String? = null
 
@@ -188,14 +189,14 @@ class Migrator constructor(
       val upgradeFile = java.io.File(basePath, migration.file)
 
       // Read all commands in the upgrade file.
-      val upgradeCommands: String = readFile(upgradeFile)
+      val upgradeCommands = readFile(upgradeFile)
         ?: throw java.sql.SQLException("Migration plan #$nextVersion is empty! ($upgradeFile)")
 
       // Execute the pre-execution code.
       migration.executePre(connection)
 
       // Parse the upgrade commands.
-      val commands: List<String> = parseCommands(upgradeCommands)
+      val commands = parseCommands(upgradeCommands)
 
       // Run the upgrade commands.
       var progress = 0
@@ -264,28 +265,43 @@ class Migrator constructor(
   }
 
   @Throws(java.io.IOException::class)
-  private fun readFile(upgradeFile: java.io.File): String? {
-    val bytes: ByteArray = java.nio.file.Files.readAllBytes(
-      java.nio.file.Paths.get(upgradeFile.toURI())
-    )
-    return if (bytes.isEmpty()) null else String(bytes)
-  }
+  private fun readFile(upgradeFile: java.io.File): Collection<String>? =
+    java.nio.file.Files
+      .readAllLines(java.nio.file.Paths.get(upgradeFile.toURI()))
+      .ifEmpty { null }
 
-  private fun parseCommands(commands: String): List<String> {
-    return ArrayList<String>(1024).apply {
-      // Flatten the SQL commands into a giant one-liner ending with a LF.
-      val sqlDump = CARRIAGE_RETURN.matcher(commands).replaceAll(" ") + "\n"
+  @Suppress("LoopWithTooManyJumpStatements")
+  private fun parseCommands(commands: Collection<String>): Collection<String> =
+    ArrayList<String>(1024).apply {
+      var nextCommand = ""
 
-      // Scan the string looking for individual commands ending with a semicolon.
-      var startFrom = 0
-      var semiColonPos: Int = sqlDump.indexOf(";\n", startFrom)
-      while (startFrom < semiColonPos) {
-        add(sqlDump.substring(startFrom, semiColonPos).trim { it <= ' ' })
-        startFrom = 2 + semiColonPos
-        semiColonPos = sqlDump.indexOf(";\n", startFrom)
+      for (command in commands) {
+        val normalizedCommand = command.trim()
+        if (normalizedCommand.isEmpty()) {
+          continue
+        }
+
+        // Detect if this line is a comment. Note: We do not support multiple-line comments.
+        val commentPrefixesIterator = commentPrefixes.iterator()
+        var isComment = false
+        while (!isComment && commentPrefixesIterator.hasNext()) {
+          isComment = normalizedCommand.startsWith(commentPrefixesIterator.next())
+        }
+
+        if (isComment) {
+          continue
+        }
+
+        if (normalizedCommand.endsWith(";")) {
+          // The command ends with a semicolon; it's the final piece the command.
+          nextCommand += " ${normalizedCommand.substring(0, normalizedCommand.length - 1)}"
+          add(nextCommand.trim())
+          nextCommand = ""
+        } else {
+          nextCommand += " $normalizedCommand"
+        }
       }
     }
-  }
 
   /**
    * Creates the migrations' table if it doesn't exist.
@@ -314,5 +330,10 @@ class Migrator constructor(
      * Default name of the migrations table.
      */
     const val TABLE_NAME = "\$migrations"
+
+    /**
+     * Default list of prefixes used for commenting migration plans.
+     */
+    val DEFAULT_COMMENT_PREFIXES: Collection<String> = listOf("/*", "#", "-- ")
   }
 }

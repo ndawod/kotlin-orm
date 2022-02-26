@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+1.6.9 (February 26, 2022)
+    Ignore comments in migration plans, compress a multi-line command to one-liner.
+
 1.6.7-1.6.8 (February 25, 2022)
     Catch any kind of exception when committing/rolling back a transaction.
 
