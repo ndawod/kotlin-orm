@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+1.8.0 (February 26, 2022)
+    Refactor `BaseDatabase.Configuration` into `DatabaseConfiguration`.
+
 1.7.0 (February 26, 2022)
     Drop use of `isOpen()` when connecting to a data source.
 

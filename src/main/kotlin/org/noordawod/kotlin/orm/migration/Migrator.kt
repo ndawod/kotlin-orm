@@ -14,6 +14,11 @@ package org.noordawod.kotlin.orm.migration
 import org.noordawod.kotlin.core.extension.secondsSinceEpoch
 
 /**
+ * A signature of an array of strings.
+ */
+typealias QueryCommands = ArrayList<String>
+
+/**
  * This class can migrate the database schema to its most recent defined version (above).
  *
  * @param connection the Connection implementation to use for querying the database
@@ -28,8 +33,6 @@ class Migrator constructor(
   private val basePath: java.io.File,
   private val commentPrefixes: Collection<String> = DEFAULT_COMMENT_PREFIXES
 ) {
-  private var lastErroneousCommand: String? = null
-
   private val isLocked: Boolean
     get() {
       try {
@@ -46,7 +49,7 @@ class Migrator constructor(
   /**
    * Performs the migration steps.
    */
-  @Suppress("LongMethod")
+  @Suppress("LongMethod", "NestedBlockDepth")
   @Throws(java.sql.SQLException::class, java.io.IOException::class)
   fun execute(migrations: Array<Migration>) {
     // Make sure migrations' table exists.
@@ -94,6 +97,8 @@ class Migrator constructor(
       // Keep track of timing for this migration.
       val migrationStart = java.util.Date()
 
+      val executedCommands = QueryCommands(128)
+
       // Perform the migration while catching any errors.
       try {
         // Each migration runs in its own transaction so in case it fails, we can roll back.
@@ -101,7 +106,7 @@ class Migrator constructor(
         connection.execute("START TRANSACTION")
 
         // Kick it!
-        performMigration(migration, migrationStart, nextVersion)
+        performMigration(executedCommands, migration, migrationStart, nextVersion)
 
         // All seems normal, commit the result.
         performCommitOrRollback("COMMIT")
@@ -109,22 +114,26 @@ class Migrator constructor(
         // An SQL error has occurred, we need to roll back all changes...
         performCommitOrRollback("ROLLBACK")
 
-        // Delete this migration plan from the database as it hasn't been carried out.
-        deleteMigration(migration)
+        println("")
+        println("Unexpected error while running migration v$nextVersion.")
 
-        // If there was an exception, report the last command which caused the exception.
-        val lastErroneousCommandLocked = lastErroneousCommand
-        lastErroneousCommand = null
-        if (null != lastErroneousCommandLocked) {
+        // Report all executed commands in this migration.
+        if (executedCommands.isNotEmpty()) {
+          println(
+            "These migration commands were already executed – " +
+              "the last one probably caused the error:"
+          )
           println("")
-          println("Unhandled exception while executing this SQL command:")
-          println("")
-          println(lastErroneousCommandLocked.trim { it <= ' ' })
-          println("")
+          for (command in executedCommands) {
+            println("> $command")
+          }
         }
+
+        println("")
 
         throw error
       } finally {
+        executedCommands.clear()
         val migrationEnd = java.util.Date()
         println("  - Ended: $migrationEnd")
         println("  - Duration: ${migrationEnd.time - migrationStart.time} milliseconds")
@@ -160,25 +169,20 @@ class Migrator constructor(
   private fun performCommitOrRollback(command: String) {
     try {
       connection.execute(command)
-    } catch (@Suppress("TooGenericExceptionCaught") ignored: Throwable) {
-      // We have an exception while committing the SQL commands; probably a bigger
-      // problem in the database :/
+    } catch (ignored: java.sql.SQLException) {
       println("")
       println("Unhandled exception issuing a $command to finalize the migration plan.")
-      println("")
     }
   }
 
   @Throws(java.sql.SQLException::class)
   private fun performMigration(
+    executedCommands: QueryCommands,
     migration: Migration,
     migrationStart: java.util.Date,
     nextVersion: Int
   ) {
-    // Start with a clean slate.
-    lastErroneousCommand = null
-
-    // Lock this version in, or fail miserably otherwise.
+    // Lock this migration.
     lockMigration(migration)
 
     // Debugging.
@@ -202,7 +206,7 @@ class Migrator constructor(
       var progress = 0
       var percent = 0
       for (command in commands) {
-        lastErroneousCommand = command
+        executedCommands.add(command)
         connection.execute(command)
         progress++
         val nextPercent = (progress.toFloat() / commands.size.toFloat() * 100f).toInt()
@@ -221,7 +225,7 @@ class Migrator constructor(
       // Execute the post-execution code.
       migration.executePost(connection)
 
-      // Release the lock for this version.
+      // Release the lock for this migration.
       unlockMigration(migration)
     } finally {
       println("")
@@ -238,13 +242,11 @@ class Migrator constructor(
         "`${MigrationField.FILE}`",
         ") VALUES (",
         "${migration.version},",
-        "'${escape(migration.description)}',",
-        "'${escape(migration.file)}')"
+        "'${connection.escapeValue(migration.description)}',",
+        "'${connection.escapeValue(migration.file)}')"
       ).joinToString(separator = "")
     )
   }
-
-  private fun escape(string: String): String = string.replace("'", "\\'")
 
   @Throws(java.sql.SQLException::class)
   private fun unlockMigration(migration: Migration) {
@@ -253,15 +255,6 @@ class Migrator constructor(
         "`${MigrationField.CREATED}`=${java.util.Date().secondsSinceEpoch()} WHERE " +
         "`${MigrationField.ID}`=${migration.version}"
     )
-  }
-
-  private fun deleteMigration(migration: Migration) {
-    try {
-      connection.execute(
-        "DELETE FROM `$tableName` WHERE `${MigrationField.ID}`=${migration.version}"
-      )
-    } catch (@Suppress("TooGenericExceptionCaught") ignored: Throwable) {
-    }
   }
 
   @Throws(java.io.IOException::class)
@@ -323,6 +316,34 @@ class Migrator constructor(
       println("- Migrations table exists: $tableName (v${version()})")
       return
     }
+  }
+
+  /**
+   * Generic database connection interface.
+   */
+  interface Connection {
+    /**
+     * Executes the specified [statement] and returns how many rows were affected.
+     *
+     * @param statement the database statement to execute
+     */
+    @Throws(java.sql.SQLException::class)
+    fun execute(statement: String): Int
+
+    /**
+     * Queries the database with the specified [statement] and returns the first result as a [Long].
+     *
+     * @param statement the database statement for the query
+     */
+    @Throws(java.sql.SQLException::class)
+    fun queryForLong(statement: String): Long
+
+    /**
+     * Escape a value so it can be safely used a value in an SQL statement.
+     *
+     * @param value the value to escape
+     */
+    fun escapeValue(value: String): String
   }
 
   companion object {

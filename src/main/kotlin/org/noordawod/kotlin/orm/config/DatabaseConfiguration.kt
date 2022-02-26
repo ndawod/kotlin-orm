@@ -44,14 +44,19 @@ abstract class DatabaseConfiguration {
   abstract val ipAddr: String
 
   /**
+   * Server's connection port.
+   */
+  abstract val port: Int
+
+  /**
    * Host name of the database server.
    */
   abstract val host: String
 
   /**
-   * Server's connection port.
+   * Timezone of the host.
    */
-  abstract val port: Int
+  abstract val timezone: String
 
   /**
    * Username to authenticate against the database server.
@@ -69,6 +74,21 @@ abstract class DatabaseConfiguration {
   abstract val schema: String
 
   /**
+   * Collation to use for this host.
+   */
+  abstract val collation: String?
+
+  /**
+   * Timeout, in milliseconds, for a client to connect to the host.
+   */
+  abstract val connectTimeout: Long?
+
+  /**
+   * Timeout, in milliseconds, on network socket operations to the host.
+   */
+  abstract val socketTimeout: Long?
+
+  /**
    * Returns the connection URI string for this instance.
    */
   val uri: String
@@ -82,20 +102,28 @@ abstract class DatabaseConfiguration {
   override fun equals(other: Any?): Boolean = other is DatabaseConfiguration &&
     other.protocol == protocol &&
     other.ipAddr == ipAddr &&
-    other.host == host &&
     other.port == port &&
+    other.host == host &&
+    other.timezone == timezone &&
     other.user == user &&
     other.pass == pass &&
-    other.schema == schema
+    other.schema == schema &&
+    other.collation == collation &&
+    other.connectTimeout == connectTimeout &&
+    other.socketTimeout == socketTimeout
 
   @Suppress("MagicNumber")
   override fun hashCode(): Int = port +
     protocol.hashCode() * 349 +
     ipAddr.hashCode() * 907 +
     host.hashCode() * 383 +
+    timezone.hashCode() * 293 +
     user.hashCode() * 2087 +
     pass.hashCode() * 557 +
-    schema.hashCode() * 1051
+    schema.hashCode() * 1051 +
+    collation.hashCode() * 709 +
+    connectTimeout.hashCode() * 199 +
+    socketTimeout.hashCode() * 503
 
   /**
    * A default data class for [DatabaseConfiguration].
@@ -104,117 +132,21 @@ abstract class DatabaseConfiguration {
   data class Default constructor(
     override val protocol: String,
     override val ipAddr: String,
-    override val host: String,
     override val port: Int,
+    override val host: String,
+    override val timezone: String,
     override val user: String,
     override val pass: String,
     override val schema: String,
+    override val collation: String? = null,
+    override val connectTimeout: Long? = DEFAULT_CONNECT_TIMEOUT,
+    override val socketTimeout: Long? = null
   ) : DatabaseConfiguration()
-}
 
-/**
- * Generic database configuration for file-based migrations.
- */
-@Serializable
-abstract class DatabaseMigrationConfiguration : DatabaseConfiguration() {
-  /**
-   * A list of paths indicating where the migrations plans are stored.
-   */
-  abstract val paths: Collection<String>
-
-  override fun equals(other: Any?): Boolean = other is DatabaseMigrationConfiguration &&
-    super.equals(other) &&
-    other.paths == paths
-
-  @Suppress("MagicNumber")
-  override fun hashCode(): Int = super.hashCode() + paths.hashCode() * 181
-
-  /**
-   * A default data class for [DatabaseMigrationConfiguration].
-   */
-  @Serializable
-  data class Default constructor(
-    override val protocol: String,
-    override val ipAddr: String,
-    override val host: String,
-    override val port: Int,
-    override val user: String,
-    override val pass: String,
-    override val schema: String,
-    override val paths: Collection<String>,
-  ) : DatabaseMigrationConfiguration()
-}
-
-/**
- * Generic database configuration for pool-backed database server.
- */
-@Serializable
-abstract class DatabasePoolConfiguration : DatabaseConfiguration() {
-  /**
-   * Connection pool configuration.
-   */
-  abstract val pool: PoolConfiguration
-
-  override fun equals(other: Any?): Boolean = other is DatabasePoolConfiguration &&
-    super.equals(other) &&
-    other.pool == pool
-
-  @Suppress("MagicNumber")
-  override fun hashCode(): Int = super.hashCode() + pool.hashCode() * 181
-
-  /**
-   * A default data class for [DatabasePoolConfiguration].
-   */
-  @Serializable
-  data class Default constructor(
-    override val protocol: String,
-    override val ipAddr: String,
-    override val host: String,
-    override val port: Int,
-    override val user: String,
-    override val pass: String,
-    override val schema: String,
-    override val pool: PoolConfiguration,
-  ) : DatabasePoolConfiguration()
-}
-
-/**
- * Database pool configuration.
- */
-@Serializable
-abstract class PoolConfiguration {
-  /**
-   * How long, in milliseconds, to keep an idle connection open before closing it.
-   */
-  abstract val ageMillis: Long
-
-  /**
-   * How many concurrent open connections to keep open.
-   */
-  abstract val maxFree: Int
-
-  /**
-   * How many milliseconds between connection health checks.
-   */
-  abstract val healthCheckMillis: Long
-
-  override fun equals(other: Any?): Boolean = other is PoolConfiguration &&
-    other.ageMillis == ageMillis &&
-    other.maxFree == maxFree &&
-    other.healthCheckMillis == healthCheckMillis
-
-  @Suppress("MagicNumber")
-  override fun hashCode(): Int = ageMillis.toInt() +
-    maxFree * 349 +
-    healthCheckMillis.toInt() * 907
-
-  /**
-   * A default data class for [PoolConfiguration].
-   */
-  @Serializable
-  data class Default(
-    override val ageMillis: Long,
-    override val maxFree: Int,
-    override val healthCheckMillis: Long,
-  ) : PoolConfiguration()
+  companion object {
+    /**
+     * How long, in milliseconds, until a client can connect to a server.
+     */
+    const val DEFAULT_CONNECT_TIMEOUT: Long = 2000L
+  }
 }

@@ -29,6 +29,7 @@ import com.j256.ormlite.jdbc.JdbcPooledConnectionSource
 import com.j256.ormlite.jdbc.db.MysqlDatabaseType
 import com.j256.ormlite.support.ConnectionSource
 import net.moznion.uribuildertiny.URIBuilderTiny
+import org.noordawod.kotlin.orm.config.DatabaseConfiguration
 
 /**
  * A lightweight wrapper around JDBC's database driver.
@@ -40,7 +41,7 @@ import net.moznion.uribuildertiny.URIBuilderTiny
  * @param healthCheckMillis interval between health checks of the database connection
  */
 open class MySQLDatabase constructor(
-  config: Configuration,
+  config: DatabaseConfiguration,
   driver: String = JDBC_DRIVER,
   ageMillis: Long = DEFAULT_AGE_MILLIS,
   maxFree: Int = DEFAULT_MAX_FREE,
@@ -73,17 +74,17 @@ open class MySQLDatabase constructor(
    *
    * @see <a href="https://tinyurl.com/yagm2clw">Connector/J Configuration Properties</a>
    */
-  fun uri(config: Configuration): String = uri(
+  fun uri(config: DatabaseConfiguration): String = uri(
     config.protocol,
     config.host,
     config.port,
     config.user,
     config.pass,
     config.schema,
+    config.timezone,
     config.collation,
     config.connectTimeout,
-    config.socketTimeout,
-    config.serverTimezone
+    config.socketTimeout
   )
 
   override fun connectImpl(): ConnectionSource = JdbcPooledConnectionSource(
@@ -136,10 +137,10 @@ open class MySQLDatabase constructor(
      * @param user username to authenticate against the database server
      * @param pass password to authenticate against the database server
      * @param schema main database schema name to attach to
+     * @param timezone timezone to use in the server after connection
      * @param collation collation to choose after connecting to database server
-     * @param connectTimeout timeout in seconds to wait for a connection
-     * @param socketTimeout timeout in seconds for the socket to connect
-     * @param serverTimezone timezone to use in the server after connection
+     * @param connectTimeout timeout, in milliseconds, to wait for a connection
+     * @param socketTimeout timeout, in milliseconds, on network socket operations
      * @return the final URI to connect to the JDBC database server
      *
      * @see <a href="https://tinyurl.com/yagm2clw">Connector/J Configuration Properties</a>
@@ -152,10 +153,10 @@ open class MySQLDatabase constructor(
       user: String,
       pass: String,
       schema: String,
+      timezone: String? = null,
       collation: String? = null,
       connectTimeout: Long? = null,
-      socketTimeout: Long? = null,
-      serverTimezone: String? = null
+      socketTimeout: Long? = null
     ): String {
       val params = mutableMapOf<String, Any>(
         "user" to user,
@@ -166,10 +167,6 @@ open class MySQLDatabase constructor(
         "useCompression" to false.toString(),
         "tcpKeepAlive" to true.toString(),
         "tcpNoDelay" to true.toString(),
-        "useServerPrepStmts" to true.toString(),
-        "prepStmtCacheSize" to DEFAULT_STATEMENTS_CACHE.toString(),
-        "prepStmtCacheSqlLimit" to DEFAULT_STATEMENTS_LENGTH.toString(),
-        "cachePrepStmts" to true.toString(),
         "autoReconnectForPools" to true.toString(),
         "autoReconnect" to false.toString()
       )
@@ -182,8 +179,8 @@ open class MySQLDatabase constructor(
       if (null != socketTimeout && 0L < socketTimeout) {
         params["socketTimeout"] = "$socketTimeout"
       }
-      if (!serverTimezone.isNullOrBlank()) {
-        params["serverTimezone"] = serverTimezone
+      if (!timezone.isNullOrBlank()) {
+        params["serverTimezone"] = timezone
       }
       return URIBuilderTiny()
         .setScheme(protocol)

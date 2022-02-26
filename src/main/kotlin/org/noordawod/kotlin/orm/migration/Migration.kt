@@ -73,13 +73,13 @@ interface Migration {
    * Executes a piece of code before the migration has started.
    */
   @Throws(java.sql.SQLException::class)
-  fun executePre(connection: Connection)
+  fun executePre(connection: Migrator.Connection)
 
   /**
    * Executes a piece of code after the migration has successfully completed.
    */
   @Throws(java.sql.SQLException::class)
-  fun executePost(connection: Connection)
+  fun executePost(connection: Migrator.Connection)
 }
 
 /**
@@ -87,12 +87,12 @@ interface Migration {
  */
 abstract class BaseMigration : Migration {
   @Throws(java.sql.SQLException::class)
-  override fun executePre(connection: Connection) {
+  override fun executePre(connection: Migrator.Connection) {
     // NO-OP.
   }
 
   @Throws(java.sql.SQLException::class)
-  override fun executePost(connection: Connection) {
+  override fun executePost(connection: Migrator.Connection) {
     // NO-OP.
   }
 }

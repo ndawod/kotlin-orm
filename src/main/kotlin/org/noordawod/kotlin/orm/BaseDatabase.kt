@@ -28,8 +28,7 @@ package org.noordawod.kotlin.orm
 import com.j256.ormlite.misc.TransactionManager
 import com.j256.ormlite.support.ConnectionSource
 import com.j256.ormlite.support.DatabaseConnection
-import org.noordawod.kotlin.orm.extension.interfaceEquals
-import org.noordawod.kotlin.orm.extension.interfaceHashCode
+import org.noordawod.kotlin.orm.config.DatabaseConfiguration
 
 /**
  * A lightweight wrapper around JDBC's database driver.
@@ -42,7 +41,7 @@ import org.noordawod.kotlin.orm.extension.interfaceHashCode
  */
 @Suppress("TooManyFunctions")
 abstract class BaseDatabase constructor(
-  val config: Configuration,
+  val config: DatabaseConfiguration,
   val driver: String? = null,
   val ageMillis: Long = DEFAULT_AGE_MILLIS,
   val maxFree: Int = DEFAULT_MAX_FREE,
@@ -63,7 +62,7 @@ abstract class BaseDatabase constructor(
   }
 
   override fun equals(other: Any?): Boolean = other is BaseDatabase &&
-    other.config.interfaceEquals(config) &&
+    other.config == config &&
     other.driver == driver &&
     other.ageMillis == ageMillis &&
     other.maxFree == maxFree &&
@@ -71,65 +70,10 @@ abstract class BaseDatabase constructor(
 
   @Suppress("MagicNumber")
   override fun hashCode(): Int = ageMillis.toInt() +
-    config.interfaceHashCode() * 349 +
+    config.hashCode() +
     driver.hashCode() * 907 +
     maxFree * 383 +
     healthCheckMillis.toInt() * 2087
-
-  /**
-   * Database configuration suitable for most database drivers.
-   */
-  interface Configuration {
-    /**
-     * The associated URI protocol (scheme) for this JDBC driver.
-     */
-    val protocol: String
-
-    /**
-     * Host name of the database server.
-     */
-    val host: String
-
-    /**
-     * Database server's connection port.
-     */
-    val port: Int
-
-    /**
-     * Username to authenticate against the database server.
-     */
-    val user: String
-
-    /**
-     * Password to authenticate against the database server.
-     */
-    val pass: String
-
-    /**
-     * Main database schema name to attach to.
-     */
-    val schema: String
-
-    /**
-     * Collation to use for this connection.
-     */
-    val collation: String
-
-    /**
-     * How long in milliseconds until a client can connect to a server.
-     */
-    val connectTimeout: Long
-
-    /**
-     * How long in milliseconds until a socket can connect to a destination.
-     */
-    val socketTimeout: Long
-
-    /**
-     * Sets the timezone of the server.
-     */
-    val serverTimezone: String
-  }
 
   private var internalConnection: ConnectionSource? = null
 
@@ -333,16 +277,6 @@ abstract class BaseDatabase constructor(
     const val INITIAL_CAPACITY: Int = 50
 
     /**
-     * Default cache size for prepared statements.
-     */
-    const val DEFAULT_STATEMENTS_CACHE: Int = 500
-
-    /**
-     * Default maximum length of prepared statements.
-     */
-    const val DEFAULT_STATEMENTS_LENGTH: Int = 1024
-
-    /**
      * Default maximum number of retries when inserting a new record.
      */
     const val DEFAULT_INSERT_TRIES: Int = 25
@@ -376,16 +310,6 @@ abstract class BaseDatabase constructor(
      * Default duration between connection health checks.
      */
     const val DEFAULT_HEALTH_CHECK_INTERVAL: Long = 3000L
-
-    /**
-     * How long in milliseconds until a client can connect to a server.
-     */
-    const val DEFAULT_CONNECT_TIMEOUT: Long = 2000L
-
-    /**
-     * How long in milliseconds until a socket can connect to a destination.
-     */
-    const val DEFAULT_SOCKET_TIMEOUT: Long = 2000L
 
     /**
      * Matches one or more white-space characters.
