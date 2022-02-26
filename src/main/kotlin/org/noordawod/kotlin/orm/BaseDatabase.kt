@@ -188,15 +188,13 @@ abstract class BaseDatabase constructor(
     }
 
     var retries = 0
-    var error: java.sql.SQLException? = null
+    var error: java.sql.SQLException?
 
     do {
       try {
         val connection = connectImpl()
-        if (connection.isOpen("")) {
-          internalConnection = connection
-          return connection
-        }
+        internalConnection = connection
+        return connection
       } catch (e: java.sql.SQLException) {
         error = e
       }
@@ -207,11 +205,7 @@ abstract class BaseDatabase constructor(
     val retriesDebug = if (1 < maxRetries) "$maxRetries tries" else "$maxRetries try"
     val errorMessage = "Unable to connect to database after $retriesDebug: $uri"
 
-    if (null == error) {
-      throw java.sql.SQLNonTransientConnectionException(errorMessage)
-    } else {
-      throw java.sql.SQLNonTransientConnectionException(errorMessage, error)
-    }
+    throw java.sql.SQLNonTransientConnectionException(errorMessage, error)
   }
 
   /**
