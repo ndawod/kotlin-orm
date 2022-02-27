@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+1.8.1 (February 27, 2022)
+    Bump up dependencies versions.
+
 1.8.0 (February 26, 2022)
     Refactor `BaseDatabase.Configuration` into `DatabaseConfiguration`.
 
