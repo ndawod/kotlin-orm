@@ -77,10 +77,10 @@ gradle-app.setting
 # End of https://www.gitignore.io/api/java,gradle,kotlin
 
 ### Unsorted ###
-
 gen/
 private
 local.properties
 lsyncd.log
 .attach_pid*
 detekt-baseline.xml
+.DS_Store
