@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+1.9.2 (July 25, 2022)
+    Add a method in `Migrator.Connection` interface to run any arbitrary query.
+
 1.9.1 (July 6, 2022)
     Bump up dependencies versions.
 

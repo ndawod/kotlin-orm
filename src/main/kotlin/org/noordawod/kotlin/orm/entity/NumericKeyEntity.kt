@@ -14,4 +14,5 @@ package org.noordawod.kotlin.orm.entity
 /**
  * Generic top-level class for all entities having a key with a [Number] value type.
  */
+@Suppress("UnnecessaryAbstractClass")
 abstract class NumericKeyEntity<ID : Number> protected constructor() : BaseKeyEntity<ID>()

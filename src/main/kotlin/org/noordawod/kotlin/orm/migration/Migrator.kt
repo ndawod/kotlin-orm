@@ -19,6 +19,11 @@ import org.noordawod.kotlin.core.extension.secondsSinceEpoch
 typealias QueryCommands = ArrayList<String>
 
 /**
+ * A signature of a map of String:String denoting a data row.
+ */
+typealias ResultRow = Map<String, String>
+
+/**
  * This class can migrate the database schema to its most recent defined version (above).
  *
  * @param connection the Connection implementation to use for querying the database
@@ -329,6 +334,16 @@ class Migrator constructor(
      */
     @Throws(java.sql.SQLException::class)
     fun execute(statement: String): Int
+
+    /**
+     * Queries the database with the specified [statement] and returns the result set.
+     *
+     * @param statement the database statement for the query
+     * @param offset offset in the result set from where to return the results
+     * @param limit how many result items to return
+     */
+    @Throws(java.sql.SQLException::class)
+    fun query(statement: String, offset: Long = 0L, limit: Long? = null): Iterable<ResultRow>
 
     /**
      * Queries the database with the specified [statement] and returns the first result as a [Long].
