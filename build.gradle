@@ -22,8 +22,9 @@
  */
 
 group = 'org.noordawod.kotlin.orm'
-version = '1.9.2'
+version = '1.9.3'
 description = 'Defines reusable contracts for OrmLite that requires entities and models to exist.'
+buildDir = 'build'
 
 apply plugin: 'kotlinx-serialization'
 apply plugin: 'com.github.ben-manes.versions'
@@ -36,7 +37,7 @@ buildscript {
         google()
         gradlePluginPortal()
         maven {
-            url "https://plugins.gradle.org/m2/"
+            url 'https://plugins.gradle.org/m2/'
         }
     }
 
@@ -51,6 +52,7 @@ buildscript {
 repositories {
     mavenCentral()
     google()
+    gradlePluginPortal()
     maven {
         url 'https://jitpack.io'
     }
