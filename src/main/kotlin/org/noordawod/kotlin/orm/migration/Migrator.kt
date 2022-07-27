@@ -339,11 +339,9 @@ class Migrator constructor(
      * Queries the database with the specified [statement] and returns the result set.
      *
      * @param statement the database statement for the query
-     * @param offset offset in the result set from where to return the results
-     * @param limit how many result items to return
      */
     @Throws(java.sql.SQLException::class)
-    fun query(statement: String, offset: Long = 0L, limit: Long? = null): Iterable<ResultRow>
+    fun query(statement: String): Iterable<ResultRow>
 
     /**
      * Queries the database with the specified [statement] and returns the first result as a [Long].
