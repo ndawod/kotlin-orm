@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+1.9.4 (July 28, 2022)
+    Upgrade Gradle wrapper to v7.5.
+
 1.9.3 (July 26, 2022)
     Bump up dependencies versions.
 
