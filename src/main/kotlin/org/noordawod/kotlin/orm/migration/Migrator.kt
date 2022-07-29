@@ -13,7 +13,7 @@ package org.noordawod.kotlin.orm.migration
 
 import org.noordawod.kotlin.core.extension.secondsSinceEpoch
 import org.noordawod.kotlin.orm.query.QueryCommands
-import org.noordawod.kotlin.orm.query.QueryResult
+import org.noordawod.kotlin.orm.query.QueryResults
 
 /**
  * This class can migrate the database schema to its most recent defined version (above).
@@ -333,7 +333,7 @@ class Migrator constructor(
      * @param statement the database statement for the query
      */
     @Throws(java.sql.SQLException::class)
-    fun query(statement: String): QueryResult
+    fun query(statement: String): QueryResults
 
     /**
      * Queries the database with the specified [statement] and returns the first result as a [Long].

@@ -29,3 +29,13 @@ package org.noordawod.kotlin.orm.query
  * A signature of an array of strings.
  */
 typealias QueryCommands = ArrayList<String>
+
+/**
+ * A signature of a [Pair] of [JoinSpecification]s.
+ */
+typealias JoinPair = Pair<JoinSpecification, JoinSpecification>
+
+/**
+ * A signature of a function that accepts a String and returns a String.
+ */
+typealias EscapeCallback = (String) -> String

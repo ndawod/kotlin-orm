@@ -26,12 +26,20 @@
 package org.noordawod.kotlin.orm.query
 
 /**
- * Holds a single row of results following a database query.
- *
- * In order to access the columns (fields), the caller needs to call the relevant getter method
- * (f.ex: [getString], [getInt], …) providing the name of the field.
+ * Holds the results set following a database query.
  */
-interface QueryRow {
+@Suppress("TooManyFunctions")
+interface QueryResults {
+  /**
+   * Returns true if there is a row in the result set, false otherwise.
+   */
+  val hasNext: Boolean
+
+  /**
+   * Moves to the next row in the result set.
+   */
+  fun next()
+
   /**
    * Returns a string value for the provided field name.
    *

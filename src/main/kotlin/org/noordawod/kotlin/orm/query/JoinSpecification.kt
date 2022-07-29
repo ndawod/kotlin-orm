@@ -21,14 +21,19 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-package org.noordawod.kotlin.orm.query.impl
+@file:Suppress("unused", "MemberVisibilityCanBePrivate", "DataClassContainsFunctions")
 
-import org.noordawod.kotlin.orm.query.QueryResult
-import org.noordawod.kotlin.orm.query.QueryRow
+package org.noordawod.kotlin.orm.query
 
-internal class QueryResultImpl(
-  override val rowsCount: Int,
-  override val rows: Collection<QueryRow>,
-  override val fieldsCount: Int,
-  override val fields: Collection<String>
-) : QueryResult
+/**
+ * A data class describing one part of a JOIN operation.
+ *
+ * @param table the table specification
+ * @param key the primary key in [table]
+ */
+data class JoinSpecification constructor(
+  val table: TableSpecification,
+  val key: String
+) {
+  fun prefix(escape: EscapeCallback): String = table.prefix(key, escape)
+}

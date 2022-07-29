@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2021 Noor Dawod. All rights reserved.
+ * Copyright 2022 Noor Dawod. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -23,70 +23,7 @@
 
 @file:Suppress("unused", "MemberVisibilityCanBePrivate", "DataClassContainsFunctions")
 
-package org.noordawod.kotlin.orm
-
-/**
- * A signature of a [Pair] of [JoinSpecification]s.
- */
-typealias JoinPair = Pair<JoinSpecification, JoinSpecification>
-
-/**
- * A signature of a function that accepts a String and returns a String.
- */
-typealias EscapeCallback = (String) -> String
-
-/**
- * A data class holding a table name and its alias, if specified.
- *
- * @param name the table name
- * @param alias the table alias, optional
- */
-data class TableSpecification constructor(
-  val name: String,
-  val alias: String?
-) {
-  override fun toString(): String = if (null == alias) name else "$name AS $alias"
-
-  /**
-   * Returns a string representation of this table and its alias suitable to be used in a
-   * SQL statement.
-   *
-   * @param escape handler to escape table and alias names
-   */
-  inline fun toString(escape: EscapeCallback): String {
-    val nameEscaped = escape(name)
-    return if (null == alias) nameEscaped else "$nameEscaped AS ${escape(alias)}"
-  }
-
-  /**
-   * Returns a prefix for this table suitable to be used in a SQL statement.
-   *
-   * @param escape handler to escape table and alias names
-   */
-  fun prefix(escape: EscapeCallback): String = if (null == alias) "" else "${escape(alias)}."
-
-  /**
-   * Returns the specified entity with a prefix of this table suitable to be used in a
-   * SQL statement.
-   *
-   * @param entity entity to prefix
-   * @param escape handler to escape table and alias names
-   */
-  fun prefix(entity: String, escape: EscapeCallback): String = "${prefix(escape)}${escape(entity)}"
-}
-
-/**
- * A data class describing one part of a JOIN operation.
- *
- * @param table the table specification
- * @param key the primary key in [table]
- */
-data class JoinSpecification constructor(
-  val table: TableSpecification,
-  val key: String
-) {
-  fun prefix(escape: EscapeCallback): String = table.prefix(key, escape)
-}
+package org.noordawod.kotlin.orm.query
 
 /**
  * A helper class that facilitates building a raw query.
@@ -123,42 +60,44 @@ class RawQueryBuilder constructor(val fieldSeparator: Char, initialCapacity: Int
   private var ascendingInternal: Boolean = true
 
   @Suppress("NestedBlockDepth", "ComplexFunction")
-  override fun toString(): String = StringBuilder(MINIMUM_BLOCK_SIZE).apply {
-    append("SELECT ")
-    append(entities.joinToString())
-    append(" FROM ")
-    tables.forEach {
-      append(it.toString(::escape))
-    }
-    joins.forEach {
-      append(" $it")
-    }
-    if (wheres.isNotEmpty()) {
-      append(" WHERE (")
-      var firstClause = true
-      wheres.forEach {
-        if (firstClause) {
-          firstClause = false
-        } else {
-          append(" AND ")
+  override fun toString(): String = StringBuilder(MINIMUM_BLOCK_SIZE)
+    .apply {
+      append("SELECT ")
+      append(entities.joinToString())
+      append(" FROM ")
+      tables.forEach {
+        append(it.toString(::escape))
+      }
+      joins.forEach {
+        append(" $it")
+      }
+      if (wheres.isNotEmpty()) {
+        append(" WHERE (")
+        var firstClause = true
+        wheres.forEach {
+          if (firstClause) {
+            firstClause = false
+          } else {
+            append(" AND ")
+          }
+          append(it)
         }
-        append(it)
+        append(")")
       }
-      append(")")
-    }
-    if (!groupByInternal.isNullOrEmpty()) {
-      append(" GROUP BY $groupByInternal")
-    }
-    if (!orderByInternal.isNullOrEmpty()) {
-      append(" ORDER BY $orderByInternal ${if (ascendingInternal) "ASC" else "DESC"}")
-    }
-    if (0 < limitInternal) {
-      append(" LIMIT $limitInternal")
-      if (0 < offsetInternal) {
-        append(" OFFSET $offsetInternal")
+      if (!groupByInternal.isNullOrEmpty()) {
+        append(" GROUP BY $groupByInternal")
+      }
+      if (!orderByInternal.isNullOrEmpty()) {
+        append(" ORDER BY $orderByInternal ${if (ascendingInternal) "ASC" else "DESC"}")
+      }
+      if (0 < limitInternal) {
+        append(" LIMIT $limitInternal")
+        if (0 < offsetInternal) {
+          append(" OFFSET $offsetInternal")
+        }
       }
     }
-  }.toString()
+    .toString()
 
   /**
    * Adds a new affected table to the query.
