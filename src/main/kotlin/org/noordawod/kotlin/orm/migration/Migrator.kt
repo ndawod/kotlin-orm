@@ -12,16 +12,8 @@
 package org.noordawod.kotlin.orm.migration
 
 import org.noordawod.kotlin.core.extension.secondsSinceEpoch
-
-/**
- * A signature of an array of strings.
- */
-typealias QueryCommands = ArrayList<String>
-
-/**
- * A signature of a map of String:String denoting a data row.
- */
-typealias ResultRow = Map<String, String>
+import org.noordawod.kotlin.orm.query.QueryCommands
+import org.noordawod.kotlin.orm.query.QueryResult
 
 /**
  * This class can migrate the database schema to its most recent defined version (above).
@@ -341,7 +333,7 @@ class Migrator constructor(
      * @param statement the database statement for the query
      */
     @Throws(java.sql.SQLException::class)
-    fun query(statement: String): Iterable<ResultRow>
+    fun query(statement: String): QueryResult
 
     /**
      * Queries the database with the specified [statement] and returns the first result as a [Long].
