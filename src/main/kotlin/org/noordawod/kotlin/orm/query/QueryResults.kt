@@ -41,77 +41,77 @@ interface QueryResults {
   fun next()
 
   /**
-   * Returns a string value for the provided field name.
+   * Returns a string value for the provided field name on success, null otherwise.
    *
    * @param fieldName the field name to retrieve
    */
   fun getString(fieldName: String): String?
 
   /**
-   * Returns a boolean value for the provided field name.
+   * Returns a boolean value for the provided field name on success, null otherwise.
    *
    * @param fieldName the field name to retrieve
    */
-  fun getBoolean(fieldName: String): Boolean
+  fun getBoolean(fieldName: String): Boolean?
 
   /**
-   * Returns a character value for the provided field name.
+   * Returns a character value for the provided field name on success, null otherwise.
    *
    * @param fieldName the field name to retrieve
    */
-  fun getChar(fieldName: String): Char
+  fun getChar(fieldName: String): Char?
 
   /**
-   * Returns a byte value for the provided field name.
+   * Returns a byte value for the provided field name on success, null otherwise.
    *
    * @param fieldName the field name to retrieve
    */
-  fun getByte(fieldName: String): Byte
+  fun getByte(fieldName: String): Byte?
 
   /**
-   * Returns an array of bytes for the provided field name.
+   * Returns an array of bytes for the provided field name on success, null otherwise.
    *
    * @param fieldName the field name to retrieve
    */
   fun getBytes(fieldName: String): ByteArray?
 
   /**
-   * Returns a short value for the provided field name.
+   * Returns a short value for the provided field name on success, null otherwise.
    *
    * @param fieldName the field name to retrieve
    */
-  fun getShort(fieldName: String): Short
+  fun getShort(fieldName: String): Short?
 
   /**
-   * Returns an integer value for the provided field name.
+   * Returns an integer value for the provided field name on success, null otherwise.
    *
    * @param fieldName the field name to retrieve
    */
-  fun getInt(fieldName: String): Int
+  fun getInt(fieldName: String): Int?
 
   /**
-   * Returns a long value for the provided field name.
+   * Returns a long value for the provided field name on success, null otherwise.
    *
    * @param fieldName the field name to retrieve
    */
-  fun getLong(fieldName: String): Long
+  fun getLong(fieldName: String): Long?
 
   /**
-   * Returns a float value for the provided field name.
+   * Returns a float value for the provided field name on success, null otherwise.
    *
    * @param fieldName the field name to retrieve
    */
-  fun getFloat(fieldName: String): Float
+  fun getFloat(fieldName: String): Float?
 
   /**
-   * Returns a double value for the provided field name.
+   * Returns a double value for the provided field name on success, null otherwise.
    *
    * @param fieldName the field name to retrieve
    */
-  fun getDouble(fieldName: String): Double
+  fun getDouble(fieldName: String): Double?
 
   /**
-   * Returns a date value for the provided field name.
+   * Returns a date value for the provided field name on success, null otherwise.
    *
    * @param fieldName the field name to retrieve
    */
