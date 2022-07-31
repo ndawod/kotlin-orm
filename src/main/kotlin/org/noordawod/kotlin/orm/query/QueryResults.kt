@@ -29,7 +29,7 @@ package org.noordawod.kotlin.orm.query
  * Holds the results set following a database query.
  */
 @Suppress("TooManyFunctions")
-interface QueryResults {
+interface QueryResults : AutoCloseable {
   /**
    * Returns true if there is a row in the result set, false otherwise.
    */
@@ -39,11 +39,6 @@ interface QueryResults {
    * Moves to the next row in the result set.
    */
   fun next()
-
-  /**
-   * Closes the result set quietly and releases any resources associated with it.
-   */
-  fun close()
 
   /**
    * Returns a string value for the provided field name on success, null otherwise.

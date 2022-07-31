@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+2.0.3 (July 31, 2022)
+    Make `QueryResults` extend `AutoCloseable`.
+
 2.0.2 (July 31, 2022)
     Do not close `QueryResults` automatically, add a method to let user do it.
 
