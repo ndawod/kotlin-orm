@@ -41,6 +41,11 @@ interface QueryResults {
   fun next()
 
   /**
+   * Closes the result set quietly and releases any resources associated with it.
+   */
+  fun close()
+
+  /**
    * Returns a string value for the provided field name on success, null otherwise.
    *
    * @param fieldName the field name to retrieve
