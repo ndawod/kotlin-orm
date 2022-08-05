@@ -95,7 +95,7 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
   open fun insertIfNew(instances: Collection<T>): List<T>? {
     val results = ArrayList<T>(BaseDatabase.INITIAL_CAPACITY)
     for (instance in instances) {
-      if (null == queryForId(instance.id)) {
+      if (!exists(instance.id)) {
         results.add(insert(instance))
       }
     }
@@ -108,10 +108,10 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
    */
   @Throws(java.sql.SQLException::class)
   open fun replace(entity: T): T = if (exists(entity.id)) {
-    insert(entity)
-  } else {
     update(entity)
     entity
+  } else {
+    insert(entity)
   }
 
   /**
