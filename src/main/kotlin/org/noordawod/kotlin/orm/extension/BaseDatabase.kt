@@ -41,7 +41,7 @@ typealias DatabaseConnectionBlock<R> = (ConnectionSource) -> R
  * @param block the code block to run
  */
 @Throws(java.sql.SQLException::class)
-fun <R> BaseDatabase.readOnlyConnection(
+inline fun <R> BaseDatabase.readOnlyConnection(
   maxRetries: Int = BaseDatabase.DEFAULT_RECONNECT_TRIES,
   retryDelay: Long = BaseDatabase.DEFAULT_RETRY_MILLIS,
   block: DatabaseConnectionBlock<R>
@@ -67,7 +67,7 @@ fun <R> BaseDatabase.readOnlyConnection(
  * @param block the code block to run
  */
 @Throws(java.sql.SQLException::class)
-fun <R> BaseDatabase.readWriteConnection(
+inline fun <R> BaseDatabase.readWriteConnection(
   maxRetries: Int = BaseDatabase.DEFAULT_RECONNECT_TRIES,
   retryDelay: Long = BaseDatabase.DEFAULT_RETRY_MILLIS,
   block: DatabaseConnectionBlock<R>
