@@ -39,14 +39,19 @@ import org.noordawod.kotlin.orm.config.DatabaseConfiguration
  * @param maxFree how many concurrent open connections to keep open
  * @param healthCheckMillis interval between health checks of the database connection
  */
-@Suppress("TooManyFunctions")
+@Suppress("TooManyFunctions", "LongParameterList")
 abstract class BaseDatabase constructor(
   val config: DatabaseConfiguration,
   val driver: String? = null,
   val ageMillis: Long = DEFAULT_AGE_MILLIS,
   val maxFree: Int = DEFAULT_MAX_FREE,
-  val healthCheckMillis: Long = DEFAULT_HEALTH_CHECK_INTERVAL,
+  val healthCheckMillis: Long = DEFAULT_HEALTH_CHECK_INTERVAL
 ) {
+  /**
+   * The property holding the single [ConnectionSource].
+   */
+  protected val connectionSource: ConnectionSource
+
   init {
     if (null != driver) {
       try {
@@ -59,6 +64,9 @@ abstract class BaseDatabase constructor(
         throw java.sql.SQLException("Unable to instantiate a database driver: $driver", e)
       }
     }
+
+    @Suppress("LeakingThis")
+    connectionSource = initialConnectionSource()
   }
 
   override fun equals(other: Any?): Boolean = other is BaseDatabase &&
@@ -74,8 +82,6 @@ abstract class BaseDatabase constructor(
     driver.hashCode() * 907 +
     maxFree * 383 +
     healthCheckMillis.toInt() * 2087
-
-  private var internalConnection: ConnectionSource? = null
 
   /**
    * The character used to wrap field, table and database names in this database server.
@@ -111,54 +117,12 @@ abstract class BaseDatabase constructor(
   }
 
   /**
-   * Connects to the database, when needed, of returns the cached connection.
-   *
-   * This method supports retrying a failed connection by specifying [maxRetries] and a
-   * [retryDelay] parameters which control its operation.
-   *
-   * @param maxRetries maximum number of retries
-   * @param retryDelay how long, in milliseconds, to wait between failed connection retries
-   */
-  @Throws(java.sql.SQLException::class)
-  fun connect(
-    maxRetries: Int = DEFAULT_RECONNECT_TRIES,
-    retryDelay: Long = DEFAULT_RETRY_MILLIS,
-  ): ConnectionSource {
-    internalConnection?.also { connection ->
-      if (connection.isOpen("")) {
-        return connection
-      }
-      internalConnection = null
-    }
-
-    var retries = 0
-    var error: java.sql.SQLException?
-
-    do {
-      try {
-        val connection = connectImpl()
-        internalConnection = connection
-        return connection
-      } catch (e: java.sql.SQLException) {
-        error = e
-      }
-
-      Thread.sleep(retryDelay)
-    } while (maxRetries > retries++)
-
-    val retriesDebug = if (1 < maxRetries) "$maxRetries tries" else "$maxRetries try"
-    val errorMessage = "Unable to connect to database after $retriesDebug: $uri"
-
-    throw java.sql.SQLNonTransientConnectionException(errorMessage, error)
-  }
-
-  /**
    * Performs all database actions executed in the callback inside a transaction. If the
    * callback throws any exceptions, null will be returned.
    */
   @Throws(java.sql.SQLException::class)
   fun <R> transactional(callable: java.util.concurrent.Callable<R>): R =
-    transactional(connect(), callable)
+    transactional(connectionSource, callable)
 
   /**
    * Performs all database actions executed in the callback while the specified table is
@@ -169,7 +133,7 @@ abstract class BaseDatabase constructor(
     tableName: String,
     writeLock: Boolean,
     callable: java.util.concurrent.Callable<R>,
-  ): R = callWithLock(connect(), tableName, writeLock, callable)
+  ): R = callWithLock(connectionSource, tableName, writeLock, callable)
 
   /**
    * Shuts down the database pool of connections. Any subsequent attempt to use the pool
@@ -177,12 +141,8 @@ abstract class BaseDatabase constructor(
    */
   @Throws(java.io.IOException::class)
   fun shutdown() {
-    internalConnection?.close()
-    internalConnection = null
+    connectionSource.close()
   }
-
-  @Throws(java.sql.SQLException::class)
-  protected abstract fun connectImpl(): ConnectionSource
 
   /**
    * Escapes the provided string value and returns the escaped value.
@@ -249,6 +209,7 @@ abstract class BaseDatabase constructor(
       }
       builder.append(valueChar)
     }
+
     return if (null == wrapper) {
       builder.toString()
     } else {
@@ -269,6 +230,9 @@ abstract class BaseDatabase constructor(
     }
     return likeQuery
   }
+
+  @Throws(java.sql.SQLException::class)
+  protected abstract fun initialConnectionSource(): ConnectionSource
 
   companion object {
     /**
@@ -370,6 +334,7 @@ abstract class BaseDatabase constructor(
       callable: java.util.concurrent.Callable<R>,
     ): R {
       val writeConnection = connection.getReadWriteConnection(tableName)
+
       return try {
         writeConnection.isAutoCommit = false
         val lockType = if (writeLock) "WRITE" else "READ"

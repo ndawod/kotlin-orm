@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+2.1.0 (August 17, 2022)
+    Remove caching of connection source from `BaseDatabase`.
+
 2.0.6 (August 8, 2022)
     Introduce two inline extension functions to help with automatically
     closing open connections.
