@@ -108,7 +108,7 @@ open class MySQLDatabase constructor(
     config.socketTimeout
   )
 
-  override fun initialConnectionSource(): ConnectionSource {
+  override fun initializeConnectionSource(): ConnectionSource {
     var retries = 0
     var error: java.sql.SQLException?
 

@@ -34,7 +34,7 @@ import org.noordawod.kotlin.orm.config.DatabaseConfiguration
  * A signature of a database connection handler obtained via [BaseDatabase.readOnlyConnection]
  * or [BaseDatabase.readWriteConnection].
  */
-typealias DatabaseConnectionBlock<R> = (ConnectionSource) -> R
+typealias DatabaseConnectionBlock<R> = ConnectionSource.(DatabaseConnection) -> R
 
 /**
  * A lightweight wrapper around JDBC's database driver.
@@ -53,10 +53,24 @@ abstract class BaseDatabase constructor(
   val maxFree: Int = DEFAULT_MAX_FREE,
   val healthCheckMillis: Long = DEFAULT_HEALTH_CHECK_INTERVAL
 ) {
+  private var connectionSourceInternal: ConnectionSource? = null
+
   /**
-   * The property holding the single [ConnectionSource].
+   * Returns the [ConnectionSource] associated with this database.
    */
-  protected val connectionSource: ConnectionSource
+  val connectionSource: ConnectionSource
+    get() {
+      var connectionSourceLocked = connectionSourceInternal
+
+      if (null == connectionSourceLocked || connectionSourceLocked.isDead()) {
+        connectionSourceInternal?.closeQuietly()
+        connectionSourceInternal = null
+        connectionSourceLocked = initializeConnectionSource()
+        connectionSourceInternal = connectionSourceLocked
+      }
+
+      return connectionSourceLocked
+    }
 
   init {
     if (null != driver) {
@@ -70,9 +84,6 @@ abstract class BaseDatabase constructor(
         throw java.sql.SQLException("Unable to instantiate a database driver: $driver", e)
       }
     }
-
-    @Suppress("LeakingThis")
-    connectionSource = initialConnectionSource()
   }
 
   override fun equals(other: Any?): Boolean = other is BaseDatabase &&
@@ -131,11 +142,11 @@ abstract class BaseDatabase constructor(
    */
   @Throws(java.sql.SQLException::class)
   fun <R> readOnlyConnection(block: DatabaseConnectionBlock<R>): R {
-    val connection: DatabaseConnection = connectionSource.getReadOnlyConnection("")
+    val databaseConnection = connectionSource.getReadOnlyConnection("")
     try {
-      return block(connectionSource)
+      return block(connectionSource, databaseConnection)
     } finally {
-      connectionSource.releaseConnection(connection)
+      connectionSource.releaseConnection(databaseConnection)
     }
   }
 
@@ -148,11 +159,11 @@ abstract class BaseDatabase constructor(
    */
   @Throws(java.sql.SQLException::class)
   fun <R> readWriteConnection(block: DatabaseConnectionBlock<R>): R {
-    val connection: DatabaseConnection = connectionSource.getReadWriteConnection("")
+    val databaseConnection = connectionSource.getReadWriteConnection("")
     try {
-      return block(connectionSource)
+      return block(connectionSource, databaseConnection)
     } finally {
-      connectionSource.releaseConnection(connection)
+      connectionSource.releaseConnection(databaseConnection)
     }
   }
 
@@ -272,7 +283,9 @@ abstract class BaseDatabase constructor(
   }
 
   @Throws(java.sql.SQLException::class)
-  protected abstract fun initialConnectionSource(): ConnectionSource
+  abstract fun initializeConnectionSource(): ConnectionSource
+
+  private fun ConnectionSource.isDead(): Boolean = !connectionSource.isOpen("")
 
   companion object {
     /**
