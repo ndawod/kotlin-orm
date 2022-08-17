@@ -39,14 +39,35 @@ import org.noordawod.kotlin.orm.config.DatabaseConfiguration
  * @param ageMillis how long, in milliseconds, to keep an idle connection open before closing it
  * @param maxFree how many concurrent open connections to keep open
  * @param healthCheckMillis interval between health checks of the database connection
+ * @param maxRetries maximum number of retries
+ * @param retryDelay how long, in milliseconds, to wait between failed connection retries
  */
+@Suppress("LongParameterList")
 open class MySQLDatabase constructor(
   config: DatabaseConfiguration,
   driver: String = JDBC_DRIVER,
   ageMillis: Long = DEFAULT_AGE_MILLIS,
   maxFree: Int = DEFAULT_MAX_FREE,
-  healthCheckMillis: Long = DEFAULT_HEALTH_CHECK_INTERVAL
-) : BaseDatabase(config, driver, ageMillis, maxFree, healthCheckMillis) {
+  healthCheckMillis: Long = DEFAULT_HEALTH_CHECK_INTERVAL,
+  val maxRetries: Int = DEFAULT_RECONNECT_TRIES,
+  val retryDelay: Long = DEFAULT_RETRY_MILLIS
+) : BaseDatabase(
+  config,
+  driver,
+  ageMillis,
+  maxFree,
+  healthCheckMillis
+) {
+  override fun equals(other: Any?): Boolean = other is MySQLDatabase &&
+    super.equals(other) &&
+    other.maxRetries == maxRetries &&
+    other.retryDelay == retryDelay
+
+  @Suppress("MagicNumber")
+  override fun hashCode(): Int = super.hashCode() +
+    maxRetries * 2713 +
+    retryDelay.toInt() * 2801
+
   override val fieldWrapperChar: Char = FIELD_WRAPPER_CHAR
 
   override val valueWrapperChar: Char = VALUE_WRAPPER_CHAR
@@ -87,14 +108,32 @@ open class MySQLDatabase constructor(
     config.socketTimeout
   )
 
-  override fun connectImpl(): ConnectionSource = JdbcPooledConnectionSource(
-    if (uri.startsWith(JDBC_PREFIX)) uri else "$JDBC_PREFIX$uri",
-    MysqlDatabaseType()
-  ).apply {
-    setCheckConnectionsEveryMillis(healthCheckMillis)
-    setMaxConnectionAgeMillis(ageMillis)
-    setMaxConnectionsFree(maxFree)
-    setTestBeforeGet(true)
+  override fun initialConnectionSource(): ConnectionSource {
+    var retries = 0
+    var error: java.sql.SQLException?
+
+    do {
+      try {
+        val normalizedUrl = if (uri.startsWith(JDBC_PREFIX)) uri else "$JDBC_PREFIX$uri"
+        val connectionSource = JdbcPooledConnectionSource(normalizedUrl, MysqlDatabaseType())
+
+        connectionSource.setTestBeforeGet(true)
+        connectionSource.setMaxConnectionAgeMillis(ageMillis)
+        connectionSource.setMaxConnectionsFree(maxFree)
+        connectionSource.setCheckConnectionsEveryMillis(healthCheckMillis)
+
+        return connectionSource
+      } catch (e: java.sql.SQLException) {
+        error = e
+      }
+
+      Thread.sleep(retryDelay)
+    } while (maxRetries > retries++)
+
+    val retriesDebug = if (1 < maxRetries) "$maxRetries tries" else "$maxRetries try"
+    val errorMessage = "Unable to connect to database after $retriesDebug: $uri"
+
+    throw java.sql.SQLNonTransientConnectionException(errorMessage, error)
   }
 
   companion object {

@@ -31,6 +31,7 @@ package org.noordawod.kotlin.orm.query
  * In order to access the columns (fields), the caller needs to call the relevant getter method
  * (f.ex: [getString], [getInt], …) providing the name of the field.
  */
+@Suppress("TooManyFunctions")
 interface QueryRow {
   /**
    * Returns a string value for the provided field name.
