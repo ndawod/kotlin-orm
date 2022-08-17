@@ -62,7 +62,7 @@ abstract class BaseDatabase constructor(
     get() {
       var connectionSourceLocked = connectionSourceInternal
 
-      if (null == connectionSourceLocked || connectionSourceLocked.isDead()) {
+      if (null == connectionSourceLocked || !connectionSourceLocked.isOpen("")) {
         connectionSourceInternal?.closeQuietly()
         connectionSourceInternal = null
         connectionSourceLocked = initializeConnectionSource()
@@ -284,8 +284,6 @@ abstract class BaseDatabase constructor(
 
   @Throws(java.sql.SQLException::class)
   abstract fun initializeConnectionSource(): ConnectionSource
-
-  private fun ConnectionSource.isDead(): Boolean = !connectionSource.isOpen("")
 
   companion object {
     /**
