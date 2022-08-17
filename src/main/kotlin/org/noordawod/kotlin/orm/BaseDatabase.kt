@@ -31,6 +31,12 @@ import com.j256.ormlite.support.DatabaseConnection
 import org.noordawod.kotlin.orm.config.DatabaseConfiguration
 
 /**
+ * A signature of a database connection handler obtained via [BaseDatabase.readOnlyConnection]
+ * or [BaseDatabase.readWriteConnection].
+ */
+typealias DatabaseConnectionBlock<R> = (ConnectionSource) -> R
+
+/**
  * A lightweight wrapper around JDBC's database driver.
  *
  * @param config database configuration to use
@@ -114,6 +120,40 @@ abstract class BaseDatabase constructor(
    */
   fun showDatabaseDrivers() {
     showDatabaseDrivers(uri)
+  }
+
+  /**
+   * Creates a new [ConnectionSource] to this [database][BaseDatabase] and executes [block]
+   * with the successfully created source. After [block] is finished, with or without an error,
+   * the connection is released.
+   *
+   * @param block the code block to run
+   */
+  @Throws(java.sql.SQLException::class)
+  fun <R> readOnlyConnection(block: DatabaseConnectionBlock<R>): R {
+    val connection: DatabaseConnection = connectionSource.getReadOnlyConnection("")
+    try {
+      return block(connectionSource)
+    } finally {
+      connectionSource.releaseConnection(connection)
+    }
+  }
+
+  /**
+   * Creates a new [ConnectionSource] to this [database][BaseDatabase] and executes [block]
+   * with the successfully created source. After [block] is finished, with or without an error,
+   * the connection is released.
+   *
+   * @param block the code block to run
+   */
+  @Throws(java.sql.SQLException::class)
+  fun <R> readWriteConnection(block: DatabaseConnectionBlock<R>): R {
+    val connection: DatabaseConnection = connectionSource.getReadWriteConnection("")
+    try {
+      return block(connectionSource)
+    } finally {
+      connectionSource.releaseConnection(connection)
+    }
   }
 
   /**
