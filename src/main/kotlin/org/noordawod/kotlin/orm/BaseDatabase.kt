@@ -29,6 +29,7 @@ import com.j256.ormlite.misc.TransactionManager
 import com.j256.ormlite.support.ConnectionSource
 import com.j256.ormlite.support.DatabaseConnection
 import org.noordawod.kotlin.orm.config.DatabaseConfiguration
+import java.sql.SQLTransientConnectionException
 
 /**
  * A signature of a database connection handler obtained via [BaseDatabase.readOnlyConnection]
@@ -53,6 +54,7 @@ abstract class BaseDatabase constructor(
   val maxFree: Int = DEFAULT_MAX_FREE,
   val healthCheckMillis: Long = DEFAULT_HEALTH_CHECK_INTERVAL
 ) {
+  private val connectionSourceLock = Object()
   private var connectionSourceInternal: ConnectionSource? = null
 
   /**
@@ -60,13 +62,17 @@ abstract class BaseDatabase constructor(
    */
   val connectionSource: ConnectionSource
     get() {
+      synchronized(connectionSourceLock) {
+        return connectionSourceImpl
+      }
+    }
+
+  private val connectionSourceImpl: ConnectionSource
+    get() {
       var connectionSourceLocked = connectionSourceInternal
 
       if (null == connectionSourceLocked || !connectionSourceLocked.isOpen("")) {
-        connectionSourceInternal?.closeQuietly()
-        connectionSourceInternal = null
-        connectionSourceLocked = initializeConnectionSource()
-        connectionSourceInternal = connectionSourceLocked
+        connectionSourceLocked = reconnect()
       }
 
       return connectionSourceLocked
@@ -141,14 +147,11 @@ abstract class BaseDatabase constructor(
    * @param block the code block to run
    */
   @Throws(java.sql.SQLException::class)
-  fun <R> readOnlyConnection(block: DatabaseConnectionBlock<R>): R {
-    val databaseConnection = connectionSource.getReadOnlyConnection("")
-    try {
-      return block(connectionSource, databaseConnection)
-    } finally {
-      connectionSource.releaseConnection(databaseConnection)
-    }
-  }
+  fun <R> readOnlyConnection(block: DatabaseConnectionBlock<R>): R =
+    runDatabaseConnectionBlock(
+      connectionSource.getReadOnlyConnection(""),
+      block
+    )
 
   /**
    * Creates a new [ConnectionSource] to this [database][BaseDatabase] and executes [block]
@@ -158,13 +161,43 @@ abstract class BaseDatabase constructor(
    * @param block the code block to run
    */
   @Throws(java.sql.SQLException::class)
-  fun <R> readWriteConnection(block: DatabaseConnectionBlock<R>): R {
-    val databaseConnection = connectionSource.getReadWriteConnection("")
-    try {
-      return block(connectionSource, databaseConnection)
-    } finally {
-      connectionSource.releaseConnection(databaseConnection)
-    }
+  fun <R> readWriteConnection(block: DatabaseConnectionBlock<R>): R =
+    runDatabaseConnectionBlock(
+      connectionSource.getReadWriteConnection(""),
+      block
+    )
+
+  private fun <R> runDatabaseConnectionBlock(
+    databaseConnection: DatabaseConnection,
+    block: DatabaseConnectionBlock<R>
+  ): R {
+    var shouldReconnectAndRetry = false
+    var error: Throwable?
+
+    do {
+      try {
+        return block(connectionSource, databaseConnection)
+      } catch (e: java.sql.SQLException) {
+        error = e
+        shouldReconnectAndRetry = !shouldReconnectAndRetry
+        if (shouldReconnectAndRetry) {
+          reconnect()
+        }
+      } finally {
+        connectionSource.releaseConnection(databaseConnection)
+      }
+    } while (shouldReconnectAndRetry)
+
+    throw error ?: SQLTransientConnectionException()
+  }
+
+  private fun reconnect(): ConnectionSource {
+    shutdown()
+
+    val connectionSourceLocked = initializeConnectionSource()
+    connectionSourceInternal = connectionSourceLocked
+
+    return connectionSourceLocked
   }
 
   /**
@@ -192,7 +225,8 @@ abstract class BaseDatabase constructor(
    */
   @Throws(java.io.IOException::class)
   fun shutdown() {
-    connectionSource.close()
+    connectionSourceInternal?.closeQuietly()
+    connectionSourceInternal = null
   }
 
   /**
@@ -200,6 +234,7 @@ abstract class BaseDatabase constructor(
    */
   fun escape(value: String, wrapper: Char?): String {
     val allow = fieldWrapperChar != wrapper
+
     return escape(value, wrapper, allow, allow)
   }
 
@@ -273,12 +308,15 @@ abstract class BaseDatabase constructor(
    */
   fun like(word: String, start: Boolean, end: Boolean): String {
     var likeQuery = escape(word, null)
+
     if (start) {
       likeQuery = "%$likeQuery"
     }
+
     if (end) {
       likeQuery = "$likeQuery%"
     }
+
     return likeQuery
   }
 
