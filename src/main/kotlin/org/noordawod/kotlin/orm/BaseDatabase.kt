@@ -67,6 +67,15 @@ abstract class BaseDatabase constructor(
       }
     }
 
+  /**
+   * Determines whether to automatically create a transactional connection if a
+   * [read-write connection][readWriteConnection] is requested.
+   *
+   * By default, you need to call [transactional] in order to create a transactional read-write
+   * connection.
+   */
+  var autoTransactional: Boolean = false
+
   private val connectionSourceImpl: ConnectionSource
     get() {
       var connectionSourceLocked = connectionSourceInternal
@@ -173,7 +182,11 @@ abstract class BaseDatabase constructor(
    */
   @Throws(java.sql.SQLException::class)
   fun <R> readWriteConnection(block: DatabaseConnectionBlock<R>): R =
-    runDatabaseConnectionBlock(connectionSource, true, block)
+    if (autoTransactional) {
+      transactional(block)
+    } else {
+      runDatabaseConnectionBlock(connectionSource, true, block)
+    }
 
   /**
    * Creates a new read-write [DatabaseConnection] to this [database][BaseDatabase] and

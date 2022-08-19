@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+2.1.6 (August 19, 2022)
+    Add a new property to return a transactional connection automatically.
+
 2.1.5 (August 19, 2022)
     Fix a reentrant situation where connections were closed eagerly.
 
