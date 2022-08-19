@@ -76,6 +76,14 @@ abstract class BaseDatabase constructor(
    */
   var autoTransactional: Boolean = false
 
+  /**
+   * Determines whether to automatically reuse the same database connection regardless how many
+   * calls are made to [readOnlyConnection] / [readWriteConnection] within the same session.
+   *
+   * By default, this is engaged (true) and it's advised that you don't change it.
+   */
+  var autoReentrant: Boolean = true
+
   private val connectionSourceImpl: ConnectionSource
     get() {
       var connectionSourceLocked = connectionSourceInternal
@@ -167,7 +175,7 @@ abstract class BaseDatabase constructor(
    * After [block] is finished, with or without an error, the connection is released.
    */
   @Throws(java.sql.SQLException::class)
-  private fun <R> readOnlyLock(
+  fun <R> readOnlyLock(
     tableName: String,
     block: DatabaseConnectionBlock<R>
   ): R = callWithLock(tableName, false, block)
@@ -195,7 +203,7 @@ abstract class BaseDatabase constructor(
    * After [block] is finished, with or without an error, the connection is released.
    */
   @Throws(java.sql.SQLException::class)
-  private fun <R> readWriteLock(
+  fun <R> readWriteLock(
     tableName: String,
     block: DatabaseConnectionBlock<R>
   ): R = callWithLock(tableName, true, block)
@@ -342,25 +350,36 @@ abstract class BaseDatabase constructor(
   ): R {
     var shouldReconnectAndRetry = false
     var error: Throwable?
+    val autoReentrantLocked = autoReentrant
     val databaseConnection = if (writeLock) {
       connectionSource.getReadWriteConnection("")
     } else {
       connectionSource.getReadOnlyConnection("")
     }
 
-    do {
-      try {
-        return block(connectionSource, databaseConnection)
-      } catch (e: java.sql.SQLException) {
-        error = e
-        shouldReconnectAndRetry = !shouldReconnectAndRetry
-        if (shouldReconnectAndRetry) {
-          reconnect()
-        }
-      } finally {
-        connectionSource.releaseConnection(databaseConnection)
+    try {
+      if (autoReentrantLocked && writeLock) {
+        connectionSource.saveSpecialConnection(databaseConnection)
       }
-    } while (shouldReconnectAndRetry)
+
+      do {
+        try {
+          return block(connectionSource, databaseConnection)
+        } catch (e: java.sql.SQLException) {
+          error = e
+          shouldReconnectAndRetry = !shouldReconnectAndRetry
+          if (shouldReconnectAndRetry) {
+            reconnect()
+          }
+        } finally {
+          connectionSource.releaseConnection(databaseConnection)
+        }
+      } while (shouldReconnectAndRetry)
+    } finally {
+      if (autoReentrantLocked && writeLock) {
+        connectionSource.clearSpecialConnection(databaseConnection)
+      }
+    }
 
     throw error ?: SQLTransientConnectionException()
   }
