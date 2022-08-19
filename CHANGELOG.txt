@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+2.1.5 (August 19, 2022)
+    Fix a reentrant situation where connections were closed eagerly.
+
 2.1.4 (August 19, 2022)
     Allows the `BaseDatabase` to detect database connection problems and retry the connection.
 

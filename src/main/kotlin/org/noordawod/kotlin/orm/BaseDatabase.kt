@@ -140,84 +140,82 @@ abstract class BaseDatabase constructor(
   }
 
   /**
-   * Creates a new [ConnectionSource] to this [database][BaseDatabase] and executes [block]
-   * with the successfully created source. After [block] is finished, with or without an error,
-   * the connection is released.
+   * Creates a new read-only [DatabaseConnection] to this [database][BaseDatabase] and
+   * executes [block] with that connection.
+   *
+   * After [block] is finished, with or without an error, the connection is released.
    *
    * @param block the code block to run
    */
   @Throws(java.sql.SQLException::class)
   fun <R> readOnlyConnection(block: DatabaseConnectionBlock<R>): R =
-    runDatabaseConnectionBlock(
-      connectionSource.getReadOnlyConnection(""),
-      block
-    )
+    runDatabaseConnectionBlock(connectionSource, false, block)
 
   /**
-   * Creates a new [ConnectionSource] to this [database][BaseDatabase] and executes [block]
-   * with the successfully created source. After [block] is finished, with or without an error,
-   * the connection is released.
+   * Creates a new read-only [DatabaseConnection] to this [database][BaseDatabase] and
+   * executes [block] with that connection after locking [tableName] for read operations.
+   *
+   * After [block] is finished, with or without an error, the connection is released.
+   */
+  @Throws(java.sql.SQLException::class)
+  private fun <R> readOnlyLock(
+    tableName: String,
+    block: DatabaseConnectionBlock<R>
+  ): R = callWithLock(tableName, false, block)
+
+  /**
+   * Creates a new read-write [DatabaseConnection] to this [database][BaseDatabase] and
+   * executes [block] with that connection.
+   *
+   * After [block] is finished, with or without an error, the connection is released.
    *
    * @param block the code block to run
    */
   @Throws(java.sql.SQLException::class)
   fun <R> readWriteConnection(block: DatabaseConnectionBlock<R>): R =
-    runDatabaseConnectionBlock(
-      connectionSource.getReadWriteConnection(""),
-      block
-    )
+    runDatabaseConnectionBlock(connectionSource, true, block)
 
-  private fun <R> runDatabaseConnectionBlock(
-    databaseConnection: DatabaseConnection,
+  /**
+   * Creates a new read-write [DatabaseConnection] to this [database][BaseDatabase] and
+   * executes [block] with that connection after locking [tableName] for read-write operations.
+   *
+   * After [block] is finished, with or without an error, the connection is released.
+   */
+  @Throws(java.sql.SQLException::class)
+  private fun <R> readWriteLock(
+    tableName: String,
     block: DatabaseConnectionBlock<R>
-  ): R {
-    var shouldReconnectAndRetry = false
-    var error: Throwable?
+  ): R = callWithLock(tableName, true, block)
 
-    do {
+  /**
+   * Creates a new transactional [DatabaseConnection] to this [database][BaseDatabase] and
+   * executes [block] with that connection. If an error is thrown during execution of [block],
+   * then the transaction is rolled back and not committed to the database.
+   *
+   * After [block] is finished, with or without an error, the connection is released.
+   *
+   * Note: Internally, the database connection is read-write always so the user operations may
+   * modify the database freely.
+   */
+  @Throws(java.sql.SQLException::class)
+  fun <R> transactional(block: DatabaseConnectionBlock<R>): R =
+    runDatabaseConnectionBlock(connectionSource, true) { databaseConnection ->
+      var saved = false
       try {
-        return block(connectionSource, databaseConnection)
-      } catch (e: java.sql.SQLException) {
-        error = e
-        shouldReconnectAndRetry = !shouldReconnectAndRetry
-        if (shouldReconnectAndRetry) {
-          reconnect()
+        saved = saveSpecialConnection(databaseConnection)
+        TransactionManager.callInTransaction(
+          databaseConnection,
+          saved,
+          databaseType,
+        ) {
+          block(connectionSource, databaseConnection)
         }
       } finally {
-        connectionSource.releaseConnection(databaseConnection)
+        if (saved) {
+          clearSpecialConnection(databaseConnection)
+        }
       }
-    } while (shouldReconnectAndRetry)
-
-    throw error ?: SQLTransientConnectionException()
-  }
-
-  private fun reconnect(): ConnectionSource {
-    shutdown()
-
-    val connectionSourceLocked = initializeConnectionSource()
-    connectionSourceInternal = connectionSourceLocked
-
-    return connectionSourceLocked
-  }
-
-  /**
-   * Performs all database actions executed in the callback inside a transaction. If the
-   * callback throws any exceptions, null will be returned.
-   */
-  @Throws(java.sql.SQLException::class)
-  fun <R> transactional(callable: java.util.concurrent.Callable<R>): R =
-    transactional(connectionSource, callable)
-
-  /**
-   * Performs all database actions executed in the callback while the specified table is
-   * locked. If the callback throws any exceptions, NULL will be returned.
-   */
-  @Throws(java.sql.SQLException::class)
-  fun <R> callWithLock(
-    tableName: String,
-    writeLock: Boolean,
-    callable: java.util.concurrent.Callable<R>,
-  ): R = callWithLock(connectionSource, tableName, writeLock, callable)
+    }
 
   /**
    * Shuts down the database pool of connections. Any subsequent attempt to use the pool
@@ -323,6 +321,78 @@ abstract class BaseDatabase constructor(
   @Throws(java.sql.SQLException::class)
   abstract fun initializeConnectionSource(): ConnectionSource
 
+  @Throws(java.sql.SQLException::class)
+  private fun <R> runDatabaseConnectionBlock(
+    connectionSource: ConnectionSource,
+    writeLock: Boolean,
+    block: DatabaseConnectionBlock<R>
+  ): R {
+    var shouldReconnectAndRetry = false
+    var error: Throwable?
+    val databaseConnection = if (writeLock) {
+      connectionSource.getReadWriteConnection("")
+    } else {
+      connectionSource.getReadOnlyConnection("")
+    }
+
+    do {
+      try {
+        return block(connectionSource, databaseConnection)
+      } catch (e: java.sql.SQLException) {
+        error = e
+        shouldReconnectAndRetry = !shouldReconnectAndRetry
+        if (shouldReconnectAndRetry) {
+          reconnect()
+        }
+      } finally {
+        connectionSource.releaseConnection(databaseConnection)
+      }
+    } while (shouldReconnectAndRetry)
+
+    throw error ?: SQLTransientConnectionException()
+  }
+
+  @Throws(java.sql.SQLException::class)
+  private fun <R> callWithLock(
+    tableName: String,
+    writeLock: Boolean,
+    block: DatabaseConnectionBlock<R>
+  ): R = runDatabaseConnectionBlock(connectionSource, writeLock) { databaseConnection ->
+    try {
+      databaseConnection.isAutoCommit = false
+
+      val lockType = if (writeLock) "WRITE" else "READ"
+      databaseConnection.executeStatement(
+        "LOCK TABLES ${escape(tableName, fieldWrapperChar)} $lockType",
+        DatabaseConnection.DEFAULT_RESULT_FLAGS
+      )
+      val result = block(this, databaseConnection)
+
+      databaseConnection.commit(null)
+
+      result
+    } finally {
+      // Try to restore if we are in auto-commit mode.
+      databaseConnection.executeStatement(
+        "UNLOCK TABLES",
+        DatabaseConnection.DEFAULT_RESULT_FLAGS
+      )
+      databaseConnection.isAutoCommit = true
+
+      clearSpecialConnection(databaseConnection)
+    }
+  }
+
+  @Throws(java.sql.SQLException::class)
+  private fun reconnect(): ConnectionSource {
+    shutdown()
+
+    val connectionSourceLocked = initializeConnectionSource()
+    connectionSourceInternal = connectionSourceLocked
+
+    return connectionSourceLocked
+  }
+
   companion object {
     /**
      * Initial capacity of arrays.
@@ -397,59 +467,6 @@ abstract class BaseDatabase constructor(
           println("  Version: " + driver.majorVersion + "." + driver.minorVersion)
           println("  Accepts URL? $acceptsURL")
         }
-      }
-    }
-
-    /**
-     * Performs all database actions executed in the callback inside a transaction. If the
-     * callback throws any exceptions, null will be returned.
-     */
-    @Throws(java.sql.SQLException::class)
-    fun <R> transactional(
-      connection: ConnectionSource,
-      callable: java.util.concurrent.Callable<R>,
-    ): R = TransactionManager.callInTransaction(connection, callable)
-
-    /**
-     * Performs all database actions executed in the callback while the specified table is
-     * locked. If the callback throws any exceptions, NULL will be returned.
-     */
-    @Suppress("KotlinConstantConditions")
-    @Throws(java.sql.SQLException::class)
-    fun <R> callWithLock(
-      connection: ConnectionSource,
-      tableName: String,
-      writeLock: Boolean,
-      callable: java.util.concurrent.Callable<R>,
-    ): R {
-      val writeConnection = connection.getReadWriteConnection(tableName)
-
-      return try {
-        writeConnection.isAutoCommit = false
-        val lockType = if (writeLock) "WRITE" else "READ"
-        writeConnection.executeStatement(
-          "LOCK TABLES `$tableName` $lockType",
-          DatabaseConnection.DEFAULT_RESULT_FLAGS
-        )
-        try {
-          val result = callable.call()
-          writeConnection.commit(null)
-          result
-        } catch (@Suppress("TooGenericExceptionCaught") e: Throwable) {
-          @Suppress("KotlinConstantConditions")
-          throw java.sql.SQLException("Transaction callable threw non-SQL exception", e)
-        }
-      } finally {
-        // Try to restore if we are in auto-commit mode.
-        writeConnection.executeStatement(
-          "UNLOCK TABLES",
-          DatabaseConnection.DEFAULT_RESULT_FLAGS
-        )
-        writeConnection.isAutoCommit = true
-
-        // We should clear aggressively.
-        connection.clearSpecialConnection(writeConnection)
-        connection.releaseConnection(writeConnection)
       }
     }
   }
