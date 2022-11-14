@@ -90,7 +90,7 @@ complexity:
     active: true
     threshold: 15
     includeStaticDeclarations: false
-  ComplexMethod:
+  CyclomaticComplexMethod:
     active: true
     threshold: 15
     ignoreSingleWhenExpression: false
@@ -139,7 +139,7 @@ complexity:
     excludeStringsWithLessThan5Characters: true
     ignoreStringsRegex: '$^'
   TooManyFunctions:
-    active: true
+    active: false
     excludes:
       - "**/test/**"
       - "**/androidTest/**"
@@ -267,6 +267,18 @@ exceptions:
      - Throwable
      - RuntimeException
 
+libraries:
+  active: true
+  ForbiddenPublicDataClass:
+    active: false
+    ignorePackages:
+      - "*.internal"
+      - "*.internal.*"
+  LibraryEntitiesShouldNotBePublic:
+    active: false
+  LibraryCodeMustSpecifyReturnType:
+    active: true
+
 formatting:
   active: true
   android: false
@@ -295,10 +307,21 @@ formatting:
     active: true
     autoCorrect: true
     indentSize: 2
-    continuationIndentSize: 2
+  FunctionReturnTypeSpacing:
+    active: true
+  FunctionStartOfBodySpacing:
+    active: true
   MaximumLineLength:
     active: true
     maxLineLength: 100
+  NullableTypeSpacing:
+    active: true
+  ParameterListSpacing:
+    active: true
+  SpacingBetweenFunctionNameAndOpeningParenthesis:
+    active: true
+  TypeParameterListSpacing:
+    active: true
   ModifierOrdering:
     active: true
     autoCorrect: true
@@ -346,7 +369,6 @@ formatting:
   ParameterListWrapping:
     active: true
     autoCorrect: true
-    indentSize: 2
   SpacingAroundColon:
     active: true
     autoCorrect: true
@@ -546,6 +568,8 @@ performance:
       - "**/*.Test.kt"
       - "**/*.Spec.kt"
       - "**/*.Spek.kt"
+  UnnecessaryPartOfBinaryExpression:
+    active: true
   UnnecessaryTemporaryInstantiation:
     active: true
 
@@ -553,8 +577,6 @@ potential-bugs:
   active: true
   Deprecation:
     active: false
-  DuplicateCaseInWhenExpression:
-    active: true
   EqualsAlwaysReturnsTrueOrFalse:
     active: true
   EqualsWithHashCodeExist:
@@ -583,11 +605,9 @@ potential-bugs:
     ignoreOnClassesPattern: ""
   MapGetWithNotNullAssertionOperator:
     active: true
-  MissingWhenCase:
-    active: true
-  RedundantElseInWhen:
-    active: true
   UnconditionalJumpStatementInLoop:
+    active: true
+  UnnecessaryNotNullCheck:
     active: true
   UnreachableCode:
     active: true
@@ -602,11 +622,14 @@ potential-bugs:
 
 style:
   active: true
+  AlsoCouldBeApply:
+    active: true
   CollapsibleIfStatements:
     active: true
   DataClassContainsFunctions:
     active: true
-    conversionFunctionPrefix: 'to'
+    conversionFunctionPrefix:
+      - "to"
   DataClassShouldBeImmutable:
     active: true
   EqualsNullCall:
@@ -634,11 +657,6 @@ style:
   ForbiddenMethodCall:
     active: false
 #    methods:
-  ForbiddenPublicDataClass:
-    active: false
-    ignorePackages:
-      - "*.internal"
-      - "*.internal.*"
   ForbiddenVoid:
     active: true
     ignoreOverridden: false
@@ -646,11 +664,10 @@ style:
   FunctionOnlyReturningConstant:
     active: true
     ignoreOverridableFunction: true
-    excludedFunctions: 'describeContents'
+    excludedFunctions:
+      - "describeContents"
     ignoreAnnotated:
       - "dagger.Provides"
-  LibraryCodeMustSpecifyReturnType:
-    active: true
   LoopWithTooManyJumpStatements:
     active: true
     maxJumpCount: 1
@@ -688,6 +705,11 @@ style:
     active: true
   ModifierOrder:
     active: true
+  MultilineLambdaItParameter:
+    active: true
+  MultilineRawStringIndentation:
+    active: true
+    indentSize: 2
   NestedClassesVisibility:
     active: true
   NewLineAtEndOfFile:
@@ -711,7 +733,8 @@ style:
   ReturnCount:
     active: true
     max: 3
-    excludedFunctions: "equals"
+    excludedFunctions:
+      - "equals"
     excludeLabeled: true
     excludeReturnFromLambda: true
     excludeGuardClauses: true
@@ -725,6 +748,8 @@ style:
     active: true
     max: 3
   TrailingWhitespace:
+    active: true
+  TrimMultilineRawString:
     active: true
   UnderscoresInNumericLiterals:
     active: true
@@ -763,6 +788,10 @@ style:
   UseIfInsteadOfWhen:
     active: false
   UseRequire:
+    active: true
+  UseRequireNotNull:
+    active: true
+  UseSumOfInsteadOfFlatMapSize:
     active: true
   UselessCallOnNotNull:
     active: true

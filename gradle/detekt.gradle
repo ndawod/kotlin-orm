@@ -35,6 +35,18 @@ detekt {
 }
 
 dependencies {
+    detektPlugins "io.gitlab.arturbosch.detekt:detekt-rules:${versions.detekt}"
+    detektPlugins "io.gitlab.arturbosch.detekt:detekt-rules-complexity:${versions.detekt}"
+    detektPlugins "io.gitlab.arturbosch.detekt:detekt-rules-coroutines:${versions.detekt}"
+    detektPlugins "io.gitlab.arturbosch.detekt:detekt-rules-documentation:${versions.detekt}"
+    detektPlugins "io.gitlab.arturbosch.detekt:detekt-rules-empty:${versions.detekt}"
+    detektPlugins "io.gitlab.arturbosch.detekt:detekt-rules-errorprone:${versions.detekt}"
+    detektPlugins "io.gitlab.arturbosch.detekt:detekt-rules-exceptions:${versions.detekt}"
+    detektPlugins "io.gitlab.arturbosch.detekt:detekt-rules-libraries:${versions.detekt}"
+    detektPlugins "io.gitlab.arturbosch.detekt:detekt-rules-naming:${versions.detekt}"
+    detektPlugins "io.gitlab.arturbosch.detekt:detekt-rules-performance:${versions.detekt}"
+    detektPlugins "io.gitlab.arturbosch.detekt:detekt-rules-ruleauthors:${versions.detekt}"
+    detektPlugins "io.gitlab.arturbosch.detekt:detekt-rules-style:${versions.detekt}"
     detektPlugins "io.gitlab.arturbosch.detekt:detekt-formatting:${versions.detekt}"
     detekt "io.gitlab.arturbosch.detekt:detekt-cli:${versions.detekt}"
 }

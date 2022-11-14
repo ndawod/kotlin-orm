@@ -342,6 +342,7 @@ abstract class BaseDatabase constructor(
   @Throws(java.sql.SQLException::class)
   abstract fun initializeConnectionSource(): ConnectionSource
 
+  @Suppress("NestedBlockDepth")
   @Throws(java.sql.SQLException::class)
   private fun <R> runDatabaseConnectionBlock(
     connectionSource: ConnectionSource,
