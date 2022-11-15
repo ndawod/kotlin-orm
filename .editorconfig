@@ -1,0 +1,31 @@
+# top-most EditorConfig file.
+root = true
+
+# Unix-style newlines and UTF-8 for all files.
+[*]
+trim_trailing_whitespace = true
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+max_line_length = 100
+indent_size = 4
+indent_style = space
+
+# Keep it the same as value of "formatting.ImportOrdering.layout" in detekt.yml.
+ij_kotlin_imports_layout = *
+
+# 2 space indentation for Kotlin and Java.
+[{*.kt, *.java}]
+indent_size = 2
+
+# 2 space indentation for Yaml.
+[{*.yaml, *.yml}]
+indent_size = 2
+
+# 2 space indentation for Markdown.
+[*.md]
+indent_size = 2
+
+# 2 space indentation for HTML/XML.
+[{*.htm, *.html, *.xml}]
+indent_size = 2

@@ -29,7 +29,6 @@ import com.j256.ormlite.misc.TransactionManager
 import com.j256.ormlite.support.ConnectionSource
 import com.j256.ormlite.support.DatabaseConnection
 import org.noordawod.kotlin.orm.config.DatabaseConfiguration
-import java.sql.SQLTransientConnectionException
 
 /**
  * A signature of a database connection handler obtained via [BaseDatabase.readOnlyConnection]
@@ -382,7 +381,7 @@ abstract class BaseDatabase constructor(
       }
     }
 
-    throw error ?: SQLTransientConnectionException()
+    throw error ?: java.sql.SQLTransientConnectionException()
   }
 
   @Throws(java.sql.SQLException::class)
