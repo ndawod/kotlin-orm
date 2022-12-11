@@ -25,9 +25,9 @@
 
 package org.noordawod.kotlin.orm.extension
 
+import org.noordawod.kotlin.core.security.base62
 import org.noordawod.kotlin.orm.entity.HashValue
 import org.noordawod.kotlin.orm.entity.PublicId
-import org.noordawod.kotlin.security.base62
 
 /**
  * Returns the corresponding [PublicId] for this [HashValue] on success,

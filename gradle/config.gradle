@@ -30,6 +30,6 @@ ext.versions = [
     kotlin_coroutines: '1.6.4',
     kotlin_serialization: '1.4.1',
     uribuilder_tiny: '2.7.1',
-    ndawod_kotlin_core: '3.0.5',
+    ndawod_kotlin_core: '3.1.0',
     ormlite: '6.1'
 ]

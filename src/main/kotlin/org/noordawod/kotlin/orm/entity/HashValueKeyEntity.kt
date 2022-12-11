@@ -25,9 +25,9 @@
 
 package org.noordawod.kotlin.orm.entity
 
+import org.noordawod.kotlin.core.security.ByteArrayStrength
+import org.noordawod.kotlin.core.security.ByteUtils
 import org.noordawod.kotlin.orm.extension.publicIdOrEmpty
-import org.noordawod.kotlin.security.ByteArrayStrength
-import org.noordawod.kotlin.security.ByteUtils
 
 /**
  * Generic top-level class for all entities having a [HashValue].
