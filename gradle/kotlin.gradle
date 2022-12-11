@@ -25,14 +25,10 @@ apply from: "$rootDir/gradle/config.gradle"
 
 apply plugin: 'kotlin'
 
-compileKotlin {
-    // noinspection GrUnresolvedAccess
-    kotlinOptions.jvmTarget = versions.jdk
-}
-
-compileTestKotlin {
-    // noinspection GrUnresolvedAccess
-    kotlinOptions.jvmTarget = versions.jdk
+kotlin {
+    jvmToolchain {
+        languageVersion.set(JavaLanguageVersion.of("${versions.jdk}".toInteger()))
+    }
 }
 
 dependencies {

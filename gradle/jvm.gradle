@@ -27,9 +27,6 @@ apply plugin: 'java'
 apply plugin: 'java-library'
 apply plugin: 'maven-publish'
 
-sourceCompatibility = versions.jdk
-targetCompatibility = versions.jdk
-
 javadoc {
     // noinspection GroovyAssignabilityCheck
     options {
@@ -39,6 +36,9 @@ javadoc {
 }
 
 java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of("${versions.jdk}".toInteger()))
+    }
     withJavadocJar()
     withSourcesJar()
 }
@@ -56,7 +56,7 @@ project.afterEvaluate {
 }
 
 dependencies {
-    implementation "javax.xml.bind:jaxb-api:${versions.java_ee}"
-    implementation "com.sun.xml.bind:jaxb-core:${versions.java_ee}"
-    implementation "com.sun.xml.bind:jaxb-impl:${versions.java_ee}"
+    implementation 'javax.xml.bind:jaxb-api:2.3.0'
+    implementation 'com.sun.xml.bind:jaxb-core:2.3.0'
+    implementation 'com.sun.xml.bind:jaxb-impl:2.3.0'
 }

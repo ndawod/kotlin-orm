@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+3.0.0 (December 10, 2022)
+    Introduce a migration class, upgrade to latest 'kotlin-core' module.
+
 2.2.0 (November 14, 2022)
     Bump up dependencies versions.
 
