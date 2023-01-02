@@ -21,10 +21,16 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-@file:Suppress("unused", "MagicNumber")
+@file:Suppress(
+  "unused",
+  "MagicNumber",
+  "TooManyFunctions",
+  "CyclomaticComplexMethod"
+)
 
 package org.noordawod.kotlin.orm.migration
 
+import org.noordawod.kotlin.core.Constants
 import org.noordawod.kotlin.core.extension.secondsSinceEpoch
 import org.noordawod.kotlin.orm.query.QueryCommands
 import org.noordawod.kotlin.orm.query.QueryResults
@@ -37,19 +43,26 @@ import org.noordawod.kotlin.orm.query.QueryResults
  * @param basePath base path to where the Migrator will find migration plans
  * @param commentPrefixes list of prefixes used for commenting migration plans
  */
-@Suppress("TooManyFunctions")
 class Migrator constructor(
   private val connection: Connection,
   private val tableName: String = TABLE_NAME,
   private val basePath: java.io.File,
   private val commentPrefixes: Collection<String> = DEFAULT_COMMENT_PREFIXES
 ) {
+  private val escapedTableName = connection.escapeProperty(tableName)
+  private val escapedIdProperty = connection.escapeProperty(MigrationField.ID)
+  private val escapedDescriptionProperty = connection.escapeProperty(MigrationField.DESCRIPTION)
+  private val escapedFileProperty = connection.escapeProperty(MigrationField.FILE)
+  private val escapedCreatedProperty = connection.escapeProperty(MigrationField.CREATED)
+  private val asciiCollation = "CHARACTER SET ascii COLLATE ascii_general_ci"
+
   private val isLocked: Boolean
     get() {
       try {
         return 0L != connection.queryForLong(
-          "SELECT COUNT(`${MigrationField.ID}`) AS count FROM `$tableName` " +
-            "WHERE `${MigrationField.CREATED}` IS NULL"
+          "SELECT COUNT($escapedIdProperty) AS count " +
+            "FROM $escapedTableName " +
+            "WHERE $escapedCreatedProperty IS NULL"
         )
       } catch (ignored: java.sql.SQLException) {
         // NO-OP.
@@ -58,7 +71,9 @@ class Migrator constructor(
     }
 
   /**
-   * Performs the migration steps.
+   * Performs the specified migration steps.
+   *
+   * @param migrations list of migration to perform
    */
   @Suppress("LongMethod", "NestedBlockDepth")
   @Throws(java.sql.SQLException::class, java.io.IOException::class)
@@ -77,16 +92,19 @@ class Migrator constructor(
     val migrationsStart = java.util.Date()
     println("- Started: $migrationsStart")
 
+    // Keep track of executed commands in this migration.
+    val executedCommands = QueryCommands(Constants.MEDIUM_BLOCK_SIZE)
+
     // Go over all migrations and run them one after the other.
     for (migration in migrations) {
-      // Check if the migrations' table is locked.
-      if (isLocked) {
-        throw java.sql.SQLException("Migration table is locked, is another process active?")
-      }
-
       // Get the next migration plan and check if it's already executed.
       if (migration.version <= nextVersion) {
         continue
+      }
+
+      // Check if the migrations' table is locked.
+      if (isLocked) {
+        throw java.sql.SQLException("Migration table is locked, is another process active?")
       }
 
       // Migration plans must be continuous.
@@ -105,62 +123,87 @@ class Migrator constructor(
         println("- Running migrations:")
       }
 
+      var preMigrationRan = false
+      var migrationRan = false
+      var migrationError: java.sql.SQLException? = null
+
       // Keep track of timing for this migration.
       val migrationStart = java.util.Date()
 
-      val executedCommands = QueryCommands(128)
-
-      // Perform the migration while catching any errors.
       try {
         // Each migration runs in its own transaction so in case it fails, we can roll back.
-        connection.execute("SET autocommit = 0")
+        connection.execute("SET autocommit=0")
         connection.execute("START TRANSACTION")
 
-        // Kick it!
-        performMigration(executedCommands, migration, migrationStart, nextVersion)
+        lockMigration(migration)
 
-        // All seems normal, commit the result.
+        print("  v$nextVersion: ${migration.description}:")
+
+        performPreMigration(migration)
+        preMigrationRan = true
+
+        performMigration(migration, nextVersion, executedCommands)
+        migrationRan = true
+
+        performPostMigration(migration)
+
         performCommitOrRollback("COMMIT")
+
+        unlockMigration(migration)
       } catch (error: java.sql.SQLException) {
+        migrationError = error
         // An SQL error has occurred, we need to roll back all changes...
         performCommitOrRollback("ROLLBACK")
-
-        println("")
-        println("Unexpected error while running migration v$nextVersion.")
-
-        // Report all executed commands in this migration.
-        if (executedCommands.isNotEmpty()) {
-          println(
-            "These migration commands were already executed – " +
-              "the last one probably caused the error:"
-          )
-          println("")
-          for (command in executedCommands) {
-            println("> $command")
-          }
-        }
-
-        println("")
-
-        throw error
       } finally {
         executedCommands.clear()
         val migrationEnd = java.util.Date()
+        println("  - Started: $migrationStart")
         println("  - Ended: $migrationEnd")
-        println("  - Duration: ${migrationEnd.time - migrationStart.time} milliseconds")
+        val duration = migrationEnd.time - migrationStart.time
+        if (1 < duration) {
+          println("  - Duration: $duration milliseconds")
+        }
+      }
+
+      if (null != migrationError) {
+        println()
+
+        when {
+          !preMigrationRan -> println("Unexpected error while running pre-migration hook.")
+
+          !migrationRan -> {
+            println("Unexpected error while running migration.")
+
+            // Report all executed commands in this migration.
+            if (executedCommands.isNotEmpty()) {
+              println()
+              println(
+                "These migration commands were already executed – " +
+                  "the last one probably caused the error:"
+              )
+              println()
+              for (command in executedCommands) {
+                println("> $command")
+              }
+            }
+          }
+
+          else -> println("Unexpected error while running post-migration hook.")
+        }
+
+        println()
+
+        throw migrationError
       }
     }
 
     val migrationsEnd = java.util.Date()
+    val duration = migrationsEnd.time - migrationsStart.time
 
     println("- Ended: $migrationsEnd")
-    println("- Duration: ")
-    println("")
-    println(
-      "Database Migration finished in " +
-        "${migrationsEnd.time - migrationsStart.time} milliseconds."
-    )
-    println("")
+    println()
+    println("Database Migration finished in $duration milliseconds.")
+    println()
   }
 
   /**
@@ -170,9 +213,11 @@ class Migrator constructor(
   fun version(): Int {
     try {
       return connection.queryForLong(
-        "SELECT MAX(`${MigrationField.ID}`) AS max_version FROM `$tableName`"
+        "SELECT MAX($escapedIdProperty) AS max_version " +
+          "FROM $escapedTableName"
       ).toInt()
     } catch (ignored: java.sql.SQLException) {
+      // NO-OP.
     }
     return 0
   }
@@ -181,23 +226,31 @@ class Migrator constructor(
     try {
       connection.execute(command)
     } catch (ignored: java.sql.SQLException) {
-      println("")
+      println()
       println("Unhandled exception issuing a $command to finalize the migration plan.")
     }
   }
 
   @Throws(java.sql.SQLException::class)
-  private fun performMigration(
-    executedCommands: QueryCommands,
-    migration: Migration,
-    migrationStart: java.util.Date,
-    nextVersion: Int
-  ) {
-    // Lock this migration.
-    lockMigration(migration)
+  private fun performPreMigration(migration: Migration) {
+    println("    - Running pre-migration code…")
+    migration.executePre(connection)
+  }
 
+  @Throws(java.sql.SQLException::class)
+  private fun performPostMigration(migration: Migration) {
+    println("    - Running post-migration code…")
+    migration.executePost(connection)
+  }
+
+  @Throws(java.sql.SQLException::class)
+  private fun performMigration(
+    migration: Migration,
+    nextVersion: Int,
+    executedCommands: QueryCommands
+  ) {
     // Debugging.
-    print("  v$nextVersion [$migrationStart]: ${migration.description}:")
+    print("    - Running migration:")
 
     try {
       // Where the upgrade file resides.
@@ -207,20 +260,18 @@ class Migrator constructor(
       val upgradeCommands = readFile(upgradeFile)
         ?: throw java.sql.SQLException("Migration plan #$nextVersion is empty! ($upgradeFile)")
 
-      // Execute the pre-execution code.
-      migration.executePre(connection)
-
       // Parse the upgrade commands.
       val commands = parseCommands(upgradeCommands)
+      val commandsSizePercentage = commands.size * 100f
 
       // Run the upgrade commands.
-      var progress = 0
+      var progress = 0f
       var percent = 0
       for (command in commands) {
         executedCommands.add(command)
         connection.execute(command)
         progress++
-        val nextPercent = (progress.toFloat() / commands.size.toFloat() * 100f).toInt()
+        val nextPercent = (progress / commandsSizePercentage).toInt()
         if (10 <= nextPercent - percent) {
           percent += 10
           print(" $percent%")
@@ -231,15 +282,13 @@ class Migrator constructor(
       if (100 != percent) {
         print(" 100%")
       }
+
       print(".")
-
-      // Execute the post-execution code.
-      migration.executePost(connection)
-
-      // Release the lock for this migration.
-      unlockMigration(migration)
+    } catch (error: java.sql.SQLException) {
+      println()
+      throw error
     } finally {
-      println("")
+      println()
     }
   }
 
@@ -247,14 +296,14 @@ class Migrator constructor(
   private fun lockMigration(migration: Migration) {
     connection.execute(
       arrayOf(
-        "INSERT INTO `$tableName` (",
-        "`${MigrationField.ID}`,",
-        "`${MigrationField.DESCRIPTION}`,",
-        "`${MigrationField.FILE}`",
+        "INSERT INTO $escapedTableName (",
+        "$escapedIdProperty,",
+        "$escapedDescriptionProperty,",
+        "$escapedFileProperty,",
         ") VALUES (",
         "${migration.version},",
-        "'${connection.escapeValue(migration.description)}',",
-        "'${connection.escapeValue(migration.file)}')"
+        "${connection.escapeValue(migration.description)},",
+        "${connection.escapeValue(migration.file)})"
       ).joinToString(separator = "")
     )
   }
@@ -262,9 +311,10 @@ class Migrator constructor(
   @Throws(java.sql.SQLException::class)
   private fun unlockMigration(migration: Migration) {
     connection.execute(
-      "UPDATE `$tableName` SET " +
-        "`${MigrationField.CREATED}`=${java.util.Date().secondsSinceEpoch()} WHERE " +
-        "`${MigrationField.ID}`=${migration.version}"
+      "UPDATE $escapedTableName SET " +
+        "$escapedCreatedProperty=" +
+        "${java.util.Date().secondsSinceEpoch()} WHERE " +
+        "$escapedIdProperty=${migration.version}"
     )
   }
 
@@ -314,18 +364,18 @@ class Migrator constructor(
   private fun ensureMigrationsTable() {
     try {
       connection.execute(
-        "CREATE TABLE `$tableName` (" +
-          "`${MigrationField.ID}` smallint UNSIGNED NOT NULL PRIMARY KEY," +
-          "`${MigrationField.DESCRIPTION}` tinytext CHARACTER SET ascii NOT NULL," +
-          "`${MigrationField.FILE}` tinytext CHARACTER SET ascii NOT NULL," +
-          "`${MigrationField.CREATED}` int UNSIGNED NULL" +
+        "CREATE TABLE $escapedTableName (" +
+          "$escapedIdProperty smallint UNSIGNED NOT NULL," +
+          "$escapedDescriptionProperty tinytext $asciiCollation NOT NULL," +
+          "$escapedFileProperty tinytext $asciiCollation NOT NULL," +
+          "$escapedCreatedProperty int UNSIGNED NULL," +
+          "PRIMARY KEY ($escapedIdProperty)," +
+          "KEY $escapedCreatedProperty ($escapedCreatedProperty)" +
           ")"
       )
-      connection.execute("ALTER TABLE `$tableName` ADD KEY (`${MigrationField.CREATED}`)")
       println("- Migrations table missing, auto-created...")
     } catch (ignored: java.sql.SQLException) {
       println("- Migrations table exists: $tableName (v${version()})")
-      return
     }
   }
 
@@ -358,11 +408,26 @@ class Migrator constructor(
     fun queryForLong(statement: String): Long
 
     /**
-     * Escape a value so it can be safely used a value in an SQL statement.
+     * Escapes the provided string property (table name, column name, etc.) and
+     * returns the escaped value.
+     *
+     * @param name the property name
+     */
+    fun escapeProperty(name: String): String
+
+    /**
+     * Escapes the provided string value and returns the escaped value.
      *
      * @param value the value to escape
      */
     fun escapeValue(value: String): String
+
+    /**
+     * Escapes the provided string used in a LIKE operation returns the escaped value.
+     *
+     * @param value the value to escape
+     */
+    fun escapeLike(value: String): String
   }
 
   companion object {

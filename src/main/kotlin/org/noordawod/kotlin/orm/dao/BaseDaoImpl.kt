@@ -27,6 +27,7 @@ package org.noordawod.kotlin.orm.dao
 
 import com.j256.ormlite.dao.Dao
 import com.j256.ormlite.support.ConnectionSource
+import org.noordawod.kotlin.core.Constants
 import org.noordawod.kotlin.orm.BaseDatabase
 
 /**
@@ -40,8 +41,9 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
   /**
    * Returns the database name this DAO is currently is attached to.
    */
-  @get:Throws(java.sql.SQLException::class)
-  val catalogName: String? get() = getCatalogName(this)
+  val catalogName: String?
+    @Throws(java.sql.SQLException::class)
+    get() = getCatalogName(this)
 
   /**
    * Queries the database for distinct records having the specified ID equal to the
@@ -60,6 +62,7 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
       builder.limit(limit)
     }
     val result = builder.where().eq(fieldName, id).query()
+
     return if (result.isNullOrEmpty()) null else result
   }
 
@@ -68,12 +71,16 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
    * specified field.
    */
   @Throws(java.sql.SQLException::class)
-  fun queryForId(fieldName: String, id: ID): List<T>? {
+  fun queryForId(
+    fieldName: String,
+    id: ID
+  ): List<T>? {
     val result = queryBuilder()
       .distinct()
       .where()
       .eq(fieldName, id)
       .query()
+
     return if (result.isNullOrEmpty()) null else result
   }
 
@@ -106,6 +113,7 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
       builder.limit(limit)
     }
     val result = builder.where().`in`(fieldName, ids).query()
+
     return if (result.isNullOrEmpty()) null else result
   }
 
@@ -114,12 +122,16 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
    * specified field.
    */
   @Throws(java.sql.SQLException::class)
-  fun queryForIds(fieldName: String, ids: Collection<ID>): List<T>? {
+  fun queryForIds(
+    fieldName: String,
+    ids: Collection<ID>
+  ): List<T>? {
     val result = queryBuilder()
       .distinct()
       .where()
       .`in`(fieldName, ids)
       .query()
+
     return if (result.isNullOrEmpty()) null else result
   }
 
@@ -183,13 +195,16 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
    * Returns the maximum value for a field inside this model.
    */
   @Throws(java.sql.SQLException::class)
-  open fun getNextSorting(sortingKey: String, primaryKey: String, keyValue: Any): T? =
-    queryBuilder()
-      .orderBy(sortingKey, false)
-      .limit(1L)
-      .where()
-      .eq(primaryKey, keyValue)
-      .queryForFirst()
+  open fun getNextSorting(
+    sortingKey: String,
+    primaryKey: String,
+    keyValue: Any
+  ): T? = queryBuilder()
+    .orderBy(sortingKey, false)
+    .limit(1L)
+    .where()
+    .eq(primaryKey, keyValue)
+    .queryForFirst()
 
   /**
    * Creates a new [entity] in the database.
@@ -202,14 +217,17 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
    * of times to set the correct insert ID in it before failing.
    */
   @Throws(java.sql.SQLException::class)
-  open fun insert(entity: T, tries: Int = BaseDatabase.DEFAULT_INSERT_TRIES): T =
-    create(entity).let { entity }
+  open fun insert(
+    entity: T,
+    tries: Int = BaseDatabase.DEFAULT_INSERT_TRIES
+  ): T = create(entity).let { entity }
 
   /**
    * Creates new [entities] in the database.
    */
   @Throws(java.sql.SQLException::class)
-  fun insert(entities: Collection<T>): List<T> = insert(entities, BaseDatabase.DEFAULT_INSERT_TRIES)
+  fun insert(entities: Collection<T>): List<T> =
+    insert(entities, BaseDatabase.DEFAULT_INSERT_TRIES)
 
   /**
    * Creates new [entities] in the database and optionally tries the specified number
@@ -220,7 +238,7 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
     entities: Collection<T>,
     tries: Int = BaseDatabase.DEFAULT_INSERT_TRIES,
   ): List<T> {
-    val results = ArrayList<T>(BaseDatabase.INITIAL_CAPACITY)
+    val results = ArrayList<T>(Constants.DEFAULT_LIST_CAPACITY)
     for (entry in entities) {
       results.add(insert(entry, tries))
     }
@@ -251,6 +269,7 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
     @Throws(java.sql.SQLException::class)
     fun getCatalogName(connection: com.j256.ormlite.dao.BaseDaoImpl<*, *>): String? {
       val values = connection.queryRaw("SELECT DATABASE()")?.firstResult
+
       return if (null != values && 1 == values.size) values[0] else null
     }
   }

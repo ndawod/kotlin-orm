@@ -58,7 +58,11 @@ class DatabaseMigration constructor(
 
     override fun queryForLong(statement: String): Long = connection.queryForLong(statement)
 
-    override fun escapeValue(value: String): String = database.escape(value, null)
+    override fun escapeProperty(name: String): String = database.escapeProperty(name)
+
+    override fun escapeValue(value: String): String = database.escapeValue(value)
+
+    override fun escapeLike(value: String): String = database.escapeLike(value)
   }
 
   /**

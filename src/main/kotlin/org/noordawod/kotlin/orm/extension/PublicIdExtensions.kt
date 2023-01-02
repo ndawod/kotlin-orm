@@ -25,10 +25,10 @@
 
 package org.noordawod.kotlin.orm.extension
 
+import org.noordawod.kotlin.core.repository.EmptyHashValue
+import org.noordawod.kotlin.core.repository.HashValue
+import org.noordawod.kotlin.core.repository.PublicId
 import org.noordawod.kotlin.core.security.base62
-import org.noordawod.kotlin.orm.entity.EmptyHashValue
-import org.noordawod.kotlin.orm.entity.HashValue
-import org.noordawod.kotlin.orm.entity.PublicId
 
 /**
  * Returns the corresponding [HashValue] for this [PublicId] on success,
@@ -37,7 +37,7 @@ import org.noordawod.kotlin.orm.entity.PublicId
  * A valid HashValue is one that is non-null and that contains at least one byte. So a 0-byte
  * HashValue is considered invalid, and the function will return null in such cases.
  */
-fun PublicId?.hashValue(): HashValue? = if (null == this || isEmpty()) null else base62()
+fun PublicId?.hashValue(): HashValue? = if (null == this || isBlank()) null else base62()
 
 /**
  * Returns the corresponding [HashValue] for this [PublicId] on success,

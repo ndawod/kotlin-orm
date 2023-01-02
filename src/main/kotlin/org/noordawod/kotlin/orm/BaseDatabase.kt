@@ -55,14 +55,24 @@ abstract class BaseDatabase constructor(
 ) {
   private val connectionSourceLock = Object()
   private var connectionSourceInternal: ConnectionSource? = null
+  private var transactionEngaged: Boolean = true
 
   /**
    * Returns the [ConnectionSource] associated with this database.
    */
   val connectionSource: ConnectionSource
+    @Throws(java.sql.SQLException::class)
     get() {
       synchronized(connectionSourceLock) {
-        return connectionSourceImpl
+        var connectionSourceLocked = connectionSourceInternal
+
+        if (null == connectionSourceLocked || !connectionSourceLocked.isOpen("")) {
+          shutdown()
+          connectionSourceLocked = initializeConnectionSource()
+          connectionSourceInternal = connectionSourceLocked
+        }
+
+        return connectionSourceLocked
       }
     }
 
@@ -74,25 +84,6 @@ abstract class BaseDatabase constructor(
    * connection.
    */
   var autoTransactional: Boolean = false
-
-  /**
-   * Determines whether to automatically reuse the same database connection regardless how many
-   * calls are made to [readOnlyConnection] / [readWriteConnection] within the same session.
-   *
-   * By default, this is engaged (true) and it's advised that you don't change it.
-   */
-  var autoReentrant: Boolean = true
-
-  private val connectionSourceImpl: ConnectionSource
-    get() {
-      var connectionSourceLocked = connectionSourceInternal
-
-      if (null == connectionSourceLocked || !connectionSourceLocked.isOpen("")) {
-        connectionSourceLocked = reconnect()
-      }
-
-      return connectionSourceLocked
-    }
 
   init {
     if (null != driver) {
@@ -107,6 +98,12 @@ abstract class BaseDatabase constructor(
       }
     }
   }
+
+  /**
+   * Establishes a connection to the database and returns the resulting [ConnectionSource].
+   */
+  @Throws(java.sql.SQLException::class)
+  abstract fun initializeConnectionSource(): ConnectionSource
 
   override fun equals(other: Any?): Boolean = other is BaseDatabase &&
     other.config == config &&
@@ -123,19 +120,14 @@ abstract class BaseDatabase constructor(
     healthCheckMillis.toInt() * 2087
 
   /**
-   * The character used to wrap field, table and database names in this database server.
+   * The character used to wrap a property, such as a table name, column name, etc.
    */
-  abstract val fieldWrapperChar: Char
+  abstract val propertyWrapperChar: Char
 
   /**
-   * The character used to escape values in this database server.
+   * The character used to escape column values.
    */
   abstract val valueWrapperChar: Char
-
-  /**
-   * The double-quote character.
-   */
-  abstract val doubleQuoteChar: Char
 
   /**
    * The characters that require proper escaping before sending in a query.
@@ -165,19 +157,7 @@ abstract class BaseDatabase constructor(
    */
   @Throws(java.sql.SQLException::class)
   fun <R> readOnlyConnection(block: DatabaseConnectionBlock<R>): R =
-    runDatabaseConnectionBlock(connectionSource, false, block)
-
-  /**
-   * Creates a new read-only [DatabaseConnection] to this [database][BaseDatabase] and
-   * executes [block] with that connection after locking [tableName] for read operations.
-   *
-   * After [block] is finished, with or without an error, the connection is released.
-   */
-  @Throws(java.sql.SQLException::class)
-  fun <R> readOnlyLock(
-    tableName: String,
-    block: DatabaseConnectionBlock<R>
-  ): R = callWithLock(tableName, false, block)
+    runDatabaseConnectionBlock(false, block)
 
   /**
    * Creates a new read-write [DatabaseConnection] to this [database][BaseDatabase] and
@@ -192,8 +172,20 @@ abstract class BaseDatabase constructor(
     if (autoTransactional) {
       transactional(block)
     } else {
-      runDatabaseConnectionBlock(connectionSource, true, block)
+      runDatabaseConnectionBlock(true, block)
     }
+
+  /**
+   * Creates a new read-only [DatabaseConnection] to this [database][BaseDatabase] and
+   * executes [block] with that connection after locking [tableName] for read operations.
+   *
+   * After [block] is finished, with or without an error, the connection is released.
+   */
+  @Throws(java.sql.SQLException::class)
+  fun <R> readOnlyLock(
+    tableName: String,
+    block: DatabaseConnectionBlock<R>
+  ): R = callWithLock(tableName, false, block)
 
   /**
    * Creates a new read-write [DatabaseConnection] to this [database][BaseDatabase] and
@@ -219,10 +211,17 @@ abstract class BaseDatabase constructor(
    */
   @Throws(java.sql.SQLException::class)
   fun <R> transactional(block: DatabaseConnectionBlock<R>): R =
-    runDatabaseConnectionBlock(connectionSource, true) { databaseConnection ->
+    runDatabaseConnectionBlock(true) { databaseConnection ->
+      if (transactionEngaged) {
+        throw java.sql.SQLException("Reentrant transaction detected.")
+      }
+
+      transactionEngaged = true
       var saved = false
+
       try {
         saved = saveSpecialConnection(databaseConnection)
+
         TransactionManager.callInTransaction(
           databaseConnection,
           saved,
@@ -231,6 +230,8 @@ abstract class BaseDatabase constructor(
           block(connectionSource, databaseConnection)
         }
       } finally {
+        transactionEngaged = false
+
         if (saved) {
           clearSpecialConnection(databaseConnection)
         }
@@ -248,84 +249,49 @@ abstract class BaseDatabase constructor(
   }
 
   /**
-   * Escapes the provided string value and returns the escaped value.
+   * Escapes the provided string property (table name, column name, etc.) and
+   * returns the escaped value, wrapped inside [propertyWrapperChar] on both ends.
+   *
+   * @param name the property name
    */
-  fun escape(value: String, wrapper: Char?): String {
-    val allow = fieldWrapperChar != wrapper
-
-    return escape(value, wrapper, allow, allow)
-  }
+  fun escapeProperty(name: String): String = escape(
+    value = name,
+    wrapper = propertyWrapperChar,
+    escapePercent = false,
+    escapeLowDash = false
+  )
 
   /**
-   * Escapes the provided string value and returns the escaped value.
+   * Escapes the provided string value and returns the escaped value, wrapped inside
+   * [valueWrapperChar] on both ends.
+   *
+   * @param value the value to escape
    */
-  @Suppress("MagicNumber", "ComplexMethod", "KotlinConstantConditions")
-  fun escape(
-    value: String,
-    wrapper: Char?,
-    alsoPercent: Boolean,
-    alsoLowDash: Boolean,
-  ): String {
-    val length = value.length
-    val builder = StringBuilder(value.length + 10)
-    var arrayLength = escapeChars.size
-    if (alsoPercent) {
-      arrayLength++
-    }
-    if (alsoLowDash) {
-      arrayLength++
-    }
+  fun escapeValue(value: String): String = escape(
+    value = value,
+    wrapper = valueWrapperChar,
+    escapePercent = false,
+    escapeLowDash = false
+  )
 
-    // Create new array containing the characters to escape.
-    val chars = CharArray(arrayLength)
-    System.arraycopy(
-      escapeChars,
-      0,
-      chars,
-      0,
-      escapeChars.size
-    )
-    var idx: Int = -1
-    if (alsoPercent) {
-      chars[++idx + escapeChars.size] = '%'
-    }
-    if (alsoLowDash) {
-      chars[++idx + escapeChars.size] = '_'
-    }
-    idx = -1
-    while (length > ++idx) {
-      val valueChar = value[idx]
-      @Suppress("ComplexCondition")
-      if (
-        null == wrapper ||
-        (valueWrapperChar != wrapper || doubleQuoteChar != valueChar) &&
-        (doubleQuoteChar != wrapper || valueWrapperChar != valueChar)
-      ) {
-        var found = false
-        var specialCharIdx = -1
-        while (!found && chars.size > ++specialCharIdx) {
-          val thisChar = chars[specialCharIdx]
-          found = valueChar == thisChar
-        }
-        if (found) {
-          builder.append('\\')
-        }
-      }
-      builder.append(valueChar)
-    }
-
-    return if (null == wrapper) {
-      builder.toString()
-    } else {
-      wrapper.toString() + builder.toString() + wrapper
-    }
-  }
+  /**
+   * Escapes the provided string used in a LIKE operation returns the escaped value,
+   * as-is, without wrapping with a character.
+   *
+   * @param value the value to escape
+   */
+  fun escapeLike(value: String): String = escape(
+    value = value,
+    wrapper = null,
+    escapePercent = true,
+    escapeLowDash = true
+  )
 
   /**
    * Builds and returns a "LIKE" SQL command for this database server.
    */
   fun like(word: String, start: Boolean, end: Boolean): String {
-    var likeQuery = escape(word, null)
+    var likeQuery = escapeLike(word)
 
     if (start) {
       likeQuery = "%$likeQuery"
@@ -338,48 +304,113 @@ abstract class BaseDatabase constructor(
     return likeQuery
   }
 
-  @Throws(java.sql.SQLException::class)
-  abstract fun initializeConnectionSource(): ConnectionSource
+  /**
+   * Escapes the provided string and returns the escaped value.
+   *
+   * @param value the string value to escape
+   * @param wrapper the wrapper character used for escaping
+   * @param escapePercent whether to escape the percent sign (%) too.
+   * @param escapeLowDash whether to escape the low-dash (_) too.
+   */
+  @Suppress("MagicNumber", "ComplexMethod", "KotlinConstantConditions")
+  protected fun escape(
+    value: String,
+    wrapper: Char?,
+    escapePercent: Boolean,
+    escapeLowDash: Boolean
+  ): String {
+    val length = value.length
+    val builder = StringBuilder(value.length + 10)
+    var idx: Int = -1
+
+    var arrayLength = escapeChars.size
+    if (escapePercent) {
+      arrayLength++
+    }
+    if (escapeLowDash) {
+      arrayLength++
+    }
+
+    // Create new array containing the characters to escape.
+    val chars = CharArray(arrayLength)
+    System.arraycopy(
+      escapeChars,
+      0,
+      chars,
+      0,
+      escapeChars.size
+    )
+
+    if (escapePercent) {
+      chars[++idx + escapeChars.size] = '%'
+    }
+
+    if (escapeLowDash) {
+      chars[++idx + escapeChars.size] = '_'
+    }
+
+    idx = -1
+
+    while (length > ++idx) {
+      val valueChar = value[idx]
+
+      @Suppress("ComplexCondition")
+      if (
+        null == wrapper ||
+        (SINGLE_QUOTE_CHAR != wrapper || DOUBLE_QUOTE_CHAR != valueChar) &&
+        (DOUBLE_QUOTE_CHAR != wrapper || SINGLE_QUOTE_CHAR != valueChar)
+      ) {
+        var found = false
+        var specialCharIdx = -1
+
+        while (!found && chars.size > ++specialCharIdx) {
+          val thisChar = chars[specialCharIdx]
+          found = valueChar == thisChar
+        }
+
+        if (found) {
+          builder.append('\\')
+        }
+      }
+
+      builder.append(valueChar)
+    }
+
+    return if (null == wrapper) "$builder" else "$wrapper$builder$wrapper"
+  }
 
   @Suppress("NestedBlockDepth")
   @Throws(java.sql.SQLException::class)
   private fun <R> runDatabaseConnectionBlock(
-    connectionSource: ConnectionSource,
     writeLock: Boolean,
     block: DatabaseConnectionBlock<R>
   ): R {
     var shouldReconnectAndRetry = false
+    var databaseConnection: DatabaseConnection? = null
     var error: Throwable?
-    val autoReentrantLocked = autoReentrant
-    val databaseConnection = if (writeLock) {
-      connectionSource.getReadWriteConnection("")
-    } else {
-      connectionSource.getReadOnlyConnection("")
-    }
 
-    try {
-      if (autoReentrantLocked && writeLock) {
-        connectionSource.saveSpecialConnection(databaseConnection)
-      }
+    do {
+      try {
+        databaseConnection = if (writeLock) {
+          connectionSource.getReadWriteConnection("")
+        } else {
+          connectionSource.getReadOnlyConnection("")
+        }
 
-      do {
-        try {
-          return block(connectionSource, databaseConnection)
-        } catch (e: java.sql.SQLException) {
-          error = e
-          shouldReconnectAndRetry = !shouldReconnectAndRetry
-          if (shouldReconnectAndRetry) {
-            reconnect()
-          }
-        } finally {
+        return block(connectionSource, databaseConnection)
+      } catch (e: java.sql.SQLException) {
+        error = e
+        shouldReconnectAndRetry = !shouldReconnectAndRetry
+
+        if (shouldReconnectAndRetry) {
+          shutdown()
+        }
+      } finally {
+        if (null != databaseConnection) {
           connectionSource.releaseConnection(databaseConnection)
         }
-      } while (shouldReconnectAndRetry)
-    } finally {
-      if (autoReentrantLocked && writeLock) {
-        connectionSource.clearSpecialConnection(databaseConnection)
       }
-    }
+    } while (shouldReconnectAndRetry)
 
     throw error ?: java.sql.SQLTransientConnectionException()
   }
@@ -389,15 +420,18 @@ abstract class BaseDatabase constructor(
     tableName: String,
     writeLock: Boolean,
     block: DatabaseConnectionBlock<R>
-  ): R = runDatabaseConnectionBlock(connectionSource, writeLock) { databaseConnection ->
+  ): R = runDatabaseConnectionBlock(writeLock) { databaseConnection ->
+    val isAutoCommit = databaseConnection.isAutoCommit
+    val lockType = if (writeLock) "WRITE" else "READ"
+
     try {
       databaseConnection.isAutoCommit = false
 
-      val lockType = if (writeLock) "WRITE" else "READ"
       databaseConnection.executeStatement(
-        "LOCK TABLES ${escape(tableName, fieldWrapperChar)} $lockType",
+        "LOCK TABLES ${escapeProperty(tableName)} $lockType",
         DatabaseConnection.DEFAULT_RESULT_FLAGS
       )
+
       val result = block(this, databaseConnection)
 
       databaseConnection.commit(null)
@@ -409,28 +443,11 @@ abstract class BaseDatabase constructor(
         "UNLOCK TABLES",
         DatabaseConnection.DEFAULT_RESULT_FLAGS
       )
-      databaseConnection.isAutoCommit = true
-
-      clearSpecialConnection(databaseConnection)
+      databaseConnection.isAutoCommit = isAutoCommit
     }
   }
 
-  @Throws(java.sql.SQLException::class)
-  private fun reconnect(): ConnectionSource {
-    shutdown()
-
-    val connectionSourceLocked = initializeConnectionSource()
-    connectionSourceInternal = connectionSourceLocked
-
-    return connectionSourceLocked
-  }
-
   companion object {
-    /**
-     * Initial capacity of arrays.
-     */
-    const val INITIAL_CAPACITY: Int = 50
-
     /**
      * Default maximum number of retries when inserting a new record.
      */
@@ -467,14 +484,19 @@ abstract class BaseDatabase constructor(
     const val DEFAULT_HEALTH_CHECK_INTERVAL: Long = 3000L
 
     /**
-     * Matches one or more white-space characters.
-     */
-    val WHITE_SPACE: java.util.regex.Pattern = java.util.regex.Pattern.compile("\\s+")
-
-    /**
      * Protocol used in the JVM for JDBC connections.
      */
     const val JDBC_PREFIX: String = "jdbc:"
+
+    /**
+     * The double-quote character.
+     */
+    const val DOUBLE_QUOTE_CHAR: Char = '"'
+
+    /**
+     * The double-quote character.
+     */
+    const val SINGLE_QUOTE_CHAR: Char = '\''
 
     /**
      * Prints a list of database drivers currently loaded in the JVM. Used primarily for

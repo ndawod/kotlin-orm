@@ -27,8 +27,8 @@ package org.noordawod.kotlin.orm.dao
 
 import com.j256.ormlite.stmt.PreparedQuery
 import com.j256.ormlite.support.ConnectionSource
+import org.noordawod.kotlin.core.Constants
 import org.noordawod.kotlin.core.extension.mutableMapWith
-import org.noordawod.kotlin.orm.BaseDatabase
 import org.noordawod.kotlin.orm.entity.BaseKeyEntity
 
 /**
@@ -56,16 +56,16 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
    * Optionally populate this entity with fresh details from the database if needed, does
    * nothing otherwise. Will return the populated entity on success, null otherwise.
    */
-  open fun populateIfNeeded(entity: T?, force: Boolean = false): T? =
-    if (null == entity) {
-      null
-    } else {
-      if (!force && entity.populated) {
-        entity
-      } else {
-        queryFor(entity)?.also { it.populated = true }
-      }
+  open fun populateIfNeeded(
+    entity: T?,
+    force: Boolean = false
+  ): T? = when {
+    null == entity -> null
+    !force && entity.populated -> entity
+    else -> queryFor(entity)?.also {
+      it.populated = true
     }
+  }
 
   override fun delete(data: T): Int = deleteById(data.id)
 
@@ -75,7 +75,10 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
    * the stored data obtained from the database.
    */
   @Throws(java.sql.SQLException::class)
-  override fun insert(entity: T, tries: Int): T {
+  override fun insert(
+    entity: T,
+    tries: Int
+  ): T {
     var thisTry = tries
     var lastError: java.sql.SQLException?
     do {
@@ -89,6 +92,7 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
         thisTry--
       }
     } while (0 < thisTry)
+
     throw lastError ?: java.sql.SQLException(
       "Unable to insert a new record of type ${entity::javaClass.name} to database."
     )
@@ -107,12 +111,13 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
    */
   @Throws(java.sql.SQLException::class)
   open fun insertIfNew(instances: Collection<T>): List<T>? {
-    val results = ArrayList<T>(BaseDatabase.INITIAL_CAPACITY)
+    val results = ArrayList<T>(Constants.DEFAULT_LIST_CAPACITY)
     for (instance in instances) {
       if (!exists(instance.id)) {
         results.add(insert(instance))
       }
     }
+
     return if (results.isEmpty()) null else results
   }
 
@@ -140,40 +145,88 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
   @Throws(java.sql.SQLException::class)
   open fun exists(ids: Collection<ID>): Boolean = ids.size == queryForIds(ids)?.size
 
-  override fun queryForId(id: ID): T? =
-    super.queryForId(id)?.also { it.populated = true }
+  override fun queryForId(id: ID): T? = super.queryForId(id)?.also {
+    it.populated = true
+  }
 
   override fun queryForAll(): List<T>? {
     val result = super.queryForAll()
-    return if (result.isNullOrEmpty()) null else result.onEach { it.populated = true }
+
+    return if (result.isNullOrEmpty()) {
+      null
+    } else {
+      result.onEach {
+        it.populated = true
+      }
+    }
   }
 
-  override fun queryForEq(fieldName: String, value: Any?): List<T>? {
+  override fun queryForEq(
+    fieldName: String,
+    value: Any?
+  ): List<T>? {
     val result = super.queryForEq(fieldName, value)
-    return if (result.isNullOrEmpty()) null else result.onEach { it.populated = true }
+
+    return if (result.isNullOrEmpty()) {
+      null
+    } else {
+      result.onEach {
+        it.populated = true
+      }
+    }
   }
 
   override fun queryForFirst(preparedQuery: PreparedQuery<T>): T? =
-    super.queryForFirst(preparedQuery)?.also { it.populated = true }
+    super.queryForFirst(preparedQuery)?.also {
+      it.populated = true
+    }
 
   override fun queryForFieldValues(fieldValues: Map<String, Any?>): List<T>? {
     val result = super.queryForFieldValues(fieldValues)
-    return if (result.isNullOrEmpty()) null else result.onEach { it.populated = true }
+
+    return if (result.isNullOrEmpty()) {
+      null
+    } else {
+      result.onEach {
+        it.populated = true
+      }
+    }
   }
 
   override fun queryForFieldValuesArgs(fieldValues: Map<String, Any?>): List<T>? {
     val result = super.queryForFieldValuesArgs(fieldValues)
-    return if (result.isNullOrEmpty()) null else result.onEach { it.populated = true }
+
+    return if (result.isNullOrEmpty()) {
+      null
+    } else {
+      result.onEach {
+        it.populated = true
+      }
+    }
   }
 
   override fun queryForMatching(matchObj: T): List<T>? {
     val result = super.queryForMatching(matchObj)
-    return if (result.isNullOrEmpty()) null else result.onEach { it.populated = true }
+
+    return if (result.isNullOrEmpty()) {
+      null
+    } else {
+      result.onEach {
+        it.populated = true
+      }
+    }
   }
 
   override fun queryForMatchingArgs(matchObj: T): List<T>? {
     val result = super.queryForMatchingArgs(matchObj)
-    return if (result.isNullOrEmpty()) null else result.onEach { it.populated = true }
+
+    return if (result.isNullOrEmpty()) {
+      null
+    } else {
+      result.onEach {
+        it.populated = true
+      }
+    }
   }
 
   override fun queryForSameId(data: T?): T? =
@@ -190,8 +243,13 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
    * null otherwise.
    */
   @Throws(java.sql.SQLException::class)
-  fun queryForFirst(fieldName: String, value: Any?): T? =
-    queryForEq(fieldName, value)?.firstOrNull()
+  fun queryForFirst(
+    fieldName: String,
+    value: Any?
+  ): T? = queryForEq(
+    fieldName,
+    value
+  )?.firstOrNull()
 
   /**
    * Queries the database for distinct records having the specified [identifiers][ids]
@@ -199,15 +257,24 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
    */
   @Throws(java.sql.SQLException::class)
   open fun queryForIds(ids: Collection<ID>): List<T>? =
-    queryForIds(primaryKey, ids)?.onEach { it.populated = true }
+    queryForIds(primaryKey, ids)?.onEach {
+      it.populated = true
+    }
 
   /**
    * Queries the database for the specified [identifiers][ids] and sorts the result
    * ascending by the specified sort order field.
    */
   @Throws(java.sql.SQLException::class)
-  open fun queryForIds(ids: Collection<ID>, orderField: String): List<T>? =
-    queryForIds(ids, 0, orderField, true)
+  open fun queryForIds(
+    ids: Collection<ID>,
+    orderField: String
+  ): List<T>? = queryForIds(
+    ids,
+    0,
+    orderField,
+    true
+  )
 
   /**
    * Queries the database for the specified [identifiers][ids] and sorts the result
@@ -219,8 +286,15 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
     limit: Long = 0,
     orderField: String,
     ascending: Boolean
-  ): List<T>? =
-    queryForIds(primaryKey, ids, limit, orderField, ascending)?.onEach { it.populated = true }
+  ): List<T>? = queryForIds(
+    primaryKey,
+    ids,
+    limit,
+    orderField,
+    ascending
+  )?.onEach {
+    it.populated = true
+  }
 
   /**
    * Queries the database for distinct records having the specified [identifiers][ids]
@@ -234,8 +308,15 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
    * ascending by the specified sort order field.
    */
   @Throws(java.sql.SQLException::class)
-  open fun associateForIds(ids: Collection<ID>, orderField: String): Map<ID, T>? =
-    associateForIds(ids, 0, orderField, true)
+  open fun associateForIds(
+    ids: Collection<ID>,
+    orderField: String
+  ): Map<ID, T>? = associateForIds(
+    ids,
+    0,
+    orderField,
+    true
+  )
 
   /**
    * Queries the database for the specified [identifiers][ids] and sorts the result
@@ -247,17 +328,22 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
     limit: Long = 0,
     orderField: String,
     ascending: Boolean
-  ): Map<ID, T>? = queryForIds(primaryKey, ids, limit, orderField, ascending).toMap()
+  ): Map<ID, T>? = queryForIds(
+    primaryKey,
+    ids,
+    limit,
+    orderField,
+    ascending
+  ).toMap()
 
   /**
    * Converts a list of [T] instances to a Map of keys of [T] and the instance itself.
    */
-  open fun Collection<T>?.toMap(): Map<ID, T>? =
-    this?.let { instances ->
-      mutableMapWith<ID, T>(this.size).apply {
-        for (instance in instances) {
-          this[instance.id] = instance
-        }
+  open fun Collection<T>?.toMap(): Map<ID, T>? = this?.let { instances ->
+    mutableMapWith<ID, T>(this.size).apply {
+      for (instance in instances) {
+        this[instance.id] = instance
       }
     }
+  }
 }

@@ -68,18 +68,16 @@ open class MySQLDatabase constructor(
     maxRetries * 2713 +
     retryDelay.toInt() * 2801
 
-  override val fieldWrapperChar: Char = FIELD_WRAPPER_CHAR
+  override val propertyWrapperChar: Char = '`'
 
-  override val valueWrapperChar: Char = VALUE_WRAPPER_CHAR
+  override val valueWrapperChar: Char = SINGLE_QUOTE_CHAR
 
-  override val doubleQuoteChar: Char = DOUBLE_QUOTE_CHAR
-
-  @Suppress("MagicNumber")
+  @Suppress("MagicNumber", "LeakingThis")
   override val escapeChars: CharArray = charArrayOf(
     '\\',
     '\n',
     '\r',
-    VALUE_WRAPPER_CHAR,
+    valueWrapperChar,
     DOUBLE_QUOTE_CHAR,
     0x00.toChar(),
     0x1a.toChar()
@@ -141,21 +139,6 @@ open class MySQLDatabase constructor(
      * The character used to wrap field, table and database names in MySQL.
      */
     const val JDBC_DRIVER: String = "com.mysql.cj.jdbc.Driver"
-
-    /**
-     * The character used to wrap field, table and database names in MySQL.
-     */
-    const val FIELD_WRAPPER_CHAR: Char = '`'
-
-    /**
-     * The character used to escape values in MySQL.
-     */
-    const val VALUE_WRAPPER_CHAR: Char = '\''
-
-    /**
-     * The double-quote character.
-     */
-    const val DOUBLE_QUOTE_CHAR: Char = '"'
 
     /**
      * Default collation to use in the database server.

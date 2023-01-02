@@ -26,8 +26,8 @@
 package org.noordawod.kotlin.orm.dao
 
 import com.j256.ormlite.support.ConnectionSource
+import org.noordawod.kotlin.core.repository.HashValue
 import org.noordawod.kotlin.core.util.ByteArrayMap
-import org.noordawod.kotlin.orm.entity.HashValue
 import org.noordawod.kotlin.orm.entity.HashValueKeyEntity
 
 /**
@@ -37,14 +37,13 @@ abstract class HashValueKeyDao<T : HashValueKeyEntity> protected constructor(
   connection: ConnectionSource,
   dataClass: Class<T>
 ) : BaseKeyDao<HashValue, T>(connection, dataClass) {
-  override fun Collection<T>?.toMap(): ByteArrayMap<T>? =
-    this?.let { instances ->
-      ByteArrayMap<T>().apply {
-        for (instance in instances) {
-          this[instance.id] = instance
-        }
+  override fun Collection<T>?.toMap(): ByteArrayMap<T>? = this?.let { instances ->
+    ByteArrayMap<T>().apply {
+      for (instance in instances) {
+        this[instance.id] = instance
       }
     }
+  }
 
   /**
    * Fetches the row associated with the supplied [id].
@@ -54,5 +53,7 @@ abstract class HashValueKeyDao<T : HashValueKeyEntity> protected constructor(
     .where()
     .eq(primaryKey, id)
     .queryForFirst()
-    ?.also { it.populated = true }
+    ?.also {
+      it.populated = true
+    }
 }

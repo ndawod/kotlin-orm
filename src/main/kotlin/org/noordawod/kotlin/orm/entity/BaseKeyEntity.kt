@@ -26,21 +26,6 @@
 package org.noordawod.kotlin.orm.entity
 
 /**
- * The type of public record identifier.
- */
-typealias PublicId = String
-
-/**
- * The type of internal record identifiers.
- */
-typealias HashValue = ByteArray
-
-/**
- * Corresponds to a [HashValue] that's 0-byte.
- */
-val EmptyHashValue: HashValue = byteArrayOf()
-
-/**
  * Base ORM class for all tables that have a key (primary or unique).
  */
 abstract class BaseKeyEntity<ID> protected constructor() : BaseEntity() {

@@ -25,6 +25,7 @@
 
 package org.noordawod.kotlin.orm.entity
 
+import org.noordawod.kotlin.core.repository.HashValue
 import org.noordawod.kotlin.core.security.ByteArrayStrength
 import org.noordawod.kotlin.core.security.ByteUtils
 import org.noordawod.kotlin.orm.extension.publicIdOrEmpty
