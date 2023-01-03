@@ -55,7 +55,7 @@ abstract class BaseDatabase constructor(
 ) {
   private val connectionSourceLock = Object()
   private var connectionSourceInternal: ConnectionSource? = null
-  private var transactionEngaged: Boolean = true
+  private var transactionEngaged: Boolean = false
 
   /**
    * Returns the [ConnectionSource] associated with this database.
