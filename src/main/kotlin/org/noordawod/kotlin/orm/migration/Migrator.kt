@@ -60,9 +60,11 @@ class Migrator constructor(
     get() {
       try {
         return 0L != connection.queryForLong(
-          "SELECT COUNT($escapedIdProperty) AS count " +
-            "FROM $escapedTableName " +
+          listOf(
+            "SELECT COUNT($escapedIdProperty) AS count",
+            "FROM $escapedTableName",
             "WHERE $escapedCreatedProperty IS NULL"
+          ).joinToString(separator = " ")
         )
       } catch (ignored: java.sql.SQLException) {
         // NO-OP.
@@ -227,7 +229,7 @@ class Migrator constructor(
       connection.execute(command)
     } catch (ignored: java.sql.SQLException) {
       println()
-      println("Unhandled exception issuing a $command to finalize the migration plan.")
+      println("Ignored exception issuing a $command operation.")
     }
   }
 
@@ -294,16 +296,19 @@ class Migrator constructor(
 
   @Throws(java.sql.SQLException::class)
   private fun lockMigration(migration: Migration) {
+    val fieldValues = mapOf(
+      escapedIdProperty to "${migration.version}",
+      escapedDescriptionProperty to connection.escapeValue(migration.description),
+      escapedFileProperty to connection.escapeValue(migration.file)
+    )
+
     connection.execute(
-      arrayOf(
+      listOf(
         "INSERT INTO $escapedTableName (",
-        "$escapedIdProperty,",
-        "$escapedDescriptionProperty,",
-        "$escapedFileProperty,",
+        fieldValues.keys.joinToString(separator = ","),
         ") VALUES (",
-        "${migration.version},",
-        "${connection.escapeValue(migration.description)},",
-        "${connection.escapeValue(migration.file)})"
+        fieldValues.values.joinToString(separator = ","),
+        ")"
       ).joinToString(separator = "")
     )
   }
@@ -311,10 +316,11 @@ class Migrator constructor(
   @Throws(java.sql.SQLException::class)
   private fun unlockMigration(migration: Migration) {
     connection.execute(
-      "UPDATE $escapedTableName SET " +
-        "$escapedCreatedProperty=" +
-        "${java.util.Date().secondsSinceEpoch()} WHERE " +
-        "$escapedIdProperty=${migration.version}"
+      listOf(
+        "UPDATE $escapedTableName",
+        "SET $escapedCreatedProperty=${java.util.Date().secondsSinceEpoch()}",
+        "WHERE $escapedIdProperty=${migration.version}"
+      ).joinToString(separator = " ")
     )
   }
 
@@ -364,14 +370,18 @@ class Migrator constructor(
   private fun ensureMigrationsTable() {
     try {
       connection.execute(
-        "CREATE TABLE $escapedTableName (" +
-          "$escapedIdProperty smallint UNSIGNED NOT NULL," +
-          "$escapedDescriptionProperty tinytext $asciiCollation NOT NULL," +
-          "$escapedFileProperty tinytext $asciiCollation NOT NULL," +
-          "$escapedCreatedProperty int UNSIGNED NULL," +
-          "PRIMARY KEY ($escapedIdProperty)," +
-          "KEY $escapedCreatedProperty ($escapedCreatedProperty)" +
+        listOf(
+          "CREATE TABLE $escapedTableName (",
+          listOf(
+            "$escapedIdProperty smallint unsigned NOT NULL",
+            "$escapedDescriptionProperty tinytext $asciiCollation NOT NULL",
+            "$escapedFileProperty tinytext $asciiCollation NOT NULL",
+            "$escapedCreatedProperty int unsigned NULL",
+            "PRIMARY KEY ($escapedIdProperty)",
+            "KEY $escapedCreatedProperty ($escapedCreatedProperty)"
+          ).joinToString(separator = ","),
           ")"
+        ).joinToString(separator = "")
       )
       println("- Migrations table missing, auto-created...")
     } catch (ignored: java.sql.SQLException) {
