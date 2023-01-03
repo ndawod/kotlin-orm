@@ -89,6 +89,7 @@ class Migrator constructor(
     // Get current version
     var nextVersion: Int = version()
     println("- Current version: $nextVersion")
+    println("- Number of migrations: ${migrations.size}")
 
     // Keep track of timing for all migrations.
     val migrationsStart = java.util.Date()
@@ -139,11 +140,12 @@ class Migrator constructor(
 
         lockMigration(migration)
 
-        print("  v$nextVersion: ${migration.description}:")
+        println("  - v$nextVersion → ${migration.description}:")
 
         performPreMigration(migration)
         preMigrationRan = true
 
+        executedCommands.clear()
         performMigration(migration, nextVersion, executedCommands)
         migrationRan = true
 
@@ -154,10 +156,9 @@ class Migrator constructor(
         unlockMigration(migration)
       } catch (error: java.sql.SQLException) {
         migrationError = error
-        // An SQL error has occurred, we need to roll back all changes...
+        // An SQL error has occurred, we need to roll back all changes…
         performCommitOrRollback("ROLLBACK")
       } finally {
-        executedCommands.clear()
         val migrationEnd = java.util.Date()
         println("  - Started: $migrationStart")
         println("  - Ended: $migrationEnd")
@@ -171,7 +172,7 @@ class Migrator constructor(
         println()
 
         when {
-          !preMigrationRan -> println("Unexpected error while running pre-migration hook.")
+          !preMigrationRan -> println("Unexpected error while running pre-migration code.")
 
           !migrationRan -> {
             println("Unexpected error while running migration.")
@@ -190,7 +191,7 @@ class Migrator constructor(
             }
           }
 
-          else -> println("Unexpected error while running post-migration hook.")
+          else -> println("Unexpected error while running post-migration code.")
         }
 
         println()
@@ -199,12 +200,14 @@ class Migrator constructor(
       }
     }
 
+    executedCommands.clear()
+
     val migrationsEnd = java.util.Date()
     val duration = migrationsEnd.time - migrationsStart.time
 
     println("- Ended: $migrationsEnd")
     println()
-    println("Database Migration finished in $duration milliseconds.")
+    println("Database migration finished in $duration milliseconds.")
     println()
   }
 
@@ -229,7 +232,7 @@ class Migrator constructor(
       connection.execute(command)
     } catch (ignored: java.sql.SQLException) {
       println()
-      println("Ignored exception issuing a $command operation.")
+      println("Ignored an exception issuing a $command operation.")
     }
   }
 
@@ -383,7 +386,7 @@ class Migrator constructor(
           ")"
         ).joinToString(separator = "")
       )
-      println("- Migrations table missing, auto-created...")
+      println("- Migrations table missing, auto-created.")
     } catch (ignored: java.sql.SQLException) {
       println("- Migrations table exists: $tableName (v${version()})")
     }
