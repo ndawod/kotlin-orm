@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+4.0.4 (January 3, 2023)
+    Add methods that cause database operations to retry on error.
+
 4.0.3 (January 3, 2023)
     Insert a new line character where needed in `Migrator.kt`.
 

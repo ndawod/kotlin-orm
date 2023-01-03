@@ -152,28 +152,50 @@ abstract class BaseDatabase constructor(
    * executes [block] with that connection.
    *
    * After [block] is finished, with or without an error, the connection is released.
-   *
-   * @param block the code block to run
    */
   @Throws(java.sql.SQLException::class)
   fun <R> readOnlyConnection(block: DatabaseConnectionBlock<R>): R =
-    runDatabaseConnectionBlock(false, block)
+    runDatabaseConnectionBlock(
+      enableRetryOnError = true,
+      writeLock = false,
+      block = block
+    )
 
   /**
    * Creates a new read-write [DatabaseConnection] to this [database][BaseDatabase] and
    * executes [block] with that connection.
    *
    * After [block] is finished, with or without an error, the connection is released.
-   *
-   * @param block the code block to run
    */
   @Throws(java.sql.SQLException::class)
   fun <R> readWriteConnection(block: DatabaseConnectionBlock<R>): R =
-    if (autoTransactional) {
-      transactional(block)
-    } else {
-      runDatabaseConnectionBlock(true, block)
-    }
+    readWriteConnection(
+      enableRetryOnError = true,
+      block = block
+    )
+
+  /**
+   * Creates a new read-write [DatabaseConnection] to this [database][BaseDatabase] and
+   * executes [block] with that connection.
+   *
+   * After [block] is finished, with or without an error, the connection is released.
+   */
+  @Throws(java.sql.SQLException::class)
+  fun <R> readWriteConnection(
+    enableRetryOnError: Boolean,
+    block: DatabaseConnectionBlock<R>
+  ): R = if (autoTransactional) {
+    transactional(
+      enableRetryOnError = enableRetryOnError,
+      block = block
+    )
+  } else {
+    runDatabaseConnectionBlock(
+      enableRetryOnError = enableRetryOnError,
+      writeLock = true,
+      block = block
+    )
+  }
 
   /**
    * Creates a new read-only [DatabaseConnection] to this [database][BaseDatabase] and
@@ -185,7 +207,29 @@ abstract class BaseDatabase constructor(
   fun <R> readOnlyLock(
     tableName: String,
     block: DatabaseConnectionBlock<R>
-  ): R = callWithLock(tableName, false, block)
+  ): R = readOnlyLock(
+    tableName = tableName,
+    enableRetryOnError = false,
+    block = block
+  )
+
+  /**
+   * Creates a new read-only [DatabaseConnection] to this [database][BaseDatabase] and
+   * executes [block] with that connection after locking [tableName] for read operations.
+   *
+   * After [block] is finished, with or without an error, the connection is released.
+   */
+  @Throws(java.sql.SQLException::class)
+  fun <R> readOnlyLock(
+    tableName: String,
+    enableRetryOnError: Boolean,
+    block: DatabaseConnectionBlock<R>
+  ): R = callWithLock(
+    tableName = tableName,
+    enableRetryOnError = enableRetryOnError,
+    writeLock = false,
+    block = block
+  )
 
   /**
    * Creates a new read-write [DatabaseConnection] to this [database][BaseDatabase] and
@@ -196,8 +240,14 @@ abstract class BaseDatabase constructor(
   @Throws(java.sql.SQLException::class)
   fun <R> readWriteLock(
     tableName: String,
+    enableRetryOnError: Boolean,
     block: DatabaseConnectionBlock<R>
-  ): R = callWithLock(tableName, true, block)
+  ): R = callWithLock(
+    tableName = tableName,
+    enableRetryOnError = enableRetryOnError,
+    writeLock = true,
+    block = block
+  )
 
   /**
    * Creates a new transactional [DatabaseConnection] to this [database][BaseDatabase] and
@@ -211,32 +261,54 @@ abstract class BaseDatabase constructor(
    */
   @Throws(java.sql.SQLException::class)
   fun <R> transactional(block: DatabaseConnectionBlock<R>): R =
-    runDatabaseConnectionBlock(true) { databaseConnection ->
-      if (transactionEngaged) {
-        throw java.sql.SQLException("Reentrant transaction detected.")
+    transactional(
+      enableRetryOnError = true,
+      block = block
+    )
+
+  /**
+   * Creates a new transactional [DatabaseConnection] to this [database][BaseDatabase] and
+   * executes [block] with that connection. If an error is thrown during execution of [block],
+   * then the transaction is rolled back and not committed to the database.
+   *
+   * After [block] is finished, with or without an error, the connection is released.
+   *
+   * Note: Internally, the database connection is read-write always so the user operations may
+   * modify the database freely.
+   */
+  @Throws(java.sql.SQLException::class)
+  fun <R> transactional(
+    enableRetryOnError: Boolean,
+    block: DatabaseConnectionBlock<R>
+  ): R = runDatabaseConnectionBlock(
+    enableRetryOnError = enableRetryOnError,
+    writeLock = true,
+  ) { databaseConnection ->
+    if (transactionEngaged) {
+      throw java.sql.SQLException("Reentrant transaction detected.")
+    }
+
+    transactionEngaged = true
+    var saved = false
+
+    try {
+      saved = saveSpecialConnection(databaseConnection)
+
+      TransactionManager.callInTransaction(
+        databaseConnection,
+        saved,
+        databaseType,
+      ) {
+        block(connectionSource, databaseConnection)
       }
+    } finally {
+      transactionEngaged = false
 
-      transactionEngaged = true
-      var saved = false
-
-      try {
-        saved = saveSpecialConnection(databaseConnection)
-
-        TransactionManager.callInTransaction(
-          databaseConnection,
-          saved,
-          databaseType,
-        ) {
-          block(connectionSource, databaseConnection)
-        }
-      } finally {
-        transactionEngaged = false
-
-        if (saved) {
-          clearSpecialConnection(databaseConnection)
-        }
+      if (saved) {
+        clearSpecialConnection(databaseConnection)
       }
     }
+  }
 
   /**
    * Shuts down the database pool of connections. Any subsequent attempt to use the pool
@@ -251,8 +323,6 @@ abstract class BaseDatabase constructor(
   /**
    * Escapes the provided string property (table name, column name, etc.) and
    * returns the escaped value, wrapped inside [propertyWrapperChar] on both ends.
-   *
-   * @param name the property name
    */
   fun escapeProperty(name: String): String = escape(
     value = name,
@@ -264,8 +334,6 @@ abstract class BaseDatabase constructor(
   /**
    * Escapes the provided string value and returns the escaped value, wrapped inside
    * [valueWrapperChar] on both ends.
-   *
-   * @param value the value to escape
    */
   fun escapeValue(value: String): String = escape(
     value = value,
@@ -277,8 +345,6 @@ abstract class BaseDatabase constructor(
   /**
    * Escapes the provided string used in a LIKE operation returns the escaped value,
    * as-is, without wrapping with a character.
-   *
-   * @param value the value to escape
    */
   fun escapeLike(value: String): String = escape(
     value = value,
@@ -306,11 +372,6 @@ abstract class BaseDatabase constructor(
 
   /**
    * Escapes the provided string and returns the escaped value.
-   *
-   * @param value the string value to escape
-   * @param wrapper the wrapper character used for escaping
-   * @param escapePercent whether to escape the percent sign (%) too.
-   * @param escapeLowDash whether to escape the low-dash (_) too.
    */
   @Suppress("MagicNumber", "ComplexMethod", "KotlinConstantConditions")
   protected fun escape(
@@ -382,12 +443,13 @@ abstract class BaseDatabase constructor(
   @Suppress("NestedBlockDepth")
   @Throws(java.sql.SQLException::class)
   private fun <R> runDatabaseConnectionBlock(
+    enableRetryOnError: Boolean,
     writeLock: Boolean,
     block: DatabaseConnectionBlock<R>
   ): R {
-    var shouldReconnectAndRetry = false
+    var shouldRetryOnError = enableRetryOnError
     var databaseConnection: DatabaseConnection? = null
-    var error: Throwable?
+    var latestError: Throwable?
 
     do {
       try {
@@ -398,11 +460,11 @@ abstract class BaseDatabase constructor(
         }
 
         return block(connectionSource, databaseConnection)
-      } catch (e: java.sql.SQLException) {
-        error = e
-        shouldReconnectAndRetry = !shouldReconnectAndRetry
+      } catch (error: java.sql.SQLException) {
+        latestError = error
+        shouldRetryOnError = !shouldRetryOnError
 
-        if (shouldReconnectAndRetry) {
+        if (shouldRetryOnError) {
           shutdown()
         }
       } finally {
@@ -410,17 +472,21 @@ abstract class BaseDatabase constructor(
           connectionSource.releaseConnection(databaseConnection)
         }
       }
-    } while (shouldReconnectAndRetry)
+    } while (shouldRetryOnError)
 
-    throw error ?: java.sql.SQLTransientConnectionException()
+    throw latestError ?: java.sql.SQLTransientConnectionException()
   }
 
   @Throws(java.sql.SQLException::class)
   private fun <R> callWithLock(
     tableName: String,
+    enableRetryOnError: Boolean,
     writeLock: Boolean,
     block: DatabaseConnectionBlock<R>
-  ): R = runDatabaseConnectionBlock(writeLock) { databaseConnection ->
+  ): R = runDatabaseConnectionBlock(
+    enableRetryOnError = enableRetryOnError,
+    writeLock = writeLock
+  ) { databaseConnection ->
     val isAutoCommit = databaseConnection.isAutoCommit
     val lockType = if (writeLock) "WRITE" else "READ"
 
