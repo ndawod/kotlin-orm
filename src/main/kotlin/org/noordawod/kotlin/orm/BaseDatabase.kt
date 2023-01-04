@@ -28,6 +28,7 @@ package org.noordawod.kotlin.orm
 import com.j256.ormlite.misc.TransactionManager
 import com.j256.ormlite.support.ConnectionSource
 import com.j256.ormlite.support.DatabaseConnection
+import org.noordawod.kotlin.core.extension.mutableListWith
 import org.noordawod.kotlin.orm.config.DatabaseConfiguration
 
 /**
@@ -344,11 +345,13 @@ abstract class BaseDatabase constructor(
 
   /**
    * Escapes the provided string used in a LIKE operation returns the escaped value,
-   * as-is, without wrapping with a character.
+   * as-is, wrapped inside [wrapper] on both ends, if provided of course.
+   *
+   * By default, [wrapper] is null.
    */
-  fun escapeLike(value: String): String = escape(
+  fun escapeLike(value: String, wrapper: Char? = null): String = escape(
     value = value,
-    wrapper = null,
+    wrapper = wrapper,
     escapePercent = true,
     escapeLowDash = true
   )
@@ -373,68 +376,59 @@ abstract class BaseDatabase constructor(
   /**
    * Escapes the provided string and returns the escaped value.
    */
-  @Suppress("MagicNumber", "ComplexMethod", "KotlinConstantConditions")
+  @Suppress("KotlinConstantConditions")
   protected fun escape(
     value: String,
     wrapper: Char?,
     escapePercent: Boolean,
     escapeLowDash: Boolean
   ): String {
-    val length = value.length
-    val builder = StringBuilder(value.length + 10)
+    val escapeCharsSize = escapeChars.size
+    var arrayLength = escapeCharsSize
+
+    if (null != wrapper) {
+      arrayLength++
+    }
+
+    if (escapePercent) {
+      arrayLength++
+    }
+
+    if (escapeLowDash) {
+      arrayLength++
+    }
+
+    val effectiveEscapeChars: MutableList<Char> = mutableListWith(arrayLength)
     var idx: Int = -1
 
-    var arrayLength = escapeChars.size
-    if (escapePercent) {
-      arrayLength++
-    }
-    if (escapeLowDash) {
-      arrayLength++
-    }
+    System.arraycopy(escapeChars, 0, effectiveEscapeChars, 0, escapeCharsSize)
 
-    // Create new array containing the characters to escape.
-    val chars = CharArray(arrayLength)
-    System.arraycopy(
-      escapeChars,
-      0,
-      chars,
-      0,
-      escapeChars.size
-    )
-
-    if (escapePercent) {
-      chars[++idx + escapeChars.size] = '%'
-    }
-
-    if (escapeLowDash) {
-      chars[++idx + escapeChars.size] = '_'
-    }
-
-    idx = -1
-
-    while (length > ++idx) {
-      val valueChar = value[idx]
-
-      @Suppress("ComplexCondition")
-      if (
-        null == wrapper ||
-        (SINGLE_QUOTE_CHAR != wrapper || DOUBLE_QUOTE_CHAR != valueChar) &&
-        (DOUBLE_QUOTE_CHAR != wrapper || SINGLE_QUOTE_CHAR != valueChar)
-      ) {
-        var found = false
-        var specialCharIdx = -1
-
-        while (!found && chars.size > ++specialCharIdx) {
-          val thisChar = chars[specialCharIdx]
-          found = valueChar == thisChar
-        }
-
-        if (found) {
-          builder.append('\\')
-        }
+    if (null != wrapper) {
+      // The value of the wrapper character determines which of the single/double character
+      // to escape – it's always the "other" one. So if wrapper=SINGLE_QUOTE_CHAR, then no
+      // need to escape DOUBLE_QUOTE_CHAR, and vice versa.
+      when (wrapper) {
+        SINGLE_QUOTE_CHAR -> effectiveEscapeChars.remove(DOUBLE_QUOTE_CHAR)
+        DOUBLE_QUOTE_CHAR -> effectiveEscapeChars.remove(SINGLE_QUOTE_CHAR)
       }
+      effectiveEscapeChars[++idx + escapeCharsSize] = wrapper
+    }
 
-      builder.append(valueChar)
+    if (escapePercent) {
+      effectiveEscapeChars[++idx + escapeCharsSize] = '%'
+    }
+
+    if (escapeLowDash) {
+      effectiveEscapeChars[++idx + escapeCharsSize] = '_'
+    }
+
+    val builder = StringBuilder(value.length + arrayLength + idx)
+
+    for (char in value) {
+      if (effectiveEscapeChars.contains(char)) {
+        builder.append('\\')
+      }
+      builder.append(char)
     }
 
     return if (null == wrapper) "$builder" else "$wrapper$builder$wrapper"

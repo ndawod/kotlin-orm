@@ -72,12 +72,15 @@ open class MySQLDatabase constructor(
 
   override val valueWrapperChar: Char = SINGLE_QUOTE_CHAR
 
+  // Based on: https://rdr.to/EOBvOfkE8qj
   @Suppress("MagicNumber", "LeakingThis")
   override val escapeChars: CharArray = charArrayOf(
-    '\\',
+    '\b',
     '\n',
     '\r',
-    valueWrapperChar,
+    '\t',
+    '\\',
+    SINGLE_QUOTE_CHAR,
     DOUBLE_QUOTE_CHAR,
     0x00.toChar(),
     0x1a.toChar()
