@@ -3,6 +3,12 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+4.0.7 (January 5, 2023)
+    Simplify `BaseDatabase.escape()` method.
+
+4.0.6 (January 4, 2023)
+    Fix escaping values and `LIKE` clauses.
+
 4.0.5 (January 4, 2023)
     Remove a couple of extension files (migrated to another package).
 

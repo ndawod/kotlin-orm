@@ -399,9 +399,11 @@ abstract class BaseDatabase constructor(
     }
 
     val effectiveEscapeChars: MutableList<Char> = mutableListWith(arrayLength)
-    var idx: Int = -1
+    for (escapeChar in escapeChars) {
+      effectiveEscapeChars.add(escapeChar)
+    }
 
-    System.arraycopy(escapeChars, 0, effectiveEscapeChars, 0, escapeCharsSize)
+    var idx: Int = -1
 
     if (null != wrapper) {
       // The value of the wrapper character determines which of the single/double character
