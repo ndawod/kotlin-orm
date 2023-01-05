@@ -375,6 +375,11 @@ abstract class BaseDatabase constructor(
 
   /**
    * Escapes the provided string and returns the escaped value.
+   *
+   * @param value the string value to escape
+   * @param wrapper the character to wrap the escaped value to return
+   * @param escapePercent whether to escape the '%' character used mainly in LIKE clauses
+   * @param escapeLowDash whether to escape the '_' character used mainly in LIKE clauses
    */
   @Suppress("KotlinConstantConditions")
   protected fun escape(
@@ -383,54 +388,41 @@ abstract class BaseDatabase constructor(
     escapePercent: Boolean,
     escapeLowDash: Boolean
   ): String {
-    val escapeCharsSize = escapeChars.size
-    var arrayLength = escapeCharsSize
-
-    if (null != wrapper) {
-      arrayLength++
-    }
-
-    if (escapePercent) {
-      arrayLength++
-    }
-
-    if (escapeLowDash) {
-      arrayLength++
-    }
+    @Suppress("MagicNumber")
+    val arrayLength = escapeChars.size + 10
 
     val effectiveEscapeChars: MutableList<Char> = mutableListWith(arrayLength)
     for (escapeChar in escapeChars) {
       effectiveEscapeChars.add(escapeChar)
     }
 
-    var idx: Int = -1
-
     if (null != wrapper) {
       // The value of the wrapper character determines which of the single/double character
       // to escape – it's always the "other" one. So if wrapper=SINGLE_QUOTE_CHAR, then no
       // need to escape DOUBLE_QUOTE_CHAR, and vice versa.
+      // However, when the wrapper is null, then both characters will be escaped.
       when (wrapper) {
         SINGLE_QUOTE_CHAR -> effectiveEscapeChars.remove(DOUBLE_QUOTE_CHAR)
         DOUBLE_QUOTE_CHAR -> effectiveEscapeChars.remove(SINGLE_QUOTE_CHAR)
       }
-      effectiveEscapeChars[++idx + escapeCharsSize] = wrapper
+      effectiveEscapeChars.add(wrapper)
     }
 
     if (escapePercent) {
-      effectiveEscapeChars[++idx + escapeCharsSize] = '%'
+      effectiveEscapeChars.add('%')
     }
 
     if (escapeLowDash) {
-      effectiveEscapeChars[++idx + escapeCharsSize] = '_'
+      effectiveEscapeChars.add('_')
     }
 
-    val builder = StringBuilder(value.length + arrayLength + idx)
+    val builder = StringBuilder(value.length + arrayLength + arrayLength)
 
-    for (char in value) {
-      if (effectiveEscapeChars.contains(char)) {
+    for (valueChar in value) {
+      if (effectiveEscapeChars.contains(valueChar)) {
         builder.append('\\')
       }
-      builder.append(char)
+      builder.append(valueChar)
     }
 
     return if (null == wrapper) "$builder" else "$wrapper$builder$wrapper"
