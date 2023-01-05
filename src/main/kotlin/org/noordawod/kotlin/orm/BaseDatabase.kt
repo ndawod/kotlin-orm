@@ -25,6 +25,8 @@
 
 package org.noordawod.kotlin.orm
 
+import com.diogonunes.jcolor.Ansi.colorize
+import com.diogonunes.jcolor.Attribute
 import com.j256.ormlite.misc.TransactionManager
 import com.j256.ormlite.support.ConnectionSource
 import com.j256.ormlite.support.DatabaseConnection
@@ -559,8 +561,13 @@ abstract class BaseDatabase constructor(
     @Suppress("SwallowedException")
     fun showDatabaseDrivers(uri: String) {
       val drivers = java.sql.DriverManager.getDrivers()
+      val boldText = Attribute.BOLD()
+
       if (null == drivers || !drivers.hasMoreElements()) {
-        System.err.println("No database drivers are registered!")
+        System.err.println(colorize(
+          "No database drivers are registered!",
+          boldText
+        ))
       } else {
         println("Checking registered database drivers against URI: $uri")
         while (drivers.hasMoreElements()) {
@@ -571,9 +578,13 @@ abstract class BaseDatabase constructor(
           } catch (e: java.sql.SQLException) {
             false
           }
-          println("  Class: " + driver.javaClass.name)
-          println("  Version: " + driver.majorVersion + "." + driver.minorVersion)
-          println("  Accepts URL? $acceptsURL")
+
+          println("  Class: " + colorize(driver.javaClass.name, boldText))
+          println("  Version: " + colorize(
+            "${driver.majorVersion}.${driver.minorVersion}",
+            boldText
+          ))
+          println("  Accepts URL? " + colorize("$acceptsURL", boldText))
         }
       }
     }

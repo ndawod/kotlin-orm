@@ -30,6 +30,8 @@
 
 package org.noordawod.kotlin.orm.migration
 
+import com.diogonunes.jcolor.Ansi.colorize
+import com.diogonunes.jcolor.Attribute
 import org.noordawod.kotlin.core.Constants
 import org.noordawod.kotlin.core.extension.secondsSinceEpoch
 import org.noordawod.kotlin.orm.query.QueryCommands
@@ -61,7 +63,7 @@ class Migrator constructor(
       try {
         return 0L != connection.queryForLong(
           listOf(
-            "SELECT COUNT($escapedIdProperty) AS count",
+            "SELECT COUNT($escapedIdProperty)",
             "FROM $escapedTableName",
             "WHERE $escapedCreatedProperty IS NULL"
           ).joinToString(separator = " ")
@@ -88,12 +90,11 @@ class Migrator constructor(
 
     // Get current version
     var nextVersion: Int = version()
-    println("- Current version: $nextVersion")
-    println("- Number of migrations: ${migrations.size}")
+    println("- Current version: " + colorize("$nextVersion", BOLD_TEXT))
+    println("- Number of migrations: " + colorize("${migrations.size}", BOLD_TEXT))
 
     // Keep track of timing for all migrations.
     val migrationsStart = java.util.Date()
-    println("- Started: $migrationsStart")
 
     // Keep track of executed commands in this migration.
     val executedCommands = QueryCommands(Constants.MEDIUM_BLOCK_SIZE)
@@ -140,7 +141,13 @@ class Migrator constructor(
 
         lockMigration(migration)
 
-        println("  - v$nextVersion → ${migration.description}:")
+        println(
+          "  - " +
+            colorize("v$nextVersion", BRIGHT_GREEN_TEXT) +
+            " → " +
+            colorize(migration.description, BOLD_TEXT) +
+            ":"
+        )
 
         performPreMigration(migration)
         preMigrationRan = true
@@ -160,29 +167,42 @@ class Migrator constructor(
         performCommitOrRollback("ROLLBACK")
       } finally {
         val migrationEnd = java.util.Date()
-        println("  - Started: $migrationStart")
-        println("  - Ended: $migrationEnd")
+        println("  - Started: " + colorize("$migrationStart", BOLD_TEXT))
+        println("  - Ended: " + colorize("$migrationEnd", BOLD_TEXT))
         val duration = migrationEnd.time - migrationStart.time
         if (1 < duration) {
-          println("  - Duration: $duration milliseconds")
+          println("  - Duration: " + colorize("$duration milliseconds", BOLD_TEXT))
         }
+        println()
       }
 
       if (null != migrationError) {
-        println()
-
         when {
-          !preMigrationRan -> println("Unexpected error while running pre-migration code.")
+          !preMigrationRan ->
+            println(
+              colorize(
+                "Unexpected error while running pre-migration code.",
+                BRIGHT_RED_TEXT
+              )
+            )
 
           !migrationRan -> {
-            println("Unexpected error while running migration.")
+            println(
+              colorize(
+                "Unexpected error while running migration.",
+                BRIGHT_RED_TEXT
+              )
+            )
 
             // Report all executed commands in this migration.
             if (executedCommands.isNotEmpty()) {
               println()
               println(
-                "These migration commands were already executed – " +
-                  "the last one probably caused the error:"
+                colorize(
+                  "These migration commands were already executed – " +
+                    "the last one probably caused the error:",
+                  BRIGHT_RED_TEXT
+                )
               )
               println()
               for (command in executedCommands) {
@@ -205,9 +225,15 @@ class Migrator constructor(
     val migrationsEnd = java.util.Date()
     val duration = migrationsEnd.time - migrationsStart.time
 
-    println("- Ended: $migrationsEnd")
+    println("- Started: " + colorize("$migrationsStart", BOLD_TEXT))
+    println("- Ended: " + colorize("$migrationsEnd", BOLD_TEXT))
     println()
-    println("Database migration finished in $duration milliseconds.")
+    println(
+      colorize(
+        "Database migration finished in $duration milliseconds.",
+        BOLD_TEXT
+      )
+    )
     println()
   }
 
@@ -232,7 +258,12 @@ class Migrator constructor(
       connection.execute(command)
     } catch (ignored: java.sql.SQLException) {
       println()
-      println("Ignored an exception issuing a $command operation.")
+      println(
+        colorize(
+          "Ignored an exception issuing a $command operation.",
+          BOLD_TEXT
+        )
+      )
     }
   }
 
@@ -279,13 +310,13 @@ class Migrator constructor(
         val nextPercent = (progress / commandsSizePercentage).toInt()
         if (10 <= nextPercent - percent) {
           percent += 10
-          print(" $percent%")
+          print(colorize(" $percent%", BOLD_TEXT))
         }
       }
 
       // Last debugging.
       if (100 != percent) {
-        print(" 100%")
+        print(colorize(" 100%", BOLD_TEXT))
       }
 
       print(".")
@@ -453,5 +484,9 @@ class Migrator constructor(
      * Default list of prefixes used for commenting migration plans.
      */
     val DEFAULT_COMMENT_PREFIXES: Collection<String> = listOf("/*", "#", "-- ")
+
+    private val BOLD_TEXT = Attribute.BOLD()
+    private val BRIGHT_GREEN_TEXT = Attribute.BRIGHT_GREEN_TEXT()
+    private val BRIGHT_RED_TEXT = Attribute.BRIGHT_RED_TEXT()
   }
 }

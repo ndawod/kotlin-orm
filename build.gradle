@@ -22,7 +22,7 @@
  */
 
 group = 'org.noordawod.kotlin.orm'
-version = '4.0.8'
+version = '4.0.9'
 description = 'Defines reusable contracts for OrmLite that requires entities and models to exist.'
 buildDir = 'build'
 
@@ -67,4 +67,5 @@ dependencies {
     implementation "com.j256.ormlite:ormlite-core:${versions.ormlite}"
     implementation "com.j256.ormlite:ormlite-jdbc:${versions.ormlite}"
     implementation "net.moznion:uribuilder-tiny:${versions.uribuilder_tiny}"
+    implementation "com.diogonunes:JColor:${versions.jcolor}"
 }
