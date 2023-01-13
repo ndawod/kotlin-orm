@@ -47,6 +47,7 @@ typealias DatabaseConnectionBlock<R> = ConnectionSource.(DatabaseConnection) -> 
  * @param ageMillis how long, in milliseconds, to keep an idle connection open before closing it
  * @param maxFree how many concurrent open connections to keep open
  * @param healthCheckMillis interval between health checks of the database connection
+ * @param maxReentrancy how many reentrant transactions is allowed
  */
 @Suppress("TooManyFunctions", "LongParameterList")
 abstract class BaseDatabase constructor(
@@ -54,11 +55,12 @@ abstract class BaseDatabase constructor(
   val driver: String? = null,
   val ageMillis: Long = DEFAULT_AGE_MILLIS,
   val maxFree: Int = DEFAULT_MAX_FREE,
-  val healthCheckMillis: Long = DEFAULT_HEALTH_CHECK_INTERVAL
+  val healthCheckMillis: Long = DEFAULT_HEALTH_CHECK_INTERVAL,
+  val maxReentrancy: Int = DEFAULT_MAX_REENTRANCY
 ) {
   private val connectionSourceLock = Object()
   private var connectionSourceInternal: ConnectionSource? = null
-  private var transactionEngaged: Boolean = false
+  private var transactionsEngaged: Int = 0
 
   /**
    * Returns the [ConnectionSource] associated with this database.
@@ -287,14 +289,19 @@ abstract class BaseDatabase constructor(
     enableRetryOnError = enableRetryOnError,
     writeLock = true,
   ) { databaseConnection ->
-    if (transactionEngaged) {
+    if (0 < transactionsEngaged && autoTransactional) {
       throw java.sql.SQLException("Reentrant transaction detected.")
     }
 
-    transactionEngaged = true
+    if (maxReentrancy == transactionsEngaged) {
+      throw java.sql.SQLException("Maximum reentrant transactions reached: $maxReentrancy")
+    }
+
     var saved = false
 
     try {
+      transactionsEngaged++
+
       saved = saveSpecialConnection(databaseConnection)
 
       TransactionManager.callInTransaction(
@@ -305,7 +312,7 @@ abstract class BaseDatabase constructor(
         block(connectionSource, databaseConnection)
       }
     } finally {
-      transactionEngaged = false
+      transactionsEngaged--
 
       if (saved) {
         clearSpecialConnection(databaseConnection)
@@ -533,6 +540,11 @@ abstract class BaseDatabase constructor(
      * How many concurrent open connections to keep open.
      */
     const val DEFAULT_MAX_FREE: Int = 10
+
+    /**
+     * How many reentrant transactions is allowed.
+     */
+    const val DEFAULT_MAX_REENTRANCY: Int = 10
 
     /**
      * Default duration between connection health checks.
