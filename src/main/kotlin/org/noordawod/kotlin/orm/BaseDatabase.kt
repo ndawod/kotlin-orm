@@ -47,7 +47,7 @@ typealias DatabaseConnectionBlock<R> = ConnectionSource.(DatabaseConnection) -> 
  * @param ageMillis how long, in milliseconds, to keep an idle connection open before closing it
  * @param maxFree how many concurrent open connections to keep open
  * @param healthCheckMillis interval between health checks of the database connection
- * @param maxReentrancy how many reentrant transactions is allowed
+ * @param maxReentrancy how many reentrant transactions are allowed
  */
 @Suppress("TooManyFunctions", "LongParameterList")
 abstract class BaseDatabase constructor(
@@ -84,6 +84,10 @@ abstract class BaseDatabase constructor(
   /**
    * Determines whether to automatically create a transactional connection if a
    * [read-write connection][readWriteConnection] is requested.
+   *
+   * When this is turned on, only a single [read-write connection][readWriteConnection] is
+   * allowed to exist, and when this is turned off, a maximum of [maxReentrancy] connections
+   * can exist.
    *
    * By default, you need to call [transactional] in order to create a transactional read-write
    * connection.
@@ -162,7 +166,7 @@ abstract class BaseDatabase constructor(
   fun <R> readOnlyConnection(block: DatabaseConnectionBlock<R>): R =
     runDatabaseConnectionBlock(
       enableRetryOnError = true,
-      writeLock = false,
+      readWrite = false,
       block = block
     )
 
@@ -197,7 +201,7 @@ abstract class BaseDatabase constructor(
   } else {
     runDatabaseConnectionBlock(
       enableRetryOnError = enableRetryOnError,
-      writeLock = true,
+      readWrite = true,
       block = block
     )
   }
@@ -232,7 +236,7 @@ abstract class BaseDatabase constructor(
   ): R = callWithLock(
     tableName = tableName,
     enableRetryOnError = enableRetryOnError,
-    writeLock = false,
+    readWrite = false,
     block = block
   )
 
@@ -250,7 +254,7 @@ abstract class BaseDatabase constructor(
   ): R = callWithLock(
     tableName = tableName,
     enableRetryOnError = enableRetryOnError,
-    writeLock = true,
+    readWrite = true,
     block = block
   )
 
@@ -287,7 +291,7 @@ abstract class BaseDatabase constructor(
     block: DatabaseConnectionBlock<R>
   ): R = runDatabaseConnectionBlock(
     enableRetryOnError = enableRetryOnError,
-    writeLock = true,
+    readWrite = true,
   ) { databaseConnection ->
     if (0 < transactionsEngaged && autoTransactional) {
       throw java.sql.SQLException("Reentrant transaction detected.")
@@ -441,7 +445,7 @@ abstract class BaseDatabase constructor(
   @Throws(java.sql.SQLException::class)
   private fun <R> runDatabaseConnectionBlock(
     enableRetryOnError: Boolean,
-    writeLock: Boolean,
+    readWrite: Boolean,
     block: DatabaseConnectionBlock<R>
   ): R {
     var shouldRetryOnError = enableRetryOnError
@@ -450,7 +454,7 @@ abstract class BaseDatabase constructor(
 
     do {
       try {
-        databaseConnection = if (writeLock) {
+        databaseConnection = if (readWrite) {
           connectionSource.getReadWriteConnection("")
         } else {
           connectionSource.getReadOnlyConnection("")
@@ -478,14 +482,14 @@ abstract class BaseDatabase constructor(
   private fun <R> callWithLock(
     tableName: String,
     enableRetryOnError: Boolean,
-    writeLock: Boolean,
+    readWrite: Boolean,
     block: DatabaseConnectionBlock<R>
   ): R = runDatabaseConnectionBlock(
     enableRetryOnError = enableRetryOnError,
-    writeLock = writeLock
+    readWrite = readWrite
   ) { databaseConnection ->
     val isAutoCommit = databaseConnection.isAutoCommit
-    val lockType = if (writeLock) "WRITE" else "READ"
+    val lockType = if (readWrite) "WRITE" else "READ"
 
     try {
       databaseConnection.isAutoCommit = false
