@@ -139,8 +139,6 @@ class Migrator constructor(
         connection.execute("SET autocommit=0")
         connection.execute("START TRANSACTION")
 
-        lockMigration(migration)
-
         println(
           "  - " +
             colorize("v$nextVersion", BRIGHT_GREEN_TEXT) +
@@ -148,6 +146,8 @@ class Migrator constructor(
             colorize(migration.description, BOLD_TEXT) +
             ":"
         )
+
+        lockMigration(migration)
 
         performPreMigration(migration)
         preMigrationRan = true
@@ -255,7 +255,9 @@ class Migrator constructor(
 
   private fun performCommitOrRollback(command: String) {
     try {
+      print("    - Executing ${colorize(command, BOLD_TEXT)}…")
       connection.execute(command)
+      println(" Done.")
     } catch (ignored: java.sql.SQLException) {
       println()
       println(
@@ -269,14 +271,16 @@ class Migrator constructor(
 
   @Throws(java.sql.SQLException::class)
   private fun performPreMigration(migration: Migration) {
-    println("    - Running pre-migration code…")
+    print("    - Running pre-migration code… ")
     migration.executePre(connection)
+    println(" Done.")
   }
 
   @Throws(java.sql.SQLException::class)
   private fun performPostMigration(migration: Migration) {
-    println("    - Running post-migration code…")
+    print("    - Running post-migration code… ")
     migration.executePost(connection)
+    println(" Done.")
   }
 
   @Throws(java.sql.SQLException::class)
@@ -330,6 +334,8 @@ class Migrator constructor(
 
   @Throws(java.sql.SQLException::class)
   private fun lockMigration(migration: Migration) {
+    print("    - Locking ${colorize(escapedTableName, BOLD_TEXT)} table… ")
+
     val fieldValues = mapOf(
       escapedIdProperty to "${migration.version}",
       escapedDescriptionProperty to connection.escapeValue(migration.description),
@@ -345,10 +351,14 @@ class Migrator constructor(
         ")"
       ).joinToString(separator = "")
     )
+
+    println(" Done.")
   }
 
   @Throws(java.sql.SQLException::class)
   private fun unlockMigration(migration: Migration) {
+    print("    - Unlocking ${colorize(escapedTableName, BOLD_TEXT)} table… ")
+
     connection.execute(
       listOf(
         "UPDATE $escapedTableName",
@@ -356,6 +366,8 @@ class Migrator constructor(
         "WHERE $escapedIdProperty=${migration.version}"
       ).joinToString(separator = " ")
     )
+
+    println(" Done.")
   }
 
   @Throws(java.io.IOException::class)
