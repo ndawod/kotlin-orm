@@ -134,11 +134,10 @@ class Migrator constructor(
       // Keep track of timing for this migration.
       val migrationStart = java.util.Date()
 
-      try {
-        // Each migration runs in its own transaction so in case it fails, we can roll back.
-        connection.execute("SET autocommit=0")
-        connection.execute("START TRANSACTION")
+      // Each migration runs in its own transaction so in case it fails, we can roll back.
+      connection.execute("START TRANSACTION")
 
+      try {
         println(
           "  - " +
             colorize("v$nextVersion", BRIGHT_GREEN_TEXT) +
@@ -158,14 +157,13 @@ class Migrator constructor(
 
         performPostMigration(migration)
 
-        performCommitOrRollback("COMMIT")
-
         unlockMigration(migration)
       } catch (error: java.sql.SQLException) {
         migrationError = error
-        // An SQL error has occurred, we need to roll back all changes…
-        performCommitOrRollback("ROLLBACK")
       } finally {
+        val commitOrRollback = if (null == migrationError) "COMMIT" else "ROLLBACK"
+        performCommitOrRollback(commitOrRollback)
+
         val migrationEnd = java.util.Date()
         println("  - Started: " + colorize("$migrationStart", BOLD_TEXT))
         println("  - Ended: " + colorize("$migrationEnd", BOLD_TEXT))
