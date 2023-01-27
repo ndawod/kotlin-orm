@@ -22,10 +22,11 @@
  */
 
 @file:Suppress(
-  "unused",
+  "CyclomaticComplexMethod",
   "MagicNumber",
   "TooManyFunctions",
-  "CyclomaticComplexMethod"
+  "StringLiteralDuplication",
+  "unused"
 )
 
 package org.noordawod.kotlin.orm.migration

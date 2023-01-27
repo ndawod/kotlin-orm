@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+4.2.0 (January 27, 2023)
+    Remove reentrancy support from `BaseDatabase`.
+
 4.1.1 (January 25, 2023)
     Downgrade to Kotlin 1.7.21.
 

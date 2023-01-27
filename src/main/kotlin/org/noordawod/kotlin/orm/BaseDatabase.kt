@@ -47,7 +47,6 @@ typealias DatabaseConnectionBlock<R> = ConnectionSource.(DatabaseConnection) -> 
  * @param ageMillis how long, in milliseconds, to keep an idle connection open before closing it
  * @param maxFree how many concurrent open connections to keep open
  * @param healthCheckMillis interval between health checks of the database connection
- * @param maxReentrancy how many reentrant transactions are allowed
  */
 @Suppress("TooManyFunctions", "LongParameterList")
 abstract class BaseDatabase constructor(
@@ -55,12 +54,10 @@ abstract class BaseDatabase constructor(
   val driver: String? = null,
   val ageMillis: Long = DEFAULT_AGE_MILLIS,
   val maxFree: Int = DEFAULT_MAX_FREE,
-  val healthCheckMillis: Long = DEFAULT_HEALTH_CHECK_INTERVAL,
-  val maxReentrancy: Int = DEFAULT_MAX_REENTRANCY
+  val healthCheckMillis: Long = DEFAULT_HEALTH_CHECK_INTERVAL
 ) {
   private val connectionSourceLock = Object()
   private var connectionSourceInternal: ConnectionSource? = null
-  private var transactionsEngaged: Int = 0
 
   /**
    * Returns the [ConnectionSource] associated with this database.
@@ -80,19 +77,6 @@ abstract class BaseDatabase constructor(
         return connectionSourceLocked
       }
     }
-
-  /**
-   * Determines whether to automatically create a transactional connection if a
-   * [read-write connection][readWriteConnection] is requested.
-   *
-   * When this is turned on, only a single [read-write connection][readWriteConnection] is
-   * allowed to exist, and when this is turned off, a maximum of [maxReentrancy] connections
-   * can exist.
-   *
-   * By default, you need to call [transactional] in order to create a transactional read-write
-   * connection.
-   */
-  var autoTransactional: Boolean = false
 
   init {
     if (null != driver) {
@@ -193,18 +177,11 @@ abstract class BaseDatabase constructor(
   fun <R> readWriteConnection(
     enableRetryOnError: Boolean,
     block: DatabaseConnectionBlock<R>
-  ): R = if (autoTransactional) {
-    transactional(
-      enableRetryOnError = enableRetryOnError,
-      block = block
-    )
-  } else {
-    runDatabaseConnectionBlock(
-      enableRetryOnError = enableRetryOnError,
-      readWrite = true,
-      block = block
-    )
-  }
+  ): R = runDatabaseConnectionBlock(
+    enableRetryOnError = enableRetryOnError,
+    readWrite = true,
+    block = block
+  )
 
   /**
    * Creates a new read-only [DatabaseConnection] to this [database][BaseDatabase] and
@@ -293,19 +270,9 @@ abstract class BaseDatabase constructor(
     enableRetryOnError = enableRetryOnError,
     readWrite = true,
   ) { databaseConnection ->
-    if (0 < transactionsEngaged && autoTransactional) {
-      throw java.sql.SQLException("Reentrant transaction detected.")
-    }
-
-    if (maxReentrancy == transactionsEngaged) {
-      throw java.sql.SQLException("Maximum reentrant transactions reached: $maxReentrancy")
-    }
-
     var saved = false
 
     try {
-      transactionsEngaged++
-
       saved = saveSpecialConnection(databaseConnection)
 
       TransactionManager.callInTransaction(
@@ -316,8 +283,6 @@ abstract class BaseDatabase constructor(
         block(connectionSource, databaseConnection)
       }
     } finally {
-      transactionsEngaged--
-
       if (saved) {
         clearSpecialConnection(databaseConnection)
       }
@@ -580,10 +545,12 @@ abstract class BaseDatabase constructor(
       val boldText = Attribute.BOLD()
 
       if (null == drivers || !drivers.hasMoreElements()) {
-        System.err.println(colorize(
-          "No database drivers are registered!",
-          boldText
-        ))
+        System.err.println(
+          colorize(
+            "No database drivers are registered!",
+            boldText
+          )
+        )
       } else {
         println("Checking registered database drivers against URI: $uri")
         while (drivers.hasMoreElements()) {
@@ -596,10 +563,12 @@ abstract class BaseDatabase constructor(
           }
 
           println("  Class: " + colorize(driver.javaClass.name, boldText))
-          println("  Version: " + colorize(
-            "${driver.majorVersion}.${driver.minorVersion}",
-            boldText
-          ))
+          println(
+            "  Version: " + colorize(
+              "${driver.majorVersion}.${driver.minorVersion}",
+              boldText
+            )
+          )
           println("  Accepts URL? " + colorize("$acceptsURL", boldText))
         }
       }
