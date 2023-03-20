@@ -3,8 +3,10 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
-4.3.1 (March 20, 2023)
+4.3.2 (March 20, 2023)
     Fix a possible reentrant bug in `transactional` method.
+
+4.3.1 (DELETED)
 
 4.3.0 (March 7, 2023)
     Bump up dependencies versions.
