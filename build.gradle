@@ -29,6 +29,18 @@ buildDir = 'build'
 apply plugin: 'kotlinx-serialization'
 apply plugin: 'com.github.ben-manes.versions'
 
+repositories {
+    mavenCentral()
+    google()
+    gradlePluginPortal()
+    maven {
+        url 'https://jitpack.io'
+    }
+    maven {
+        url 'https://plugins.gradle.org/m2/'
+    }
+}
+
 buildscript {
     apply from: "$rootDir/gradle/config.gradle"
 
@@ -36,6 +48,9 @@ buildscript {
         mavenCentral()
         google()
         gradlePluginPortal()
+        maven {
+            url 'https://jitpack.io'
+        }
         maven {
             url 'https://plugins.gradle.org/m2/'
         }
@@ -46,15 +61,6 @@ buildscript {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
         classpath "org.jetbrains.kotlin:kotlin-serialization:${versions.kotlin}"
         classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${versions.detekt}"
-    }
-}
-
-repositories {
-    mavenCentral()
-    google()
-    gradlePluginPortal()
-    maven {
-        url 'https://jitpack.io'
     }
 }
 
