@@ -246,11 +246,10 @@ abstract class BaseDatabase constructor(
    * modify the database freely.
    */
   @Throws(java.sql.SQLException::class)
-  fun <R> transactional(block: DatabaseConnectionBlock<R>): R =
-    transactional(
-      enableRetryOnError = true,
-      block = block
-    )
+  fun <R> transactional(block: DatabaseConnectionBlock<R>): R = transactional(
+    enableRetryOnError = true,
+    block = block
+  )
 
   /**
    * Creates a new transactional [DatabaseConnection] to this [database][BaseDatabase] and
@@ -268,19 +267,15 @@ abstract class BaseDatabase constructor(
     block: DatabaseConnectionBlock<R>
   ): R = runDatabaseConnectionBlock(
     enableRetryOnError = enableRetryOnError,
-    readWrite = true,
+    readWrite = true
   ) { databaseConnection ->
     var saved = false
 
     try {
       saved = saveSpecialConnection(databaseConnection)
 
-      TransactionManager.callInTransaction(
-        databaseConnection,
-        saved,
-        databaseType,
-      ) {
-        block(connectionSource, databaseConnection)
+      TransactionManager.callInTransaction(databaseConnection, saved, databaseType) {
+        block(this, databaseConnection)
       }
     } finally {
       if (saved) {
@@ -406,43 +401,6 @@ abstract class BaseDatabase constructor(
     return if (null == wrapper) "$builder" else "$wrapper$builder$wrapper"
   }
 
-  @Suppress("NestedBlockDepth")
-  @Throws(java.sql.SQLException::class)
-  private fun <R> runDatabaseConnectionBlock(
-    enableRetryOnError: Boolean,
-    readWrite: Boolean,
-    block: DatabaseConnectionBlock<R>
-  ): R {
-    var shouldRetryOnError = enableRetryOnError
-    var databaseConnection: DatabaseConnection? = null
-    var latestError: Throwable?
-
-    do {
-      try {
-        databaseConnection = if (readWrite) {
-          connectionSource.getReadWriteConnection("")
-        } else {
-          connectionSource.getReadOnlyConnection("")
-        }
-
-        return block(connectionSource, databaseConnection)
-      } catch (error: java.sql.SQLException) {
-        latestError = error
-        shouldRetryOnError = !shouldRetryOnError
-
-        if (shouldRetryOnError) {
-          shutdown()
-        }
-      } finally {
-        if (null != databaseConnection) {
-          connectionSource.releaseConnection(databaseConnection)
-        }
-      }
-    } while (shouldRetryOnError)
-
-    throw latestError ?: java.sql.SQLTransientConnectionException()
-  }
-
   @Throws(java.sql.SQLException::class)
   private fun <R> callWithLock(
     tableName: String,
@@ -477,6 +435,50 @@ abstract class BaseDatabase constructor(
       )
       databaseConnection.isAutoCommit = isAutoCommit
     }
+  }
+
+  @Suppress("NestedBlockDepth")
+  @Throws(java.sql.SQLException::class)
+  private fun <R> runDatabaseConnectionBlock(
+    enableRetryOnError: Boolean,
+    readWrite: Boolean,
+    block: DatabaseConnectionBlock<R>
+  ): R {
+    var shouldRetryOnError = enableRetryOnError
+    var connectionSource: ConnectionSource? = null
+    var databaseConnection: DatabaseConnection? = null
+    var latestError: Throwable?
+
+    do {
+      try {
+        // We have to obtain the connection once because transactions do not work
+        // across different connections.
+        connectionSource = this.connectionSource
+
+        databaseConnection = if (readWrite) {
+          connectionSource.getReadWriteConnection("")
+        } else {
+          connectionSource.getReadOnlyConnection("")
+        }
+
+        return block(connectionSource, databaseConnection)
+      } catch (error: java.sql.SQLException) {
+        latestError = error
+        shouldRetryOnError = !shouldRetryOnError
+
+        if (shouldRetryOnError) {
+          shutdown()
+        }
+      } finally {
+        if (null != databaseConnection) {
+          connectionSource?.releaseConnection(databaseConnection)
+          databaseConnection = null
+        }
+        connectionSource = null
+      }
+    } while (shouldRetryOnError)
+
+    throw latestError ?: java.sql.SQLTransientConnectionException()
   }
 
   companion object {
