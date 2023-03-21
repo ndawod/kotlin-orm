@@ -3,8 +3,10 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
-4.4.1 (March 21, 2023)
+4.4.2 (March 21, 2023)
     Fix migrator function to report errors in pre/post execution.
+
+4.4.1 (DELETED)
 
 4.4.0 (DELETED)
 

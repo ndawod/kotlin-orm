@@ -444,10 +444,10 @@ abstract class BaseDatabase constructor(
     readWrite: Boolean,
     block: DatabaseConnectionBlock<R>
   ): R {
-    var shouldRetryOnError = enableRetryOnError
+    var shouldRetryOnError = !enableRetryOnError
     var connectionSource: ConnectionSource? = null
     var databaseConnection: DatabaseConnection? = null
-    var latestError: Throwable?
+    var latestError: java.sql.SQLException?
 
     do {
       try {
@@ -466,9 +466,9 @@ abstract class BaseDatabase constructor(
         latestError = error
         shouldRetryOnError = !shouldRetryOnError
 
-        if (shouldRetryOnError) {
-          shutdown()
-        }
+        // Occasionally, the database connection might be stuck and closing it would free
+        // it up such that a new one is picked up in the next execution.
+        shutdown()
       } finally {
         if (null != databaseConnection) {
           connectionSource?.releaseConnection(databaseConnection)
