@@ -35,6 +35,7 @@ import com.diogonunes.jcolor.Ansi.colorize
 import com.diogonunes.jcolor.Attribute
 import org.noordawod.kotlin.core.Constants
 import org.noordawod.kotlin.core.extension.secondsSinceEpoch
+import org.noordawod.kotlin.core.extension.trimOrNull
 import org.noordawod.kotlin.orm.query.QueryCommands
 import org.noordawod.kotlin.orm.query.QueryResults
 
@@ -76,6 +77,14 @@ class Migrator constructor(
     }
 
   /**
+   * Initialize the migrator before any migration is [executed][execute].
+   */
+  @Throws(java.sql.SQLException::class)
+  fun initialize() {
+    ensureMigrationsTable()
+  }
+
+  /**
    * Performs the specified migration steps.
    *
    * @param migrations list of migration to perform
@@ -83,9 +92,6 @@ class Migrator constructor(
   @Suppress("LongMethod", "NestedBlockDepth")
   @Throws(java.sql.SQLException::class, java.io.IOException::class)
   fun execute(migrations: Array<Migration>) {
-    // Make sure migrations' table exists.
-    ensureMigrationsTable()
-
     // Reusable variables.
     var isFirstRun = true
 
@@ -122,15 +128,15 @@ class Migrator constructor(
         )
       }
 
-      // Debug.
       if (isFirstRun) {
         isFirstRun = false
         println("- Running migrations:")
       }
 
       var preMigrationRan = false
+      var postMigrationRan = false
       var migrationRan = false
-      var migrationError: java.sql.SQLException? = null
+      var migrationError: Throwable? = null
 
       // Keep track of timing for this migration.
       val migrationStart = java.util.Date()
@@ -153,17 +159,29 @@ class Migrator constructor(
         preMigrationRan = true
 
         executedCommands.clear()
-        performMigration(migration, nextVersion, executedCommands)
+        performMigration(
+          migration = migration,
+          nextVersion = nextVersion,
+          executedCommands = executedCommands
+        )
         migrationRan = true
 
         performPostMigration(migration)
+        postMigrationRan = true
 
         unlockMigration(migration)
       } catch (error: java.sql.SQLException) {
         migrationError = error
+        println(colorize(" SQL ERROR!", BRIGHT_RED_TEXT))
+      } catch (@Suppress("TooGenericExceptionCaught") error: Throwable) {
+        migrationError = error
+        println(colorize(" GENERIC ERROR!", BRIGHT_RED_TEXT))
       } finally {
-        val commitOrRollback = if (null == migrationError) "COMMIT" else "ROLLBACK"
-        performCommitOrRollback(commitOrRollback)
+        if (null == migrationError) {
+          performCommit()
+        } else {
+          performRollback()
+        }
 
         val migrationEnd = java.util.Date()
         println("  - Started: " + colorize("$migrationStart", BOLD_TEXT))
@@ -210,7 +228,21 @@ class Migrator constructor(
             }
           }
 
-          else -> println("Unexpected error while running post-migration code.")
+          !postMigrationRan ->
+            println(
+              colorize(
+                "Unexpected error while running post-migration code.",
+                BRIGHT_RED_TEXT
+              )
+            )
+
+          else ->
+            println(
+              colorize(
+                "Unexpected error while unlocking migrations table.",
+                BRIGHT_RED_TEXT
+              )
+            )
         }
 
         println()
@@ -252,6 +284,14 @@ class Migrator constructor(
     return 0
   }
 
+  private fun performCommit() {
+    performCommitOrRollback("COMMIT")
+  }
+
+  private fun performRollback() {
+    performCommitOrRollback("ROLLBACK")
+  }
+
   private fun performCommitOrRollback(command: String) {
     try {
       print("    - Executing ${colorize(command, BOLD_TEXT)}…")
@@ -270,14 +310,14 @@ class Migrator constructor(
 
   @Throws(java.sql.SQLException::class)
   private fun performPreMigration(migration: Migration) {
-    print("    - Running pre-migration code… ")
+    print("    - Running pre-migration code…")
     migration.executePre(connection)
     println(" Done.")
   }
 
   @Throws(java.sql.SQLException::class)
   private fun performPostMigration(migration: Migration) {
-    print("    - Running post-migration code… ")
+    print("    - Running post-migration code…")
     migration.executePost(connection)
     println(" Done.")
   }
@@ -288,52 +328,44 @@ class Migrator constructor(
     nextVersion: Int,
     executedCommands: QueryCommands
   ) {
-    // Debugging.
     print("    - Running migration:")
 
-    try {
-      // Where the upgrade file resides.
-      val upgradeFile = java.io.File(basePath, migration.file)
+    // Where the upgrade file resides.
+    val upgradeFile = java.io.File(basePath, migration.file)
 
-      // Read all commands in the upgrade file.
-      val upgradeCommands = readFile(upgradeFile)
-        ?: throw java.sql.SQLException("Migration plan #$nextVersion is empty! ($upgradeFile)")
+    // Read all commands in the upgrade file.
+    val upgradeCommands = readFile(upgradeFile)
+      ?: throw java.sql.SQLException("Migration plan #$nextVersion is empty! ($upgradeFile)")
 
-      // Parse the upgrade commands.
-      val commands = parseCommands(upgradeCommands)
-      val commandsSizePercentage = commands.size * 100f
+    // Parse the upgrade commands.
+    val commands = parseCommands(upgradeCommands)
+    val commandsSizePercentage = commands.size * 100f
 
-      // Run the upgrade commands.
-      var progress = 0f
-      var percent = 0
-      for (command in commands) {
-        executedCommands.add(command)
-        connection.execute(command)
-        progress++
-        val nextPercent = (progress / commandsSizePercentage).toInt()
-        if (10 <= nextPercent - percent) {
-          percent += 10
-          print(colorize(" $percent%", BOLD_TEXT))
-        }
+    // Run the upgrade commands.
+    var progress = 0f
+    var percent = 0
+    for (command in commands) {
+      executedCommands.add(command)
+      connection.execute(command)
+      progress++
+      val nextPercent = (progress / commandsSizePercentage).toInt()
+      if (10 <= nextPercent - percent) {
+        percent += 10
+        print(colorize(" $percent%", BOLD_TEXT))
       }
-
-      // Last debugging.
-      if (100 != percent) {
-        print(colorize(" 100%", BOLD_TEXT))
-      }
-
-      print(".")
-    } catch (error: java.sql.SQLException) {
-      println()
-      throw error
-    } finally {
-      println()
     }
+
+    // Last debugging.
+    if (100 != percent) {
+      print(colorize(" 100%", BOLD_TEXT))
+    }
+
+    println(".")
   }
 
   @Throws(java.sql.SQLException::class)
   private fun lockMigration(migration: Migration) {
-    print("    - Locking ${colorize(escapedTableName, BOLD_TEXT)} table… ")
+    print("    - Locking ${colorize(escapedTableName, BOLD_TEXT)} table…")
 
     val fieldValues = mapOf(
       escapedIdProperty to "${migration.version}",
@@ -377,18 +409,16 @@ class Migrator constructor(
 
   @Suppress("LoopWithTooManyJumpStatements")
   private fun parseCommands(commands: Collection<String>): Collection<String> =
-    ArrayList<String>(1024).apply {
-      var nextCommand = ""
+    ArrayList<String>(Constants.MEDIUM_BLOCK_SIZE).apply {
+      val nextCommand = StringBuilder(Constants.MEDIUM_BLOCK_SIZE)
 
       for (command in commands) {
-        val normalizedCommand = command.trim()
-        if (normalizedCommand.isEmpty()) {
-          continue
-        }
-
-        // Detect if this line is a comment. Note: We do not support multiple-line comments.
-        val commentPrefixesIterator = commentPrefixes.iterator()
+        val normalizedCommand = command.trimOrNull() ?: continue
         var isComment = false
+
+        // Detect if this line is a comment.
+        // Note: We do not support multiple-line comments.
+        val commentPrefixesIterator = commentPrefixes.iterator()
         while (!isComment && commentPrefixesIterator.hasNext()) {
           isComment = normalizedCommand.startsWith(commentPrefixesIterator.next())
         }
@@ -397,13 +427,13 @@ class Migrator constructor(
           continue
         }
 
-        if (normalizedCommand.endsWith(";")) {
-          // The command ends with a semicolon; it's the final piece the command.
-          nextCommand += " ${normalizedCommand.substring(0, normalizedCommand.length - 1)}"
-          add(nextCommand.trim())
-          nextCommand = ""
+        if (normalizedCommand.endsWith(';')) {
+          // The command ends with a semicolon; it's the final piece of the command.
+          nextCommand.append(" ${normalizedCommand.substring(0, normalizedCommand.length - 1)}")
+          add("$nextCommand")
+          nextCommand.clear()
         } else {
-          nextCommand += " $normalizedCommand"
+          nextCommand.append(" $normalizedCommand")
         }
       }
     }
@@ -489,7 +519,7 @@ class Migrator constructor(
     /**
      * Default name of the migrations table.
      */
-    const val TABLE_NAME = "\$migrations"
+    const val TABLE_NAME = "\$migration"
 
     /**
      * Default list of prefixes used for commenting migration plans.
