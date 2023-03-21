@@ -76,13 +76,7 @@ class Migrator constructor(
       return false
     }
 
-  /**
-   * Initialize the migrator before any migration is [executed][execute].
-   */
-  @Throws(java.sql.SQLException::class)
-  fun initialize() {
-    ensureMigrationsTable()
-  }
+  private var isMigrationTableInitialized = false
 
   /**
    * Performs the specified migration steps.
@@ -92,6 +86,11 @@ class Migrator constructor(
   @Suppress("LongMethod", "NestedBlockDepth")
   @Throws(java.sql.SQLException::class, java.io.IOException::class)
   fun execute(migrations: Array<Migration>) {
+    if (!isMigrationTableInitialized) {
+      ensureMigrationsTable()
+      isMigrationTableInitialized = true
+    }
+
     // Reusable variables.
     var isFirstRun = true
 
