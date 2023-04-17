@@ -42,8 +42,7 @@ import org.noordawod.kotlin.orm.config.DatabaseConfiguration
  * @param maxRetries maximum number of retries
  * @param retryDelay how long, in milliseconds, to wait between failed connection retries
  */
-@Suppress("LongParameterList")
-open class MySQLDatabase constructor(
+open class MySQLDatabase(
   config: DatabaseConfiguration,
   driver: String = JDBC_DRIVER,
   ageMillis: Long = DEFAULT_AGE_MILLIS,
@@ -170,7 +169,6 @@ open class MySQLDatabase constructor(
      *
      * @see <a href="https://tinyurl.com/yagm2clw">Connector/J Configuration Properties</a>
      */
-    @Suppress("LongParameterList")
     fun uri(
       protocol: String,
       host: String,

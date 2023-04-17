@@ -104,10 +104,7 @@ complexity:
     active: true
     threshold: 60
   LongParameterList:
-    active: true
-    functionThreshold: 6
-    constructorThreshold: 6
-    ignoreDefaultParameters: false
+    active: false
   MethodOverloading:
     active: false
   NestedBlockDepth:
@@ -496,14 +493,7 @@ naming:
       - "**/*.Spek.kt"
     maximumVariableNameLength: 32
   VariableMinLength:
-    active: true
-    excludes:
-      - "**/test/**"
-      - "**/androidTest/**"
-      - "**/*.Test.kt"
-      - "**/*.Spec.kt"
-      - "**/*.Spek.kt"
-    minimumVariableNameLength: 3
+    active: false
   VariableNaming:
     active: true
     excludes:

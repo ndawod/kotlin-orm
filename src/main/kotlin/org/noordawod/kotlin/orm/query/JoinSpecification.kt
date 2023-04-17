@@ -31,7 +31,7 @@ package org.noordawod.kotlin.orm.query
  * @param table the table specification
  * @param key the primary key in [table]
  */
-data class JoinSpecification constructor(
+data class JoinSpecification(
   val table: TableSpecification,
   val key: String
 ) {

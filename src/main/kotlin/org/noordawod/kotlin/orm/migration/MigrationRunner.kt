@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2022 Noor Dawod. All rights reserved.
+ * Copyright 2023 Noor Dawod. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -23,48 +23,14 @@
 
 @file:Suppress("unused", "MemberVisibilityCanBePrivate")
 
-package org.noordawod.kotlin.orm
+package org.noordawod.kotlin.orm.migration
 
-import com.j256.ormlite.stmt.StatementBuilder
-import com.j256.ormlite.support.DatabaseConnection
-import org.noordawod.kotlin.orm.migration.Migration
-import org.noordawod.kotlin.orm.migration.Migrator
-import org.noordawod.kotlin.orm.query.QueryResults
-import org.noordawod.kotlin.orm.query.impl.QueryResultsImpl
+import org.noordawod.kotlin.orm.BaseDatabase
 
 /**
- * Provides a database migration service to the [Migration] runner.
+ * Provides a database migration runner.
  */
-class DatabaseMigration constructor(
-  database: BaseDatabase,
-  connection: DatabaseConnection
-) {
-  private val connection = object : Migrator.Connection {
-    override fun execute(statement: String): Int = connection.executeStatement(
-      statement,
-      DatabaseConnection.DEFAULT_RESULT_FLAGS
-    )
-
-    override fun query(statement: String): QueryResults =
-      QueryResultsImpl(
-        connection.compileStatement(
-          statement.trim(),
-          StatementBuilder.StatementType.SELECT_RAW,
-          null,
-          DatabaseConnection.DEFAULT_RESULT_FLAGS,
-          false
-        )
-      )
-
-    override fun queryForLong(statement: String): Long = connection.queryForLong(statement)
-
-    override fun escapeProperty(name: String): String = database.escapeProperty(name)
-
-    override fun escapeValue(value: String): String = database.escapeValue(value)
-
-    override fun escapeLike(value: String): String = database.escapeLike(value)
-  }
-
+class MigrationRunner(private val database: BaseDatabase) {
   /**
    * Executes a [migration] found in the specified [path][basePath].
    */
@@ -108,9 +74,18 @@ class DatabaseMigration constructor(
     basePath: String,
     migrations: Collection<Migration>
   ) {
-    Migrator(
-      connection = connection,
-      basePath = java.io.File(basePath)
-    ).execute(migrations.toTypedArray())
+    database.readWriteConnection { databaseConnection ->
+      try {
+        Migrator(
+          databaseConnection = databaseConnection,
+          escapeProperty = database::escapeProperty,
+          escapeValue = database::escapeValue,
+          escapeLike = database::escapeLike,
+          basePath = java.io.File(basePath)
+        ).execute(migrations.toTypedArray())
+      } finally {
+        databaseConnection.closeQuietly()
+      }
+    }
   }
 }

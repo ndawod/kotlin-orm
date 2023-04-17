@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+4.5.0 (April 17, 2023)
+    Use the underlying database connection to apply transactions.
+
 4.4.2 (March 21, 2023)
     Fix migrator function to report errors in pre/post execution.
 

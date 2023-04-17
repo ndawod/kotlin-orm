@@ -31,7 +31,7 @@ package org.noordawod.kotlin.orm.query
  * @param name the table name
  * @param alias the table alias, optional
  */
-data class TableSpecification constructor(
+data class TableSpecification(
   val name: String,
   val alias: String?
 ) {

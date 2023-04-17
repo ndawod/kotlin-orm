@@ -15,11 +15,11 @@ indent_style = space
 ij_kotlin_imports_layout = *
 
 # 2 space indentation for Kotlin and Java.
-[{*.kt, *.java}]
+[{*.kt,*.java}]
 indent_size = 2
 
 # 2 space indentation for Yaml.
-[{*.yaml, *.yml}]
+[{*.yaml,*.yml}]
 indent_size = 2
 
 # 2 space indentation for Markdown.
@@ -27,5 +27,5 @@ indent_size = 2
 indent_size = 2
 
 # 2 space indentation for HTML/XML.
-[{*.htm, *.html, *.xml}]
+[{*.htm,*.html,*.xml}]
 indent_size = 2

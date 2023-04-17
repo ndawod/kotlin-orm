@@ -48,8 +48,8 @@ typealias DatabaseConnectionBlock<R> = ConnectionSource.(DatabaseConnection) -> 
  * @param maxFree how many concurrent open connections to keep open
  * @param healthCheckMillis interval between health checks of the database connection
  */
-@Suppress("TooManyFunctions", "LongParameterList")
-abstract class BaseDatabase constructor(
+@Suppress("TooManyFunctions")
+abstract class BaseDatabase(
   val config: DatabaseConfiguration,
   val driver: String? = null,
   val ageMillis: Long = DEFAULT_AGE_MILLIS,
@@ -354,7 +354,6 @@ abstract class BaseDatabase constructor(
    * @param escapePercent whether to escape the '%' character used mainly in LIKE clauses
    * @param escapeLowDash whether to escape the '_' character used mainly in LIKE clauses
    */
-  @Suppress("KotlinConstantConditions")
   protected fun escape(
     value: String,
     wrapper: Char?,

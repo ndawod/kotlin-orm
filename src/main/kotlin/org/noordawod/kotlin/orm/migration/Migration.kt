@@ -25,33 +25,61 @@
 
 package org.noordawod.kotlin.orm.migration
 
+import org.noordawod.kotlin.orm.query.QueryResults
+
 /**
- * Lists fields used in the migrations table.
+ * A database connection interface dedicated for migrations.
  */
-object MigrationField {
+interface MigrationConnection {
   /**
-   * The field "migration_id" in the migrations table.
+   * Executes the specified [statement] and returns how many rows were affected.
+   *
+   * @param statement the database statement to execute
    */
-  const val ID: String = "migration_id"
+  @Throws(java.sql.SQLException::class)
+  fun execute(statement: String): Int
 
   /**
-   * The field "migration_description" in the migrations table.
+   * Queries the database with the specified [statement] and returns the result set.
+   *
+   * @param statement the database statement for the query
    */
-  const val DESCRIPTION: String = "migration_description"
+  @Throws(java.sql.SQLException::class)
+  fun query(statement: String): QueryResults
 
   /**
-   * The field "migration_file" in the migrations table.
+   * Queries the database with the specified [statement] and returns the first result as a [Long].
+   *
+   * @param statement the database statement for the query
    */
-  const val FILE: String = "migration_file"
+  @Throws(java.sql.SQLException::class)
+  fun queryForLong(statement: String): Long
 
   /**
-   * The field "migration_created" in the migrations table.
+   * Escapes the provided string property (table name, column name, etc.) and
+   * returns the escaped value.
+   *
+   * @param name the property name
    */
-  const val CREATED: String = "migration_created"
+  fun escapeProperty(name: String): String
+
+  /**
+   * Escapes the provided string value and returns the escaped value.
+   *
+   * @param value the value to escape
+   */
+  fun escapeValue(value: String): String
+
+  /**
+   * Escapes the provided string used in a LIKE operation returns the escaped value.
+   *
+   * @param value the value to escape
+   */
+  fun escapeLike(value: String): String
 }
 
 /**
- * A contract for upgrading tables.
+ * A contract for upgrading a database.
  */
 interface Migration {
   /**
@@ -73,13 +101,13 @@ interface Migration {
    * Executes a piece of code before the migration has started.
    */
   @Throws(java.sql.SQLException::class)
-  fun executePre(connection: Migrator.Connection)
+  fun executePre(connection: MigrationConnection)
 
   /**
    * Executes a piece of code after the migration has successfully completed.
    */
   @Throws(java.sql.SQLException::class)
-  fun executePost(connection: Migrator.Connection)
+  fun executePost(connection: MigrationConnection)
 }
 
 /**
@@ -87,12 +115,12 @@ interface Migration {
  */
 abstract class BaseMigration : Migration {
   @Throws(java.sql.SQLException::class)
-  override fun executePre(connection: Migrator.Connection) {
+  override fun executePre(connection: MigrationConnection) {
     // NO-OP.
   }
 
   @Throws(java.sql.SQLException::class)
-  override fun executePost(connection: Migrator.Connection) {
+  override fun executePost(connection: MigrationConnection) {
     // NO-OP.
   }
 }

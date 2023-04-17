@@ -21,7 +21,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-@file:Suppress("unused", "MemberVisibilityCanBePrivate", "LongParameterList")
+@file:Suppress("unused", "MemberVisibilityCanBePrivate")
 
 package org.noordawod.kotlin.orm.config
 
@@ -48,7 +48,7 @@ abstract class DatabaseMigrationConfiguration : DatabaseConfiguration() {
    * A default data class for [DatabaseMigrationConfiguration].
    */
   @Serializable
-  data class Default constructor(
+  data class Default(
     override val protocol: String,
     override val ipAddr: String,
     override val port: Int,

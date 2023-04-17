@@ -40,7 +40,7 @@ package org.noordawod.kotlin.orm.query
  * @param initialCapacity initial capacity of internal lists
  */
 @Suppress("TooManyFunctions")
-class RawQueryBuilder constructor(val fieldSeparator: Char, initialCapacity: Int) {
+class RawQueryBuilder(val fieldSeparator: Char, initialCapacity: Int) {
   /**
    * Returns a new [RawQueryBuilder] instance with a default initial capacity.
    *

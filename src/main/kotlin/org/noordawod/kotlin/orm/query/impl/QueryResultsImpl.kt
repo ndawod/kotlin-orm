@@ -27,7 +27,7 @@ import com.j256.ormlite.support.CompiledStatement
 import com.j256.ormlite.support.DatabaseResults
 import org.noordawod.kotlin.core.extension.mutableMapWith
 
-internal class QueryResultsImpl constructor(
+internal class QueryResultsImpl(
   private val statement: CompiledStatement
 ) : org.noordawod.kotlin.orm.query.QueryResults {
   private val results: DatabaseResults = statement.runQuery(null)

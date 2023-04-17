@@ -33,31 +33,67 @@ package org.noordawod.kotlin.orm.migration
 
 import com.diogonunes.jcolor.Ansi.colorize
 import com.diogonunes.jcolor.Attribute
+import com.j256.ormlite.stmt.StatementBuilder
+import com.j256.ormlite.support.DatabaseConnection
+import java.sql.Savepoint
 import org.noordawod.kotlin.core.Constants
 import org.noordawod.kotlin.core.extension.secondsSinceEpoch
 import org.noordawod.kotlin.core.extension.trimOrNull
 import org.noordawod.kotlin.orm.query.QueryCommands
 import org.noordawod.kotlin.orm.query.QueryResults
+import org.noordawod.kotlin.orm.query.impl.QueryResultsImpl
 
 /**
  * This class can migrate the database schema to its most recent defined version (above).
  *
- * @param connection the Connection implementation to use for querying the database
+ * @param databaseConnection the physical database connection
+ * @param escapeProperty the function to escape a property (field, table, etc.)
+ * @param escapeValue the function to escape a value
+ * @param escapeLike the function to escape a LIKE value
  * @param tableName the table name to store meta-data about migrations
  * @param basePath base path to where the Migrator will find migration plans
  * @param commentPrefixes list of prefixes used for commenting migration plans
  */
-class Migrator constructor(
-  private val connection: Connection,
+internal class Migrator(
+  private val databaseConnection: DatabaseConnection,
+  escapeProperty: (String) -> String,
+  escapeValue: (String) -> String,
+  escapeLike: (String, Char?) -> String,
   private val tableName: String = TABLE_NAME,
   private val basePath: java.io.File,
   private val commentPrefixes: Collection<String> = DEFAULT_COMMENT_PREFIXES
 ) {
-  private val escapedTableName = connection.escapeProperty(tableName)
-  private val escapedIdProperty = connection.escapeProperty(MigrationField.ID)
-  private val escapedDescriptionProperty = connection.escapeProperty(MigrationField.DESCRIPTION)
-  private val escapedFileProperty = connection.escapeProperty(MigrationField.FILE)
-  private val escapedCreatedProperty = connection.escapeProperty(MigrationField.CREATED)
+  private val connection = object : MigrationConnection {
+    override fun execute(statement: String): Int = databaseConnection.executeStatement(
+      statement,
+      DatabaseConnection.DEFAULT_RESULT_FLAGS
+    )
+
+    override fun query(statement: String): QueryResults =
+      QueryResultsImpl(
+        databaseConnection.compileStatement(
+          statement.trim(),
+          StatementBuilder.StatementType.SELECT_RAW,
+          null,
+          DatabaseConnection.DEFAULT_RESULT_FLAGS,
+          false
+        )
+      )
+
+    override fun queryForLong(statement: String): Long = databaseConnection.queryForLong(statement)
+
+    override fun escapeProperty(name: String): String = escapeProperty(name)
+
+    override fun escapeValue(value: String): String = escapeValue(value)
+
+    override fun escapeLike(value: String): String = escapeLike(value, null)
+  }
+
+  private val escapedTableName = escapeProperty(tableName)
+  private val escapedIdProperty = escapeProperty(ID)
+  private val escapedDescriptionProperty = escapeProperty(DESCRIPTION)
+  private val escapedFileProperty = escapeProperty(FILE)
+  private val escapedCreatedProperty = escapeProperty(CREATED)
   private val asciiCollation = "CHARACTER SET ascii COLLATE ascii_general_ci"
 
   private val isLocked: Boolean
@@ -86,6 +122,8 @@ class Migrator constructor(
   @Suppress("LongMethod", "NestedBlockDepth")
   @Throws(java.sql.SQLException::class, java.io.IOException::class)
   fun execute(migrations: Array<Migration>) {
+    databaseConnection.isAutoCommit = false
+
     if (!isMigrationTableInitialized) {
       ensureMigrationsTable()
       isMigrationTableInitialized = true
@@ -141,7 +179,7 @@ class Migrator constructor(
       val migrationStart = java.util.Date()
 
       // Each migration runs in its own transaction so in case it fails, we can roll back.
-      connection.execute("START TRANSACTION")
+      val savePoint = databaseConnection.setSavePoint("MIGRATION_V$nextVersion")
 
       try {
         println(
@@ -176,10 +214,12 @@ class Migrator constructor(
         migrationError = error
         println(colorize(" GENERIC ERROR!", BRIGHT_RED_TEXT))
       } finally {
-        if (null == migrationError) {
-          performCommit()
-        } else {
-          performRollback()
+        if (null != savePoint) {
+          if (null == migrationError) {
+            performCommit(savePoint)
+          } else {
+            performRollback(savePoint)
+          }
         }
 
         val migrationEnd = java.util.Date()
@@ -283,24 +323,32 @@ class Migrator constructor(
     return 0
   }
 
-  private fun performCommit() {
-    performCommitOrRollback("COMMIT")
-  }
-
-  private fun performRollback() {
-    performCommitOrRollback("ROLLBACK")
-  }
-
-  private fun performCommitOrRollback(command: String) {
+  private fun performCommit(transactionId: Savepoint) {
     try {
-      print("    - Executing ${colorize(command, BOLD_TEXT)}…")
-      connection.execute(command)
+      print("    - Committing…")
+      databaseConnection.commit(transactionId)
       println(" Done.")
     } catch (ignored: java.sql.SQLException) {
       println()
       println(
         colorize(
-          "Ignored an exception issuing a $command operation.",
+          "Ignored an exception while committing.",
+          BOLD_TEXT
+        )
+      )
+    }
+  }
+
+  private fun performRollback(transactionId: Savepoint) {
+    try {
+      print("    - Rolling back…")
+      databaseConnection.releaseSavePoint(transactionId)
+      println(" Done.")
+    } catch (ignored: java.sql.SQLException) {
+      println()
+      println(
+        colorize(
+          "Ignored an exception while rolling back.",
           BOLD_TEXT
         )
       )
@@ -463,70 +511,15 @@ class Migrator constructor(
     }
   }
 
-  /**
-   * Generic database connection interface.
-   */
-  interface Connection {
-    /**
-     * Executes the specified [statement] and returns how many rows were affected.
-     *
-     * @param statement the database statement to execute
-     */
-    @Throws(java.sql.SQLException::class)
-    fun execute(statement: String): Int
-
-    /**
-     * Queries the database with the specified [statement] and returns the result set.
-     *
-     * @param statement the database statement for the query
-     */
-    @Throws(java.sql.SQLException::class)
-    fun query(statement: String): QueryResults
-
-    /**
-     * Queries the database with the specified [statement] and returns the first result as a [Long].
-     *
-     * @param statement the database statement for the query
-     */
-    @Throws(java.sql.SQLException::class)
-    fun queryForLong(statement: String): Long
-
-    /**
-     * Escapes the provided string property (table name, column name, etc.) and
-     * returns the escaped value.
-     *
-     * @param name the property name
-     */
-    fun escapeProperty(name: String): String
-
-    /**
-     * Escapes the provided string value and returns the escaped value.
-     *
-     * @param value the value to escape
-     */
-    fun escapeValue(value: String): String
-
-    /**
-     * Escapes the provided string used in a LIKE operation returns the escaped value.
-     *
-     * @param value the value to escape
-     */
-    fun escapeLike(value: String): String
-  }
-
-  companion object {
-    /**
-     * Default name of the migrations table.
-     */
+  private companion object {
     const val TABLE_NAME = "\$migration"
-
-    /**
-     * Default list of prefixes used for commenting migration plans.
-     */
+    const val ID: String = "migration_id"
+    const val DESCRIPTION: String = "migration_description"
+    const val FILE: String = "migration_file"
+    const val CREATED: String = "migration_created"
     val DEFAULT_COMMENT_PREFIXES: Collection<String> = listOf("/*", "#", "-- ")
-
-    private val BOLD_TEXT = Attribute.BOLD()
-    private val BRIGHT_GREEN_TEXT = Attribute.BRIGHT_GREEN_TEXT()
-    private val BRIGHT_RED_TEXT = Attribute.BRIGHT_RED_TEXT()
+    val BOLD_TEXT: Attribute = Attribute.BOLD()
+    val BRIGHT_GREEN_TEXT: Attribute = Attribute.BRIGHT_GREEN_TEXT()
+    val BRIGHT_RED_TEXT: Attribute = Attribute.BRIGHT_RED_TEXT()
   }
 }
