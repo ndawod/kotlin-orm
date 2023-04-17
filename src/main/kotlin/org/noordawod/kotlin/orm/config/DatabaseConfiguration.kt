@@ -89,13 +89,29 @@ abstract class DatabaseConfiguration {
   abstract val socketTimeout: Long?
 
   /**
+   * Optional connection parameters.
+   */
+  abstract val params: Map<String, String>?
+
+  /**
    * Returns the connection URI string for this instance.
    */
   val uri: String
-    get() =
-      uriInternal ?: MySQLDatabase.uri(protocol, host, port, user, pass, schema).apply {
-        uriInternal = this
-      }
+    get() = uriInternal ?: MySQLDatabase.uri(
+      protocol = protocol,
+      host = host,
+      port = port,
+      user = user,
+      pass = pass,
+      schema = schema,
+      timezone = timezone,
+      collation = collation,
+      connectTimeout = connectTimeout,
+      socketTimeout = socketTimeout,
+      params = params
+    ).apply {
+      uriInternal = this
+    }
 
   private var uriInternal: String? = null
 
@@ -110,7 +126,8 @@ abstract class DatabaseConfiguration {
     other.schema == schema &&
     other.collation == collation &&
     other.connectTimeout == connectTimeout &&
-    other.socketTimeout == socketTimeout
+    other.socketTimeout == socketTimeout &&
+    other.params == params
 
   @Suppress("MagicNumber")
   override fun hashCode(): Int = port +
@@ -123,7 +140,8 @@ abstract class DatabaseConfiguration {
     schema.hashCode() * 1051 +
     collation.hashCode() * 709 +
     connectTimeout.hashCode() * 199 +
-    socketTimeout.hashCode() * 503
+    socketTimeout.hashCode() * 503 +
+    params.hashCode() * 131
 
   /**
    * A default data class for [DatabaseConfiguration].
@@ -140,7 +158,8 @@ abstract class DatabaseConfiguration {
     override val schema: String,
     override val collation: String? = null,
     override val connectTimeout: Long? = DEFAULT_CONNECT_TIMEOUT,
-    override val socketTimeout: Long? = null
+    override val socketTimeout: Long? = null,
+    override val params: Map<String, String>? = null
   ) : DatabaseConfiguration()
 
   companion object {

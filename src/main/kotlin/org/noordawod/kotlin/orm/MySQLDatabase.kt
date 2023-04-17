@@ -29,6 +29,7 @@ import com.j256.ormlite.jdbc.JdbcPooledConnectionSource
 import com.j256.ormlite.jdbc.db.MysqlDatabaseType
 import com.j256.ormlite.support.ConnectionSource
 import net.moznion.uribuildertiny.URIBuilderTiny
+import org.noordawod.kotlin.core.extension.mutableMapWith
 import org.noordawod.kotlin.orm.config.DatabaseConfiguration
 
 /**
@@ -72,7 +73,7 @@ open class MySQLDatabase(
   override val valueWrapperChar: Char = SINGLE_QUOTE_CHAR
 
   // Based on: https://rdr.to/EOBvOfkE8qj
-  @Suppress("MagicNumber", "LeakingThis")
+  @Suppress("MagicNumber")
   override val escapeChars: CharArray = charArrayOf(
     '\b',
     '\n',
@@ -85,7 +86,12 @@ open class MySQLDatabase(
     0x1a.toChar()
   )
 
-  override val uri: String get() = uri(config)
+  override val uri: String
+    get() = uriInternal ?: uri(config).apply {
+      uriInternal = this
+    }
+
+  private var uriInternal: String? = null
 
   /**
    * Returns the database connection URI string based on provided [config].
@@ -96,16 +102,17 @@ open class MySQLDatabase(
    * @see <a href="https://tinyurl.com/yagm2clw">Connector/J Configuration Properties</a>
    */
   fun uri(config: DatabaseConfiguration): String = uri(
-    config.protocol,
-    config.host,
-    config.port,
-    config.user,
-    config.pass,
-    config.schema,
-    config.timezone,
-    config.collation,
-    config.connectTimeout,
-    config.socketTimeout
+    protocol = config.protocol,
+    host = config.host,
+    port = config.port,
+    user = config.user,
+    pass = config.pass,
+    schema = config.schema,
+    timezone = config.timezone,
+    collation = config.collation,
+    connectTimeout = config.connectTimeout,
+    socketTimeout = config.socketTimeout,
+    params = config.params
   )
 
   override fun initializeConnectionSource(): ConnectionSource {
@@ -152,6 +159,9 @@ open class MySQLDatabase(
      */
     const val DEFAULT_TIMEZONE: String = "UTC"
 
+    private const val TRUE_STRING = "true"
+    private const val FALSE_STRING = "false"
+
     /**
      * Returns the database connection URI string based on input parameters.
      *
@@ -179,38 +189,55 @@ open class MySQLDatabase(
       timezone: String? = null,
       collation: String? = null,
       connectTimeout: Long? = null,
-      socketTimeout: Long? = null
+      socketTimeout: Long? = null,
+      params: Map<String, Any>? = null
     ): String {
-      val params = mutableMapOf<String, Any>(
-        "user" to user,
-        "password" to pass,
-        "useUnicode" to true.toString(),
-        "allowPublicKeyRetrieval" to true.toString(),
-        "useSSL" to false.toString(),
-        "useCompression" to false.toString(),
-        "tcpKeepAlive" to true.toString(),
-        "tcpNoDelay" to true.toString(),
-        "autoReconnectForPools" to true.toString(),
-        "autoReconnect" to false.toString()
-      )
+      @Suppress("MagicNumber")
+      val eventualParams = mutableMapWith<String, Any>((params?.size ?: 16) + 16)
+
+      // Base configuration.
+      eventualParams["allowPublicKeyRetrieval"] = TRUE_STRING
+      eventualParams["alwaysSendSetIsolation"] = FALSE_STRING
+      eventualParams["autoReconnect"] = FALSE_STRING
+      eventualParams["autoReconnectForPools"] = TRUE_STRING
+      eventualParams["elideSetAutoCommits"] = TRUE_STRING
+      eventualParams["enableQueryTimeouts"] = FALSE_STRING
+      eventualParams["tcpKeepAlive"] = TRUE_STRING
+      eventualParams["tcpNoDelay"] = TRUE_STRING
+      eventualParams["useCompression"] = FALSE_STRING
+      eventualParams["useLocalSessionState"] = TRUE_STRING
+      eventualParams["useLocalTransactionState"] = TRUE_STRING
+      eventualParams["useSSL"] = FALSE_STRING
+      eventualParams["useUnicode"] = TRUE_STRING
+
+      // Allow client to override a few parameters.
+      if (!params.isNullOrEmpty()) {
+        eventualParams.putAll(params)
+      }
+
+      // Continue configuration.
+      eventualParams["user"] = user
+      eventualParams["password"] = pass
+
+      if (!timezone.isNullOrBlank()) {
+        eventualParams["serverTimezone"] = timezone
+      }
       if (!collation.isNullOrBlank()) {
-        params["connectionCollation"] = collation
+        eventualParams["connectionCollation"] = collation
       }
       if (null != connectTimeout && 0L < connectTimeout) {
-        params["connectTimeout"] = "$connectTimeout"
+        eventualParams["connectTimeout"] = "$connectTimeout"
       }
       if (null != socketTimeout && 0L < socketTimeout) {
-        params["socketTimeout"] = "$socketTimeout"
+        eventualParams["socketTimeout"] = "$socketTimeout"
       }
-      if (!timezone.isNullOrBlank()) {
-        params["serverTimezone"] = timezone
-      }
+
       return URIBuilderTiny()
         .setScheme(protocol)
         .setHost(host)
         .setPort(port)
         .setPaths(schema)
-        .setQueryParameters(params)
+        .setQueryParameters(eventualParams)
         .build()
         .toString()
     }

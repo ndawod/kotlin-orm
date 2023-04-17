@@ -74,7 +74,7 @@ class MigrationRunner(private val database: BaseDatabase) {
     basePath: String,
     migrations: Collection<Migration>
   ) {
-    database.readWriteConnection { databaseConnection ->
+    database.readWriteConnection(enableRetryOnError = false) { databaseConnection ->
       try {
         Migrator(
           databaseConnection = databaseConnection,
