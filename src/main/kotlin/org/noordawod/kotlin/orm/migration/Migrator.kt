@@ -35,7 +35,6 @@ import com.diogonunes.jcolor.Ansi.colorize
 import com.diogonunes.jcolor.Attribute
 import com.j256.ormlite.stmt.StatementBuilder
 import com.j256.ormlite.support.DatabaseConnection
-import java.sql.Savepoint
 import org.noordawod.kotlin.core.Constants
 import org.noordawod.kotlin.core.extension.secondsSinceEpoch
 import org.noordawod.kotlin.core.extension.trimOrNull
@@ -97,19 +96,16 @@ internal class Migrator(
   private val asciiCollation = "CHARACTER SET ascii COLLATE ascii_general_ci"
 
   private val isLocked: Boolean
-    get() {
-      try {
-        return 0L != connection.queryForLong(
-          listOf(
-            "SELECT COUNT($escapedIdProperty)",
-            "FROM $escapedTableName",
-            "WHERE $escapedCreatedProperty IS NULL"
-          ).joinToString(separator = " ")
-        )
-      } catch (ignored: java.sql.SQLException) {
-        // NO-OP.
-      }
-      return false
+    get() = try {
+      0L != connection.queryForLong(
+        listOf(
+          "SELECT COUNT($escapedIdProperty)",
+          "FROM $escapedTableName",
+          "WHERE $escapedCreatedProperty IS NULL"
+        ).joinToString(separator = " ")
+      )
+    } catch (ignored: java.sql.SQLException) {
+      false
     }
 
   private var isMigrationTableInitialized = false
@@ -145,24 +141,34 @@ internal class Migrator(
 
     // Go over all migrations and run them one after the other.
     for (migration in migrations) {
-      // Get the next migration plan and check if it's already executed.
-      if (migration.version <= nextVersion) {
-        continue
-      }
-
       // Check if the migrations' table is locked.
       if (isLocked) {
         throw java.sql.SQLException("Migration table is locked, is another process active?")
       }
 
-      // Migration plans must be continuous.
-      nextVersion++
-      if (migration.version != nextVersion) {
-        // Either this is a migration we did before, or out of sync.
-        throw java.sql.SQLException(
-          "Migration plan #$nextVersion is not continuous," +
-            " database migration is out of sync!"
-        )
+      when (migration) {
+        is Migration.Dump ->
+          // These migration can decide for themselves whether to execute or not.
+          if (!migration.isExecutable(connection)) {
+            continue
+          }
+
+        is Migration.Versioned -> {
+          // We'll execute new migration plans only based on their version.
+          if (migration.version <= nextVersion) {
+            continue
+          }
+
+          // Migration plans must be continuous.
+          nextVersion++
+          if (migration.version != nextVersion) {
+            // Either this is a migration we did before, or out of sync.
+            throw java.sql.SQLException(
+              "Migration plan #$nextVersion is not continuous," +
+                " database migration is out of sync!"
+            )
+          }
+        }
       }
 
       if (isFirstRun) {
@@ -190,7 +196,9 @@ internal class Migrator(
             ":"
         )
 
-        lockMigration(migration)
+        if (migration is Migration.Versioned) {
+          lockMigration(migration)
+        }
 
         performPreMigration(migration)
         preMigrationRan = true
@@ -206,7 +214,9 @@ internal class Migrator(
         performPostMigration(migration)
         postMigrationRan = true
 
-        unlockMigration(migration)
+        if (migration is Migration.Versioned) {
+          unlockMigration(migration)
+        }
       } catch (error: java.sql.SQLException) {
         migrationError = error
         println(colorize(" SQL ERROR!", BRIGHT_RED_TEXT))
@@ -323,7 +333,7 @@ internal class Migrator(
     return 0
   }
 
-  private fun performCommit(transactionId: Savepoint) {
+  private fun performCommit(transactionId: java.sql.Savepoint) {
     try {
       print("    - Committing…")
       databaseConnection.commit(transactionId)
@@ -339,7 +349,7 @@ internal class Migrator(
     }
   }
 
-  private fun performRollback(transactionId: Savepoint) {
+  private fun performRollback(transactionId: java.sql.Savepoint) {
     try {
       print("    - Rolling back…")
       databaseConnection.releaseSavePoint(transactionId)
@@ -411,7 +421,7 @@ internal class Migrator(
   }
 
   @Throws(java.sql.SQLException::class)
-  private fun lockMigration(migration: Migration) {
+  private fun lockMigration(migration: Migration.Versioned) {
     print("    - Locking ${colorize(escapedTableName, BOLD_TEXT)} table…")
 
     val fieldValues = mapOf(
@@ -434,7 +444,7 @@ internal class Migrator(
   }
 
   @Throws(java.sql.SQLException::class)
-  private fun unlockMigration(migration: Migration) {
+  private fun unlockMigration(migration: Migration.Versioned) {
     print("    - Unlocking ${colorize(escapedTableName, BOLD_TEXT)} table… ")
 
     connection.execute(
@@ -507,7 +517,7 @@ internal class Migrator(
       )
       println("- Migrations table missing, auto-created.")
     } catch (ignored: java.sql.SQLException) {
-      println("- Migrations table exists: $tableName (v${version()})")
+      println("- Migrations table exists: $tableName")
     }
   }
 

@@ -79,41 +79,80 @@ interface MigrationConnection {
 }
 
 /**
- * A contract for upgrading a database.
+ * The base interface to describe a database migration.
  */
-interface Migration {
+sealed interface Migration {
   /**
-   * Returns this migration's version.
-   */
-  val version: Int
-
-  /**
-   * Returns a description of this migration.
+   * A description of this migration.
    */
   val description: String
 
   /**
-   * Returns the file name that contains the migration commands.
+   * The file name that contains the migration commands.
    */
   val file: String
 
   /**
-   * Executes a piece of code before the migration has started.
+   * Executes a piece of code before the migration starts.
    */
   @Throws(java.sql.SQLException::class)
   fun executePre(connection: MigrationConnection)
 
   /**
-   * Executes a piece of code after the migration has successfully completed.
+   * Executes a piece of code after the migration ends.
    */
   @Throws(java.sql.SQLException::class)
   fun executePost(connection: MigrationConnection)
+
+  /**
+   * A migration that doesn't require a version check to run.
+   *
+   * This kind of migration will execute always whenever the [migrator][MigrationRunner]
+   * is launched.
+   */
+  interface Dump : Migration {
+    /**
+     * Returns whether this migration should execute.
+     *
+     * By default, this method returns `true`.
+     */
+    @Throws(java.sql.SQLException::class)
+    fun isExecutable(connection: MigrationConnection): Boolean = true
+  }
+
+  /**
+   * A migration that runs if its version is newer than the version of the database.
+   *
+   * This kind of migration will execute only if its [version] is found be to be newer
+   * than the version of the associated database.
+   */
+  interface Versioned : Migration {
+    /**
+     * Returns this migration's version.
+     */
+    val version: Int
+  }
 }
 
 /**
- * A helper migration class that contains no pre- or post-commands for execution.
+ * A helper [Migration.Dump] class that contains no pre- or post-commands for execution.
  */
-abstract class BaseMigration : Migration {
+abstract class BaseDumpMigration : Migration.Dump {
+  @Throws(java.sql.SQLException::class)
+  override fun executePre(connection: MigrationConnection) {
+    // NO-OP.
+  }
+
+  @Throws(java.sql.SQLException::class)
+  override fun executePost(connection: MigrationConnection) {
+    // NO-OP.
+  }
+}
+
+/**
+ * A helper [Migration.Versioned] class that contains no pre- or post-commands for execution.
+ */
+abstract class BaseVersionedMigration : Migration.Versioned {
   @Throws(java.sql.SQLException::class)
   override fun executePre(connection: MigrationConnection) {
     // NO-OP.
