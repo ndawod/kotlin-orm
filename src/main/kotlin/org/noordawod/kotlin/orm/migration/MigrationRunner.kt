@@ -32,47 +32,60 @@ import org.noordawod.kotlin.orm.BaseDatabase
  */
 class MigrationRunner(private val database: BaseDatabase) {
   /**
-   * Executes a [migration] found in the specified [path][basePath].
+   * Executes a single [migration][Migration.Dump] found in
+   * the specified [path][basePath].
    */
   fun execute(
     basePath: String,
-    migration: Migration
+    migration: Migration.Dump
   ) {
-    execute(basePath, listOf(migration))
+    executeDump(
+      basePath = basePath,
+      migrations = listOf(migration)
+    )
   }
 
   /**
-   * Executes a [migration] found in the specified [paths][basePaths].
+   * Executes a single [migration][Migration.Dump] found in
+   * the specified [paths][basePaths].
    */
   fun execute(
     basePaths: Collection<String>,
-    migration: Migration
+    migration: Migration.Dump
   ) {
-    execute(basePaths, listOf(migration))
+    executeDump(
+      basePaths = basePaths,
+      migrations = listOf(migration)
+    )
   }
 
   /**
-   * Executes a list of [migrations] found in the specified [paths][basePaths].
+   * Executes a list of [migrations][Migration.Dump] found in
+   * the specified [paths][basePaths].
    */
-  fun execute(
+  fun executeDump(
     basePaths: Collection<String>,
-    migrations: Collection<Migration>
+    migrations: Collection<Migration.Dump>
   ) {
     for (basePath in basePaths) {
       val file = java.io.File(basePath)
       if (file.isDirectory && file.canRead()) {
-        return execute(basePath, migrations)
+        return executeDump(
+          basePath = basePath,
+          migrations = migrations
+        )
       }
     }
     error("No valid database migration path found in: $basePaths")
   }
 
   /**
-   * Executes a list of [migrations] found in the specified [path][basePath].
+   * Executes a list of [migrations][Migration.Dump] found in
+   * the specified [path][basePath].
    */
-  fun execute(
+  fun executeDump(
     basePath: String,
-    migrations: Collection<Migration>
+    migrations: Collection<Migration.Dump>
   ) {
     database.readWriteConnection(enableRetryOnError = false) { databaseConnection ->
       try {
@@ -82,7 +95,78 @@ class MigrationRunner(private val database: BaseDatabase) {
           escapeValue = database::escapeValue,
           escapeLike = database::escapeLike,
           basePath = java.io.File(basePath)
-        ).execute(migrations.toTypedArray())
+        ).executeDump(migrations)
+      } finally {
+        databaseConnection.closeQuietly()
+      }
+    }
+  }
+
+  /**
+   * Executes a single [migration][Migration.Versioned] found in
+   * the specified [path][basePath].
+   */
+  fun execute(
+    basePath: String,
+    migration: Migration.Versioned
+  ) {
+    executeVersioned(
+      basePath = basePath,
+      migrations = listOf(migration)
+    )
+  }
+
+  /**
+   * Executes a single [migration][Migration.Versioned] found in
+   * the specified [paths][basePaths].
+   */
+  fun execute(
+    basePaths: Collection<String>,
+    migration: Migration.Versioned
+  ) {
+    executeVersioned(
+      basePaths = basePaths,
+      migrations = listOf(migration)
+    )
+  }
+
+  /**
+   * Executes a list of [migrations][Migration.Versioned] found in
+   * the specified [paths][basePaths].
+   */
+  fun executeVersioned(
+    basePaths: Collection<String>,
+    migrations: Collection<Migration.Versioned>
+  ) {
+    for (basePath in basePaths) {
+      val file = java.io.File(basePath)
+      if (file.isDirectory && file.canRead()) {
+        return executeVersioned(
+          basePath = basePath,
+          migrations = migrations
+        )
+      }
+    }
+    error("No valid database migration path found in: $basePaths")
+  }
+
+  /**
+   * Executes a list of [migrations][Migration.Versioned] found in
+   * the specified [path][basePath].
+   */
+  fun executeVersioned(
+    basePath: String,
+    migrations: Collection<Migration.Versioned>
+  ) {
+    database.readWriteConnection(enableRetryOnError = false) { databaseConnection ->
+      try {
+        Migrator(
+          databaseConnection = databaseConnection,
+          escapeProperty = database::escapeProperty,
+          escapeValue = database::escapeValue,
+          escapeLike = database::escapeLike,
+          basePath = java.io.File(basePath)
+        ).executeVersioned(migrations)
       } finally {
         databaseConnection.closeQuietly()
       }
