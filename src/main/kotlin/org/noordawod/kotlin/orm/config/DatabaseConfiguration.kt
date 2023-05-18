@@ -26,6 +26,7 @@
 package org.noordawod.kotlin.orm.config
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.noordawod.kotlin.orm.MySQLDatabase
 
 /**
@@ -113,6 +114,7 @@ abstract class DatabaseConfiguration {
       uriInternal = this
     }
 
+  @Transient
   private var uriInternal: String? = null
 
   override fun equals(other: Any?): Boolean = other is DatabaseConfiguration &&
