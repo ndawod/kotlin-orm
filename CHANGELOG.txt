@@ -3,6 +3,12 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+4.8.1 (May 18, 2023)
+    Revert back to using Kotlin 1.7.21.
+
+4.8.0 (May 16, 2023)
+    Switch to using Kotlin 1.8.21.
+
 4.7.0 (May 3, 2023)
     Separate different migrations into own execution handlers.
 
