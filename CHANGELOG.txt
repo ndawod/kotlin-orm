@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+4.9.0 (May 31, 2023)
+    Add a new way to specify the logical operator in a query.
+
 4.8.2 (May 18, 2023)
     Switch back to using Kotlin 1.8.21.
 

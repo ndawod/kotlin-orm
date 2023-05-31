@@ -36,22 +36,34 @@ package org.noordawod.kotlin.orm.query
  * - The where clause: appears after the joins.
  * - order, limits: appear at the end.
  *
+ * @param op the logical operator between WHERE conditions
  * @param fieldSeparator the character is used to escape table and entity names
  * @param initialCapacity initial capacity of internal lists
  */
 @Suppress("TooManyFunctions")
-class RawQueryBuilder(val fieldSeparator: Char, initialCapacity: Int) {
+class RawQueryBuilder(
+  val op: LogicalOp,
+  val fieldSeparator: Char,
+  initialCapacity: Int
+) {
   /**
    * Returns a new [RawQueryBuilder] instance with a default initial capacity.
    *
    * @param fieldSeparator the character is used to escape table and entity names
    */
-  constructor(fieldSeparator: Char) : this(fieldSeparator, INITIAL_CAPACITY)
+  constructor(
+    op: LogicalOp,
+    fieldSeparator: Char
+  ) : this(
+    op = op,
+    fieldSeparator = fieldSeparator,
+    initialCapacity = INITIAL_CAPACITY
+  )
 
   private val tables = LinkedHashSet<TableSpecification>(initialCapacity)
   private val entities = LinkedHashSet<String>(initialCapacity)
   private val joins = LinkedHashSet<String>(initialCapacity)
-  private val wheres = LinkedHashSet<String>(initialCapacity)
+  private val wheres = LinkedHashSet<Condition>(initialCapacity)
 
   private var limitInternal: Int = -1
   private var offsetInternal: Int = -1
@@ -78,7 +90,7 @@ class RawQueryBuilder(val fieldSeparator: Char, initialCapacity: Int) {
           if (firstClause) {
             firstClause = false
           } else {
-            append(" AND ")
+            append(" $op ")
           }
           append(it)
         }
@@ -167,12 +179,19 @@ class RawQueryBuilder(val fieldSeparator: Char, initialCapacity: Int) {
   }
 
   /**
-   * Adds a new clause to the WHERE part.
+   * Adds a new condition to the WHERE part.
    *
-   * @param clause clause to add
+   * @param condition condition to add
    */
-  fun where(clause: String): RawQueryBuilder {
-    wheres.add(clause)
+  fun where(condition: String): RawQueryBuilder = where(Condition(condition))
+
+  /**
+   * Adds a new condition to the WHERE part.
+   *
+   * @param condition condition to add
+   */
+  fun where(condition: Condition): RawQueryBuilder {
+    wheres.add(condition)
     return this
   }
 
