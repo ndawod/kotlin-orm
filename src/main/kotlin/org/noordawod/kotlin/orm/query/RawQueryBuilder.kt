@@ -92,7 +92,11 @@ class RawQueryBuilder(
           } else {
             append(" $op ")
           }
-          append(it)
+          if (op == it.op) {
+            append("$it")
+          } else {
+            append("($it)")
+          }
         }
         append(")")
       }
