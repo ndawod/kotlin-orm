@@ -26,19 +26,18 @@
 package org.noordawod.kotlin.orm.dao
 
 import com.j256.ormlite.support.ConnectionSource
-import org.noordawod.kotlin.core.repository.HashValue
-import org.noordawod.kotlin.core.util.ByteArrayMap
-import org.noordawod.kotlin.orm.entity.HashValueKeyEntity
+import org.noordawod.kotlin.core.extension.mutableMapWith
+import org.noordawod.kotlin.orm.entity.StringKeyEntity
 
 /**
- * All DAOs with a [HashValue] primary ID must extend this class.
+ * All DAOs with a [String] primary ID must extend this class.
  */
-abstract class HashValueKeyDao<T : HashValueKeyEntity> protected constructor(
+abstract class StringKeyDao<T : StringKeyEntity> protected constructor(
   connection: ConnectionSource,
   dataClass: Class<T>
-) : BaseKeyDao<HashValue, T>(connection, dataClass) {
-  override fun Collection<T>?.toMap(): ByteArrayMap<T>? = this?.let { instances ->
-    ByteArrayMap<T>().apply {
+) : BaseKeyDao<String, T>(connection, dataClass) {
+  override fun Collection<T>?.toMap(): Map<String, T>? = this?.let { instances ->
+    mutableMapWith<String, T>(instances.size).apply {
       for (instance in instances) {
         this[instance.id] = instance
       }
@@ -49,7 +48,7 @@ abstract class HashValueKeyDao<T : HashValueKeyEntity> protected constructor(
    * Fetches the row associated with the supplied [id].
    */
   @Throws(java.sql.SQLException::class)
-  override fun queryForId(id: HashValue): T? = queryBuilder()
+  override fun queryForId(id: String): T? = queryBuilder()
     .where()
     .eq(primaryKey, id)
     .queryForFirst()
