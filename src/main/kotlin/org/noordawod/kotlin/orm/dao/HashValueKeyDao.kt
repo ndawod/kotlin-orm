@@ -37,6 +37,11 @@ abstract class HashValueKeyDao<T : HashValueKeyEntity> protected constructor(
   connection: ConnectionSource,
   dataClass: Class<T>
 ) : BaseKeyDao<HashValue, T>(connection, dataClass) {
+  /**
+   * Returns a random [HashValue] suitable as value to [primaryKey].
+   */
+  abstract fun randomId(entity: T): HashValue
+
   override fun Collection<T>?.toMap(): ByteArrayMap<T>? = this?.let { instances ->
     ByteArrayMap<T>().apply {
       for (instance in instances) {

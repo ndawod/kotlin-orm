@@ -48,11 +48,6 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
   abstract val primaryKey: String
 
   /**
-   * Returns a random [ID] suitable as value to [primaryKey].
-   */
-  abstract fun randomId(entity: T): ID
-
-  /**
    * Optionally populate this entity with fresh details from the database if needed, does
    * nothing otherwise. Will return the populated entity on success, null otherwise.
    */
