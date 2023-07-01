@@ -6,9 +6,6 @@ This documents the changes between versions:
 4.9.4 (July 1, 2023)
     Add a new DAO base class for entities with a `String` primary key.
 
-4.9.3 (July 1, 2023)
-    Add a new base class for entities with a `String` primary key.
-
 4.9.2 (May 31, 2023)
     Add a new way to specify the logical operator in a query.
 
