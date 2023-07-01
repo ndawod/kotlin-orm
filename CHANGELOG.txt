@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+4.9.3 (July 1, 2023)
+    Add a new base class for entities with a `String` primary key.
+
 4.9.2 (May 31, 2023)
     Add a new way to specify the logical operator in a query.
 
@@ -28,7 +31,7 @@ This documents the changes between versions:
     Use the underlying database connection to apply transactions.
 
 4.4.2 (March 21, 2023)
-    Fix migrator function to report errors in pre/post execution.
+    Fix migrator function to report errors in pre-/post-execution.
 
 4.4.1 (DELETED)
 
@@ -124,7 +127,7 @@ This documents the changes between versions:
     Provide the `DatabaseConnection` when calling `readOnlyConnection` or `readWriteConnection`.
 
 2.1.1 (August 17, 2022)
-    Refactor getting a r/o or r/w connection in `BaseDatabase`.
+    Refactor getting a "r/o" or "r/w" connection in `BaseDatabase`.
 
 2.1.0 (August 17, 2022)
     Remove caching of connection source from `BaseDatabase`.
