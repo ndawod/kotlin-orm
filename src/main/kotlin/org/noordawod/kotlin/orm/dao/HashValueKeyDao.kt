@@ -42,6 +42,35 @@ abstract class HashValueKeyDao<T : HashValueKeyEntity> protected constructor(
    */
   abstract fun randomId(entity: T): HashValue
 
+  /**
+   * Creates a new [entity] in the database and optionally tries the specified number
+   * of times to set the correct insert ID in it before failing. The method will always return
+   * the stored data obtained from the database.
+   */
+  @Throws(java.sql.SQLException::class)
+  override fun insert(
+    entity: T,
+    tries: Int
+  ): T {
+    var thisTry = tries
+    var lastError: java.sql.SQLException?
+    do {
+      try {
+        entity.id = randomId(entity)
+        super.create(entity)
+        return queryForId(entity.id)
+          ?: throw java.sql.SQLException("Unable to insert row after $tries tries.")
+      } catch (e: java.sql.SQLException) {
+        lastError = e
+        thisTry--
+      }
+    } while (0 < thisTry)
+
+    throw lastError ?: java.sql.SQLException(
+      "Unable to insert a new record of type ${entity::javaClass.name} to database."
+    )
+  }
+
   override fun Collection<T>?.toMap(): ByteArrayMap<T>? = this?.let { instances ->
     ByteArrayMap<T>().apply {
       for (instance in instances) {

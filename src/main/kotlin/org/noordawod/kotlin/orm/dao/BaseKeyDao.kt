@@ -65,35 +65,6 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
   override fun delete(data: T): Int = deleteById(data.id)
 
   /**
-   * Creates a new [entity] in the database and optionally tries the specified number
-   * of times to set the correct insert ID in it before failing. The method will always return
-   * the stored data obtained from the database.
-   */
-  @Throws(java.sql.SQLException::class)
-  override fun insert(
-    entity: T,
-    tries: Int
-  ): T {
-    var thisTry = tries
-    var lastError: java.sql.SQLException?
-    do {
-      try {
-        entity.id = randomId(entity)
-        super.create(entity)
-        return queryForId(entity.id)
-          ?: throw java.sql.SQLException("Unable to insert row after $tries tries.")
-      } catch (e: java.sql.SQLException) {
-        lastError = e
-        thisTry--
-      }
-    } while (0 < thisTry)
-
-    throw lastError ?: java.sql.SQLException(
-      "Unable to insert a new record of type ${entity::javaClass.name} to database."
-    )
-  }
-
-  /**
    * Inserts an ORM object into the database and returns either the new or existing
    * record as the result.
    */
