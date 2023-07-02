@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+4.9.7 (July 2, 2023)
+    Add a few type aliases and extension functions.
+
 4.9.6 (July 1, 2023)
     Add a new base classes for entities with a `String` primary key.
 
