@@ -101,6 +101,33 @@ sealed class Condition(val op: LogicalOp?) {
   }
 
   /**
+   * A condition where a bunch of fields may match against a textual query.
+   *
+   * Note: This is a MySQL-specific query and may or may not work in other databases.
+   *
+   * @param fields the list of fields
+   * @param value the textual query value
+   * @param mode the full-text search mode
+   */
+  data class MatchAgainst(
+    val fields: Collection<String>,
+    val value: String,
+    val mode: MatchAgainstMode
+  ) : Condition(op = null) {
+    init {
+      if (fields.isEmpty()) {
+        error("The list of fields cannot be empty.")
+      }
+      if (value.isBlank()) {
+        error("The search text cannot be blank.")
+      }
+    }
+
+    override fun toString(): String =
+      "MATCH (${fields.joinToString(separator = ",")}) AGAINST ($value $mode)"
+  }
+
+  /**
    * A condition where a field's value may evaluate to a value from a list of values.
    *
    * @param field the field name

@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+4.10.1 (July 17, 2023)
+    Add a new search condition.
+
 4.10.0 (July 17, 2023)
     Overhaul the use of conditions in the query builder.
 
