@@ -75,7 +75,7 @@ class RawQueryBuilder(
   override fun toString(): String = StringBuilder(MINIMUM_BLOCK_SIZE)
     .apply {
       append("SELECT ")
-      append(entities.joinToString())
+      append(entities.joinToString(separator = ","))
       append(" FROM ")
       tables.forEach {
         append(it.toString(::escape))
@@ -86,16 +86,16 @@ class RawQueryBuilder(
       if (wheres.isNotEmpty()) {
         append(" WHERE (")
         var firstClause = true
-        wheres.forEach {
+        wheres.forEach { condition ->
           if (firstClause) {
             firstClause = false
           } else {
             append(" $op ")
           }
-          if (op == it.op) {
-            append("$it")
+          if (null == condition.op || op == condition.op) {
+            append("$condition")
           } else {
-            append("($it)")
+            append("($condition)")
           }
         }
         append(")")
@@ -181,13 +181,6 @@ class RawQueryBuilder(
     joinInternal("LEFT ", on)
     return this
   }
-
-  /**
-   * Adds a new condition to the WHERE part.
-   *
-   * @param condition condition to add
-   */
-  fun where(condition: String): RawQueryBuilder = where(Condition(condition))
 
   /**
    * Adds a new condition to the WHERE part.

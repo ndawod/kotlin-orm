@@ -21,22 +21,220 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+@file:Suppress("unused")
+
 package org.noordawod.kotlin.orm.query
 
 /**
- * Represents a single condition in a WHERE clause.
+ * Represents a condition used in a WHERE clause.
  *
- * @param op the logical operator between all condition entries
- * @param entries the entries representing the condition
+ * Note: Field names and values must be already escaped.
+ *
+ * @param op optional operator when there are many conditions within this single Condition
  */
-data class Condition(
-  val op: LogicalOp,
-  val entries: Collection<String>
-) {
-  constructor(condition: String) : this(
-    op = LogicalOp.AND,
-    entries = listOf(condition)
-  )
+sealed class Condition(val op: LogicalOp?) {
+  /**
+   * A prepared condition to use as-is.
+   *
+   * @param value the pre-prepared condition
+   */
+  data class Prepared(
+    val value: String
+  ) : Condition(op = null) {
+    override fun toString(): String = value
+  }
 
-  override fun toString(): String = entries.joinToString(separator = " $op ")
+  /**
+   * A condition where a field's value is true.
+   *
+   * @param field the field name
+   */
+  data class True(
+    val field: String
+  ) : Condition(op = null) {
+    override fun toString(): String = "$field = true"
+  }
+
+  /**
+   * A condition where a field's value is false.
+   *
+   * @param field the field name
+   */
+  data class False(
+    val field: String
+  ) : Condition(op = null) {
+    override fun toString(): String = "$field = false"
+  }
+
+  /**
+   * A collection of conditions that all of them must evaluate to true (AND logic).
+   *
+   * @param values the list of conditions
+   */
+  data class AllOf(
+    val values: Collection<Any>
+  ) : Condition(op = LogicalOp.AND) {
+    init {
+      if (values.isEmpty()) {
+        error("The list of conditions cannot be empty.")
+      }
+    }
+
+    override fun toString(): String = values.joinToString(separator = " $op ")
+  }
+
+  /**
+   * A collection of conditions that any of them may evaluate to true (OR logic).
+   *
+   * @param values the list of conditions
+   */
+  data class AnyOf(
+    val values: Collection<Any>
+  ) : Condition(op = LogicalOp.OR) {
+    init {
+      if (values.isEmpty()) {
+        error("The list of conditions cannot be empty.")
+      }
+    }
+
+    override fun toString(): String = values.joinToString(separator = " $op ")
+  }
+
+  /**
+   * A condition where a field's value may evaluate to a value from a list of values.
+   *
+   * @param field the field name
+   * @param values the list of values
+   */
+  data class In(
+    val field: String,
+    val values: Collection<Any>
+  ) : Condition(op = null) {
+    init {
+      if (values.isEmpty()) {
+        error("The list of values for '$field' cannot be empty.")
+      }
+    }
+
+    override fun toString(): String = "$field IN (${values.joinToString(separator = ",")})"
+  }
+
+  /**
+   * A condition where a field's value must not evaluate to a value from a list of values.
+   *
+   * @param field the field name
+   * @param values the list of values
+   */
+  data class NotIn(
+    val field: String,
+    val values: Collection<Any>
+  ) : Condition(op = null) {
+    init {
+      if (values.isEmpty()) {
+        error("The list of values for '$field' cannot be empty.")
+      }
+    }
+
+    override fun toString(): String = "$field NOT IN (${values.joinToString(separator = ",")})"
+  }
+
+  /**
+   * A condition where a field's value is equal to a specific value.
+   *
+   * @param field the field name
+   * @param value the specific value
+   */
+  data class Equals(
+    val field: String,
+    val value: Any
+  ) : Condition(op = null) {
+    override fun toString(): String = "$field = $value"
+  }
+
+  /**
+   * A condition where a field's value is not equal to a specific value.
+   *
+   * @param field the field name
+   * @param value the specific value
+   */
+  data class NotEquals(
+    val field: String,
+    val value: Any
+  ) : Condition(op = null) {
+    override fun toString(): String = "$field != $value"
+  }
+
+  /**
+   * A condition where a field's value is between two numeric values (inclusive).
+   *
+   * Note: This equates to ([value1] <= [field] AND [field] <= [value2])
+   *
+   * @param field the field name
+   * @param value1 the lower numeric value
+   * @param value1 the upper numeric value
+   */
+  data class Between(
+    val field: String,
+    val value1: Number,
+    val value2: Number
+  ) : Condition(op = null) {
+    override fun toString(): String = "$field BETWEEN $value1 AND $value2"
+  }
+
+  /**
+   * A condition where a field's value is less than a specific value.
+   *
+   * @param field the field name
+   * @param value the specific value
+   */
+  data class LessThan(
+    val field: String,
+    val value: Any
+  ) : Condition(op = null) {
+    override fun toString(): String = "$field < $value"
+  }
+
+  /**
+   * A condition where a field's value is less than or equal to a specific value.
+   *
+   * @param field the field name
+   * @param value the specific value
+   */
+  data class LessThanOrEqual(
+    val field: String,
+    val value: Number
+  ) : Condition(op = null) {
+    override fun toString(): String = "$field <= $value"
+  }
+
+  /**
+   * A condition where a field's value is greater than a specific value.
+   *
+   * @param field the field name
+   * @param value the specific value
+   */
+  data class GreaterThan(
+    val field: String,
+    val value: Number
+  ) : Condition(op = null) {
+    override fun toString(): String = "$field > $value"
+  }
+
+  /**
+   * A condition where a field's value is greater than or equal to a specific value.
+   *
+   * @param field the field name
+   * @param value the specific value
+   */
+  data class GreaterThanOrEqual(
+    val field: String,
+    val value: Number
+  ) : Condition(op = null) {
+    override fun toString(): String = "$field >= $value"
+  }
+
+  override fun hashCode(): Int = toString().hashCode()
+
+  override fun equals(other: Any?): Boolean =
+    other is Condition && other == this
 }
