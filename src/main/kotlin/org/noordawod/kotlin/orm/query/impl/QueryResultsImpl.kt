@@ -21,6 +21,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+@file:Suppress("JoinDeclarationAndAssignment")
+
 package org.noordawod.kotlin.orm.query.impl
 
 import com.j256.ormlite.support.CompiledStatement
@@ -30,22 +32,24 @@ import org.noordawod.kotlin.core.extension.mutableMapWith
 internal class QueryResultsImpl(
   private val statement: CompiledStatement
 ) : org.noordawod.kotlin.orm.query.QueryResults {
-  private val results: DatabaseResults = statement.runQuery(null)
+  @Suppress("IdentifierGrammar")
   private val columnsMap: Map<String, Int>
+  private val results: DatabaseResults
   private var hasNextValue: Boolean
 
   init {
-    mutableMapWith<String, Int>(results.columnCount).also { map ->
-      results.columnNames.forEachIndexed { index, columnName ->
-        map[columnName] = index
-      }
-      columnsMap = map
+    results = statement.runQuery(null)
+    columnsMap = mutableMapWith(results.columnCount)
+
+    var index = -1
+    for (columnName in results.columnNames) {
+      columnsMap[columnName] = ++index
     }
+
     hasNextValue = results.first()
   }
 
-  override val hasNext: Boolean
-    get() = hasNextValue
+  override val hasNext: Boolean get() = hasNextValue
 
   override fun close() {
     statement.closeQuietly()

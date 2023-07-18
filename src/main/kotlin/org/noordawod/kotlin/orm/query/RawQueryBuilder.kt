@@ -63,7 +63,7 @@ class RawQueryBuilder(
   private val tables = LinkedHashSet<TableSpecification>(initialCapacity)
   private val entities = LinkedHashSet<String>(initialCapacity)
   private val joins = LinkedHashSet<String>(initialCapacity)
-  private val wheres = LinkedHashSet<Condition>(initialCapacity)
+  private val conditions = LinkedHashSet<Condition>(initialCapacity)
 
   private var limitInternal: Int = -1
   private var offsetInternal: Int = -1
@@ -71,49 +71,63 @@ class RawQueryBuilder(
   private var orderByInternal: String? = null
   private var ascendingInternal: Boolean = true
 
-  @Suppress("NestedBlockDepth", "ComplexFunction")
-  override fun toString(): String = StringBuilder(MINIMUM_BLOCK_SIZE)
-    .apply {
-      append("SELECT ")
-      append(entities.joinToString(separator = ","))
-      append(" FROM ")
-      tables.forEach {
-        append(it.toString(::escape))
-      }
-      joins.forEach {
-        append(" $it")
-      }
-      if (wheres.isNotEmpty()) {
-        append(" WHERE (")
-        var firstClause = true
-        wheres.forEach { condition ->
-          if (firstClause) {
-            firstClause = false
-          } else {
-            append(" $op ")
-          }
-          if (null == condition.op || op == condition.op) {
-            append("$condition")
-          } else {
-            append("($condition)")
-          }
+  @Suppress("NestedBlockDepth", "ComplexFunction", "CyclomaticComplexMethod")
+  override fun toString(): String {
+    val result = StringBuilder(MINIMUM_BLOCK_SIZE)
+
+    result.append("SELECT ")
+    result.append(entities.joinToString(separator = ","))
+    result.append(" FROM ")
+
+    tables.forEach {
+      result.append(it.toString(::escape))
+    }
+
+    joins.forEach {
+      result.append(" $it")
+    }
+
+    if (conditions.isNotEmpty()) {
+      val where = StringBuilder(MINIMUM_BLOCK_SIZE)
+
+      for (condition in conditions) {
+        if (!condition.isValid) {
+          continue
         }
-        append(")")
-      }
-      if (!groupByInternal.isNullOrEmpty()) {
-        append(" GROUP BY $groupByInternal")
-      }
-      if (!orderByInternal.isNullOrEmpty()) {
-        append(" ORDER BY $orderByInternal ${if (ascendingInternal) "ASC" else "DESC"}")
-      }
-      if (0 < limitInternal) {
-        append(" LIMIT $limitInternal")
-        if (0 < offsetInternal) {
-          append(" OFFSET $offsetInternal")
+
+        if (where.isNotEmpty()) {
+          where.append(" $op ")
         }
+
+        if (condition.parenthesized || null == condition.op || op == condition.op) {
+          where.append("$condition")
+        } else {
+          where.append("($condition)")
+        }
+      }
+
+      if (where.isNotEmpty()) {
+        result.append(" WHERE ($where)")
       }
     }
-    .toString()
+
+    if (!groupByInternal.isNullOrEmpty()) {
+      result.append(" GROUP BY $groupByInternal")
+    }
+
+    if (!orderByInternal.isNullOrEmpty()) {
+      result.append(" ORDER BY $orderByInternal ${if (ascendingInternal) "ASC" else "DESC"}")
+    }
+
+    if (0 < limitInternal) {
+      result.append(" LIMIT $limitInternal")
+      if (0 < offsetInternal) {
+        result.append(" OFFSET $offsetInternal")
+      }
+    }
+
+    return result.toString()
+  }
 
   /**
    * Adds a new affected table to the query.
@@ -188,7 +202,7 @@ class RawQueryBuilder(
    * @param condition condition to add
    */
   fun where(condition: Condition): RawQueryBuilder {
-    wheres.add(condition)
+    conditions.add(condition)
     return this
   }
 

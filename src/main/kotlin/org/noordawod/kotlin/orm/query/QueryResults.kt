@@ -38,6 +38,7 @@ interface QueryResults : AutoCloseable {
   /**
    * Moves to the next row in the result set.
    */
+  @Throws(java.sql.SQLException::class)
   fun next()
 
   /**
@@ -45,6 +46,7 @@ interface QueryResults : AutoCloseable {
    *
    * @param fieldName the field name to retrieve
    */
+  @Throws(java.sql.SQLException::class)
   fun getString(fieldName: String): String?
 
   /**
@@ -52,6 +54,7 @@ interface QueryResults : AutoCloseable {
    *
    * @param fieldName the field name to retrieve
    */
+  @Throws(java.sql.SQLException::class)
   fun getBoolean(fieldName: String): Boolean?
 
   /**
@@ -59,6 +62,7 @@ interface QueryResults : AutoCloseable {
    *
    * @param fieldName the field name to retrieve
    */
+  @Throws(java.sql.SQLException::class)
   fun getChar(fieldName: String): Char?
 
   /**
@@ -66,6 +70,7 @@ interface QueryResults : AutoCloseable {
    *
    * @param fieldName the field name to retrieve
    */
+  @Throws(java.sql.SQLException::class)
   fun getByte(fieldName: String): Byte?
 
   /**
@@ -73,6 +78,7 @@ interface QueryResults : AutoCloseable {
    *
    * @param fieldName the field name to retrieve
    */
+  @Throws(java.sql.SQLException::class)
   fun getBytes(fieldName: String): ByteArray?
 
   /**
@@ -80,6 +86,7 @@ interface QueryResults : AutoCloseable {
    *
    * @param fieldName the field name to retrieve
    */
+  @Throws(java.sql.SQLException::class)
   fun getShort(fieldName: String): Short?
 
   /**
@@ -87,6 +94,7 @@ interface QueryResults : AutoCloseable {
    *
    * @param fieldName the field name to retrieve
    */
+  @Throws(java.sql.SQLException::class)
   fun getInt(fieldName: String): Int?
 
   /**
@@ -94,6 +102,7 @@ interface QueryResults : AutoCloseable {
    *
    * @param fieldName the field name to retrieve
    */
+  @Throws(java.sql.SQLException::class)
   fun getLong(fieldName: String): Long?
 
   /**
@@ -101,6 +110,7 @@ interface QueryResults : AutoCloseable {
    *
    * @param fieldName the field name to retrieve
    */
+  @Throws(java.sql.SQLException::class)
   fun getFloat(fieldName: String): Float?
 
   /**
@@ -108,6 +118,7 @@ interface QueryResults : AutoCloseable {
    *
    * @param fieldName the field name to retrieve
    */
+  @Throws(java.sql.SQLException::class)
   fun getDouble(fieldName: String): Double?
 
   /**
@@ -115,5 +126,6 @@ interface QueryResults : AutoCloseable {
    *
    * @param fieldName the field name to retrieve
    */
+  @Throws(java.sql.SQLException::class)
   fun getDate(fieldName: String): java.util.Date?
 }

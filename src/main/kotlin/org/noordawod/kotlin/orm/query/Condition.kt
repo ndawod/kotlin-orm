@@ -21,27 +21,54 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-@file:Suppress("unused")
+@file:Suppress("unused", "MemberVisibilityCanBePrivate")
 
 package org.noordawod.kotlin.orm.query
 
 /**
  * Represents a condition used in a WHERE clause.
  *
- * Note: Field names and values must be already escaped.
+ * Note: Field names and values must already be escaped and matching the target
+ * database escape grammar.
  *
  * @param op optional operator when there are many conditions within this single Condition
+ * @param parenthesized whether the eventual query will include surrounding parentheses
  */
-sealed class Condition(val op: LogicalOp?) {
+sealed class Condition private constructor(
+  val op: LogicalOp? = null,
+  val parenthesized: Boolean = false
+) {
+  /**
+   * Evaluates to true if this condition is valid, false otherwise.
+   */
+  abstract val isValid: Boolean
+
+  /**
+   * Returns the textual representation of this condition.
+   */
+  protected abstract fun stringify(): String
+
+  final override fun toString(): String {
+    val result = stringify()
+    return if (parenthesized) "($result)" else result
+  }
+
+  final override fun hashCode(): Int = toString().hashCode()
+
+  final override fun equals(other: Any?): Boolean = other is Condition && other == this
+
   /**
    * A prepared condition to use as-is.
    *
    * @param value the pre-prepared condition
    */
-  data class Prepared(
-    val value: String
-  ) : Condition(op = null) {
-    override fun toString(): String = value
+  class Prepared(
+    val value: String,
+    parenthesized: Boolean = false
+  ) : Condition(parenthesized = parenthesized) {
+    override val isValid: Boolean = value.isNotBlank()
+
+    override fun stringify(): String = value
   }
 
   /**
@@ -49,10 +76,12 @@ sealed class Condition(val op: LogicalOp?) {
    *
    * @param field the field name
    */
-  data class True(
+  class True(
     val field: String
-  ) : Condition(op = null) {
-    override fun toString(): String = "$field = true"
+  ) : Condition() {
+    override val isValid: Boolean = field.isNotBlank()
+
+    override fun stringify(): String = "$field = true"
   }
 
   /**
@@ -60,10 +89,12 @@ sealed class Condition(val op: LogicalOp?) {
    *
    * @param field the field name
    */
-  data class False(
+  class False(
     val field: String
-  ) : Condition(op = null) {
-    override fun toString(): String = "$field = false"
+  ) : Condition() {
+    override val isValid: Boolean = field.isNotBlank()
+
+    override fun stringify(): String = "$field = false"
   }
 
   /**
@@ -71,16 +102,18 @@ sealed class Condition(val op: LogicalOp?) {
    *
    * @param values the list of conditions
    */
-  data class AllOf(
-    val values: Collection<Any>
-  ) : Condition(op = LogicalOp.AND) {
-    init {
-      if (values.isEmpty()) {
-        error("The list of conditions cannot be empty.")
-      }
-    }
+  class AllOf(
+    val values: Collection<Any>,
+    parenthesized: Boolean = false
+  ) : Condition(
+    op = LogicalOp.AND,
+    parenthesized = parenthesized
+  ) {
+    override val isValid: Boolean = values.isNotEmpty() && values.none { "$it".isBlank() }
 
-    override fun toString(): String = values.joinToString(separator = " $op ")
+    override fun stringify(): String = values
+      .filterNot { "$it".isBlank() }
+      .joinToString(separator = " $op ")
   }
 
   /**
@@ -88,16 +121,18 @@ sealed class Condition(val op: LogicalOp?) {
    *
    * @param values the list of conditions
    */
-  data class AnyOf(
-    val values: Collection<Any>
-  ) : Condition(op = LogicalOp.OR) {
-    init {
-      if (values.isEmpty()) {
-        error("The list of conditions cannot be empty.")
-      }
-    }
+  class AnyOf(
+    val values: Collection<Any>,
+    parenthesized: Boolean = false
+  ) : Condition(
+    op = LogicalOp.OR,
+    parenthesized = parenthesized
+  ) {
+    override val isValid: Boolean = values.isNotEmpty() && values.none { "$it".isBlank() }
 
-    override fun toString(): String = values.joinToString(separator = " $op ")
+    override fun stringify(): String = values
+      .filterNot { "$it".isBlank() }
+      .joinToString(separator = " $op ")
   }
 
   /**
@@ -109,21 +144,14 @@ sealed class Condition(val op: LogicalOp?) {
    * @param value the textual query value
    * @param mode the full-text search mode
    */
-  data class MatchAgainst(
+  class MatchAgainst(
     val fields: Collection<String>,
     val value: String,
     val mode: MatchAgainstMode
-  ) : Condition(op = null) {
-    init {
-      if (fields.isEmpty()) {
-        error("The list of fields cannot be empty.")
-      }
-      if (value.isBlank()) {
-        error("The search text cannot be blank.")
-      }
-    }
+  ) : Condition() {
+    override val isValid: Boolean = fields.isNotEmpty() && value.isNotBlank()
 
-    override fun toString(): String =
+    override fun stringify(): String =
       "MATCH (${fields.joinToString(separator = ",")}) AGAINST ($value $mode)"
   }
 
@@ -133,17 +161,13 @@ sealed class Condition(val op: LogicalOp?) {
    * @param field the field name
    * @param values the list of values
    */
-  data class In(
+  class In(
     val field: String,
     val values: Collection<Any>
-  ) : Condition(op = null) {
-    init {
-      if (values.isEmpty()) {
-        error("The list of values for '$field' cannot be empty.")
-      }
-    }
+  ) : Condition() {
+    override val isValid: Boolean = field.isNotBlank() && values.isNotEmpty()
 
-    override fun toString(): String = "$field IN (${values.joinToString(separator = ",")})"
+    override fun stringify(): String = "$field IN (${values.joinToString(separator = ",")})"
   }
 
   /**
@@ -152,17 +176,13 @@ sealed class Condition(val op: LogicalOp?) {
    * @param field the field name
    * @param values the list of values
    */
-  data class NotIn(
+  class NotIn(
     val field: String,
     val values: Collection<Any>
-  ) : Condition(op = null) {
-    init {
-      if (values.isEmpty()) {
-        error("The list of values for '$field' cannot be empty.")
-      }
-    }
+  ) : Condition() {
+    override val isValid: Boolean = field.isNotBlank() && values.isNotEmpty()
 
-    override fun toString(): String = "$field NOT IN (${values.joinToString(separator = ",")})"
+    override fun stringify(): String = "$field NOT IN (${values.joinToString(separator = ",")})"
   }
 
   /**
@@ -171,11 +191,13 @@ sealed class Condition(val op: LogicalOp?) {
    * @param field the field name
    * @param value the specific value
    */
-  data class Equals(
+  class Equals(
     val field: String,
     val value: Any
-  ) : Condition(op = null) {
-    override fun toString(): String = "$field = $value"
+  ) : Condition() {
+    override val isValid: Boolean = field.isNotBlank() && value.toString().isNotBlank()
+
+    override fun stringify(): String = "$field = $value"
   }
 
   /**
@@ -184,11 +206,13 @@ sealed class Condition(val op: LogicalOp?) {
    * @param field the field name
    * @param value the specific value
    */
-  data class NotEquals(
+  class NotEquals(
     val field: String,
     val value: Any
-  ) : Condition(op = null) {
-    override fun toString(): String = "$field != $value"
+  ) : Condition() {
+    override val isValid: Boolean = field.isNotBlank() && value.toString().isNotBlank()
+
+    override fun stringify(): String = "$field != $value"
   }
 
   /**
@@ -200,12 +224,14 @@ sealed class Condition(val op: LogicalOp?) {
    * @param value1 the lower numeric value
    * @param value1 the upper numeric value
    */
-  data class Between(
+  class Between(
     val field: String,
     val value1: Number,
     val value2: Number
-  ) : Condition(op = null) {
-    override fun toString(): String = "$field BETWEEN $value1 AND $value2"
+  ) : Condition() {
+    override val isValid: Boolean = field.isNotBlank()
+
+    override fun stringify(): String = "$field BETWEEN $value1 AND $value2"
   }
 
   /**
@@ -214,11 +240,13 @@ sealed class Condition(val op: LogicalOp?) {
    * @param field the field name
    * @param value the specific value
    */
-  data class LessThan(
+  class LessThan(
     val field: String,
     val value: Any
-  ) : Condition(op = null) {
-    override fun toString(): String = "$field < $value"
+  ) : Condition() {
+    override val isValid: Boolean = field.isNotBlank() && value.toString().isNotBlank()
+
+    override fun stringify(): String = "$field < $value"
   }
 
   /**
@@ -227,11 +255,13 @@ sealed class Condition(val op: LogicalOp?) {
    * @param field the field name
    * @param value the specific value
    */
-  data class LessThanOrEqual(
+  class LessThanOrEqual(
     val field: String,
     val value: Number
-  ) : Condition(op = null) {
-    override fun toString(): String = "$field <= $value"
+  ) : Condition() {
+    override val isValid: Boolean = field.isNotBlank()
+
+    override fun stringify(): String = "$field <= $value"
   }
 
   /**
@@ -240,11 +270,13 @@ sealed class Condition(val op: LogicalOp?) {
    * @param field the field name
    * @param value the specific value
    */
-  data class GreaterThan(
+  class GreaterThan(
     val field: String,
     val value: Number
-  ) : Condition(op = null) {
-    override fun toString(): String = "$field > $value"
+  ) : Condition() {
+    override val isValid: Boolean = field.isNotBlank()
+
+    override fun stringify(): String = "$field > $value"
   }
 
   /**
@@ -253,15 +285,12 @@ sealed class Condition(val op: LogicalOp?) {
    * @param field the field name
    * @param value the specific value
    */
-  data class GreaterThanOrEqual(
+  class GreaterThanOrEqual(
     val field: String,
     val value: Number
-  ) : Condition(op = null) {
-    override fun toString(): String = "$field >= $value"
+  ) : Condition() {
+    override val isValid: Boolean = field.isNotBlank()
+
+    override fun stringify(): String = "$field >= $value"
   }
-
-  override fun hashCode(): Int = toString().hashCode()
-
-  override fun equals(other: Any?): Boolean =
-    other is Condition && other == this
 }
