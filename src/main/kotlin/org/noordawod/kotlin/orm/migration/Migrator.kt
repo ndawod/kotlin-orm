@@ -26,7 +26,8 @@
   "MagicNumber",
   "TooManyFunctions",
   "StringLiteralDuplication",
-  "unused"
+  "LongParameterList",
+  "unused",
 )
 
 package org.noordawod.kotlin.orm.migration
@@ -60,12 +61,12 @@ internal class Migrator(
   escapeLike: (String, Char?) -> String,
   private val tableName: String = TABLE_NAME,
   private val basePath: java.io.File,
-  private val commentPrefixes: Collection<String> = DEFAULT_COMMENT_PREFIXES
+  private val commentPrefixes: Collection<String> = DEFAULT_COMMENT_PREFIXES,
 ) {
   private val connection = object : MigrationConnection {
     override fun execute(statement: String): Int = databaseConnection.executeStatement(
       statement,
-      DatabaseConnection.DEFAULT_RESULT_FLAGS
+      DatabaseConnection.DEFAULT_RESULT_FLAGS,
     )
 
     override fun query(statement: String): QueryResults =
@@ -75,8 +76,8 @@ internal class Migrator(
           StatementBuilder.StatementType.SELECT_RAW,
           null,
           DatabaseConnection.DEFAULT_RESULT_FLAGS,
-          false
-        )
+          false,
+        ),
       )
 
     override fun queryForLong(statement: String): Long = databaseConnection.queryForLong(statement)
@@ -102,8 +103,8 @@ internal class Migrator(
         listOf(
           "SELECT COUNT($escapedIdProperty)",
           "FROM $escapedTableName",
-          "WHERE $escapedCreatedProperty IS NULL"
-        ).joinToString(separator = " ")
+          "WHERE $escapedCreatedProperty IS NULL",
+        ).joinToString(separator = " "),
       )
     } catch (ignored: java.sql.SQLException) {
       false
@@ -119,7 +120,7 @@ internal class Migrator(
     try {
       return connection.queryForLong(
         "SELECT MAX($escapedIdProperty) AS max_version " +
-          "FROM $escapedTableName"
+          "FROM $escapedTableName",
       ).toInt()
     } catch (ignored: java.sql.SQLException) {
       // NO-OP.
@@ -161,7 +162,7 @@ internal class Migrator(
           colorize("$index of $migrationsCount", BRIGHT_GREEN_TEXT) +
           " → " +
           colorize(migration.description, BOLD_TEXT) +
-          ":"
+          ":",
       )
 
       // These migration can decide for themselves whether to execute or not.
@@ -192,12 +193,12 @@ internal class Migrator(
       } catch (error: java.sql.SQLException) {
         error.capture(
           migrationState = migrationState,
-          message = " SQL ERROR!"
+          message = " SQL ERROR!",
         )
       } catch (@Suppress("TooGenericExceptionCaught") error: Throwable) {
         error.capture(
           migrationState = migrationState,
-          message = " GENERIC ERROR!"
+          message = " GENERIC ERROR!",
         )
       } finally {
         savePoint?.handleSavePoint(migrationState)
@@ -249,7 +250,7 @@ internal class Migrator(
         // Either this is a migration we did before, or out of sync.
         throw java.sql.SQLException(
           "Migration plan #$nextVersion is not continuous," +
-            " database migration is out of sync!"
+            " database migration is out of sync!",
         )
       }
 
@@ -272,7 +273,7 @@ internal class Migrator(
             colorize("v$nextVersion", BRIGHT_GREEN_TEXT) +
             " → " +
             colorize(migration.description, BOLD_TEXT) +
-            ":"
+            ":",
         )
 
         migration.lock()
@@ -290,12 +291,12 @@ internal class Migrator(
       } catch (error: java.sql.SQLException) {
         error.capture(
           migrationState = migrationState,
-          message = " SQL ERROR!"
+          message = " SQL ERROR!",
         )
       } catch (@Suppress("TooGenericExceptionCaught") error: Throwable) {
         error.capture(
           migrationState = migrationState,
-          message = " GENERIC ERROR!"
+          message = " GENERIC ERROR!",
         )
       } finally {
         savePoint?.handleSavePoint(migrationState)
@@ -327,10 +328,10 @@ internal class Migrator(
             "$escapedFileProperty tinytext $asciiCollation NOT NULL",
             "$escapedCreatedProperty int unsigned NULL",
             "PRIMARY KEY ($escapedIdProperty)",
-            "KEY $escapedCreatedProperty ($escapedCreatedProperty)"
+            "KEY $escapedCreatedProperty ($escapedCreatedProperty)",
           ).joinToString(separator = ","),
-          ")"
-        ).joinToString(separator = "")
+          ")",
+        ).joinToString(separator = ""),
       )
       println("- Migrations table missing, auto-created.")
     } catch (ignored: java.sql.SQLException) {
@@ -363,8 +364,8 @@ internal class Migrator(
     println(
       colorize(
         "Database migration finished in $duration milliseconds.",
-        BOLD_TEXT
-      )
+        BOLD_TEXT,
+      ),
     )
     println()
   }
@@ -377,16 +378,16 @@ internal class Migrator(
         println(
           colorize(
             "Unexpected error while running pre-migration code.",
-            BRIGHT_RED_TEXT
-          )
+            BRIGHT_RED_TEXT,
+          ),
         )
 
       !ran -> {
         println(
           colorize(
             "Unexpected error while running migration.",
-            BRIGHT_RED_TEXT
-          )
+            BRIGHT_RED_TEXT,
+          ),
         )
 
         // Report all executed commands in this migration.
@@ -396,8 +397,8 @@ internal class Migrator(
             colorize(
               "These migration commands were already executed – " +
                 "the last one probably caused the error:",
-              BRIGHT_RED_TEXT
-            )
+              BRIGHT_RED_TEXT,
+            ),
           )
           println()
           for (command in executedCommands) {
@@ -410,16 +411,16 @@ internal class Migrator(
         println(
           colorize(
             "Unexpected error while running post-migration code.",
-            BRIGHT_RED_TEXT
-          )
+            BRIGHT_RED_TEXT,
+          ),
         )
 
       else ->
         println(
           colorize(
             "Unexpected error while unlocking migrations table.",
-            BRIGHT_RED_TEXT
-          )
+            BRIGHT_RED_TEXT,
+          ),
         )
     }
 
@@ -430,7 +431,7 @@ internal class Migrator(
 
   private fun Throwable.capture(
     migrationState: MigrationState,
-    message: String
+    message: String,
   ) {
     migrationState.error = this
     println(colorize(message, BRIGHT_RED_TEXT))
@@ -458,8 +459,8 @@ internal class Migrator(
       println(
         colorize(
           "Ignored an exception while ${operation.lowercase()}.",
-          BOLD_TEXT
-        )
+          BOLD_TEXT,
+        ),
       )
     }
   }
@@ -526,7 +527,7 @@ internal class Migrator(
     val fieldValues = mapOf(
       escapedIdProperty to "$version",
       escapedDescriptionProperty to connection.escapeValue(description),
-      escapedFileProperty to connection.escapeValue(file)
+      escapedFileProperty to connection.escapeValue(file),
     )
 
     connection.execute(
@@ -535,8 +536,8 @@ internal class Migrator(
         fieldValues.keys.joinToString(separator = ","),
         ") VALUES (",
         fieldValues.values.joinToString(separator = ","),
-        ")"
-      ).joinToString(separator = "")
+        ")",
+      ).joinToString(separator = ""),
     )
 
     println(" Done.")
@@ -550,8 +551,8 @@ internal class Migrator(
       listOf(
         "UPDATE $escapedTableName",
         "SET $escapedCreatedProperty=${java.util.Date().secondsSinceEpoch()}",
-        "WHERE $escapedIdProperty=$version"
-      ).joinToString(separator = " ")
+        "WHERE $escapedIdProperty=$version",
+      ).joinToString(separator = " "),
     )
 
     println(" Done.")
@@ -592,6 +593,7 @@ internal class Migrator(
       }
     }
 
+  @Suppress("VariableMinLength")
   private companion object {
     const val TABLE_NAME = "\$migration"
     const val ID: String = "migration_id"

@@ -44,7 +44,7 @@ package org.noordawod.kotlin.orm.query
 class RawQueryBuilder(
   val op: LogicalOp,
   val fieldSeparator: Char,
-  initialCapacity: Int
+  initialCapacity: Int,
 ) {
   /**
    * Returns a new [RawQueryBuilder] instance with a default initial capacity.
@@ -53,11 +53,11 @@ class RawQueryBuilder(
    */
   constructor(
     op: LogicalOp,
-    fieldSeparator: Char
+    fieldSeparator: Char,
   ) : this(
     op = op,
     fieldSeparator = fieldSeparator,
-    initialCapacity = INITIAL_CAPACITY
+    initialCapacity = INITIAL_CAPACITY,
   )
 
   private val tables = LinkedHashSet<TableSpecification>(initialCapacity)
@@ -268,7 +268,7 @@ class RawQueryBuilder(
   fun orderBy(
     table: TableSpecification,
     entity: String,
-    ascending: Boolean = true
+    ascending: Boolean = true,
   ): RawQueryBuilder = orderBy(table.prefix(entity, ::escape), ascending)
 
   /**
@@ -290,12 +290,12 @@ class RawQueryBuilder(
 
   private fun joinInternal(
     @Suppress("SameParameterValue") type: String,
-    on: Collection<JoinPair>
+    on: Collection<JoinPair>,
   ) {
     on.forEach { join ->
       joins.add(
         "${type}JOIN ${join.first.table.toString(::escape)} " +
-          "ON ${join.first.prefix(::escape)}=${join.second.prefix(::escape)}"
+          "ON ${join.first.prefix(::escape)}=${join.second.prefix(::escape)}",
       )
     }
   }

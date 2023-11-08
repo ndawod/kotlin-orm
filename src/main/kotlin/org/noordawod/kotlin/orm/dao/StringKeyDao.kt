@@ -34,7 +34,7 @@ import org.noordawod.kotlin.orm.entity.StringKeyEntity
  */
 abstract class StringKeyDao<T : StringKeyEntity> protected constructor(
   connection: ConnectionSource,
-  dataClass: Class<T>
+  dataClass: Class<T>,
 ) : BaseKeyDao<String, T>(connection, dataClass) {
   override fun Collection<T>?.toMap(): Map<String, T>? = this?.let { instances ->
     mutableMapWith<String, T>(instances.size).apply {

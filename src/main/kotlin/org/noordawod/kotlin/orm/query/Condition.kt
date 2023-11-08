@@ -36,7 +36,7 @@ package org.noordawod.kotlin.orm.query
  */
 sealed class Condition private constructor(
   val op: LogicalOp? = null,
-  val parenthesized: Boolean = false
+  val parenthesized: Boolean = false,
 ) {
   /**
    * Evaluates to true if this condition is valid, false otherwise.
@@ -64,7 +64,7 @@ sealed class Condition private constructor(
    */
   class Prepared(
     val value: String,
-    parenthesized: Boolean = false
+    parenthesized: Boolean = false,
   ) : Condition(parenthesized = parenthesized) {
     override val isValid: Boolean = value.isNotBlank()
 
@@ -77,7 +77,7 @@ sealed class Condition private constructor(
    * @param field the field name
    */
   class True(
-    val field: String
+    val field: String,
   ) : Condition() {
     override val isValid: Boolean = field.isNotBlank()
 
@@ -90,7 +90,7 @@ sealed class Condition private constructor(
    * @param field the field name
    */
   class False(
-    val field: String
+    val field: String,
   ) : Condition() {
     override val isValid: Boolean = field.isNotBlank()
 
@@ -104,10 +104,10 @@ sealed class Condition private constructor(
    */
   class AllOf(
     val values: Collection<Any>,
-    parenthesized: Boolean = false
+    parenthesized: Boolean = false,
   ) : Condition(
     op = LogicalOp.AND,
-    parenthesized = parenthesized
+    parenthesized = parenthesized,
   ) {
     override val isValid: Boolean = values.isNotEmpty() && values.none { "$it".isBlank() }
 
@@ -123,10 +123,10 @@ sealed class Condition private constructor(
    */
   class AnyOf(
     val values: Collection<Any>,
-    parenthesized: Boolean = false
+    parenthesized: Boolean = false,
   ) : Condition(
     op = LogicalOp.OR,
-    parenthesized = parenthesized
+    parenthesized = parenthesized,
   ) {
     override val isValid: Boolean = values.isNotEmpty() && values.none { "$it".isBlank() }
 
@@ -147,7 +147,7 @@ sealed class Condition private constructor(
   class MatchAgainst(
     val fields: Collection<String>,
     val value: String,
-    val mode: MatchAgainstMode
+    val mode: MatchAgainstMode,
   ) : Condition() {
     override val isValid: Boolean = fields.isNotEmpty() && value.isNotBlank()
 
@@ -163,7 +163,7 @@ sealed class Condition private constructor(
    */
   class In(
     val field: String,
-    val values: Collection<Any>
+    val values: Collection<Any>,
   ) : Condition() {
     override val isValid: Boolean = field.isNotBlank() && values.isNotEmpty()
 
@@ -178,7 +178,7 @@ sealed class Condition private constructor(
    */
   class NotIn(
     val field: String,
-    val values: Collection<Any>
+    val values: Collection<Any>,
   ) : Condition() {
     override val isValid: Boolean = field.isNotBlank() && values.isNotEmpty()
 
@@ -193,7 +193,7 @@ sealed class Condition private constructor(
    */
   class Equals(
     val field: String,
-    val value: Any
+    val value: Any,
   ) : Condition() {
     override val isValid: Boolean = field.isNotBlank() && value.toString().isNotBlank()
 
@@ -208,7 +208,7 @@ sealed class Condition private constructor(
    */
   class NotEquals(
     val field: String,
-    val value: Any
+    val value: Any,
   ) : Condition() {
     override val isValid: Boolean = field.isNotBlank() && value.toString().isNotBlank()
 
@@ -227,7 +227,7 @@ sealed class Condition private constructor(
   class Between(
     val field: String,
     val value1: Number,
-    val value2: Number
+    val value2: Number,
   ) : Condition() {
     override val isValid: Boolean = field.isNotBlank()
 
@@ -242,7 +242,7 @@ sealed class Condition private constructor(
    */
   class LessThan(
     val field: String,
-    val value: Any
+    val value: Any,
   ) : Condition() {
     override val isValid: Boolean = field.isNotBlank() && value.toString().isNotBlank()
 
@@ -257,7 +257,7 @@ sealed class Condition private constructor(
    */
   class LessThanOrEqual(
     val field: String,
-    val value: Number
+    val value: Number,
   ) : Condition() {
     override val isValid: Boolean = field.isNotBlank()
 
@@ -272,7 +272,7 @@ sealed class Condition private constructor(
    */
   class GreaterThan(
     val field: String,
-    val value: Number
+    val value: Number,
   ) : Condition() {
     override val isValid: Boolean = field.isNotBlank()
 
@@ -287,7 +287,7 @@ sealed class Condition private constructor(
    */
   class GreaterThanOrEqual(
     val field: String,
-    val value: Number
+    val value: Number,
   ) : Condition() {
     override val isValid: Boolean = field.isNotBlank()
 

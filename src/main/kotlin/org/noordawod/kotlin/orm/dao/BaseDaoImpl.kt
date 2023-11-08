@@ -36,7 +36,7 @@ import org.noordawod.kotlin.orm.BaseDatabase
 @Suppress("TooManyFunctions")
 abstract class BaseDaoImpl<ID, T> protected constructor(
   connection: ConnectionSource,
-  dataClass: Class<T>
+  dataClass: Class<T>,
 ) : com.j256.ormlite.dao.BaseDaoImpl<T, ID>(connection, dataClass), Dao<T, ID> {
   /**
    * Returns the database name this DAO is currently is attached to.
@@ -55,7 +55,7 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
     id: ID,
     limit: Long = 0,
     orderField: String,
-    ascending: Boolean = true
+    ascending: Boolean = true,
   ): List<T>? {
     val builder = queryBuilder().distinct().orderBy(orderField, ascending)
     if (0 < limit) {
@@ -73,7 +73,7 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
   @Throws(java.sql.SQLException::class)
   fun queryForId(
     fieldName: String,
-    id: ID
+    id: ID,
   ): List<T>? {
     val result = queryBuilder()
       .distinct()
@@ -93,7 +93,7 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
     fieldName: String,
     ids: Collection<ID>,
     orderField: String,
-    ascending: Boolean = true
+    ascending: Boolean = true,
   ): List<T>? = queryForIds(fieldName, ids, 0, orderField, ascending)
 
   /**
@@ -106,7 +106,7 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
     ids: Collection<ID>,
     limit: Long = 0,
     orderField: String,
-    ascending: Boolean = true
+    ascending: Boolean = true,
   ): List<T>? {
     val builder = queryBuilder().distinct().orderBy(orderField, ascending)
     if (0 < limit) {
@@ -124,7 +124,7 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
   @Throws(java.sql.SQLException::class)
   fun queryForIds(
     fieldName: String,
-    ids: Collection<ID>
+    ids: Collection<ID>,
   ): List<T>? {
     val result = queryBuilder()
       .distinct()
@@ -152,7 +152,7 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
   fun replaceIntoTable(
     targetTableName: String,
     whereClause: String?,
-    args: Array<String>? = null
+    args: Array<String>? = null,
   ) {
     val builder = StringBuilder("REPLACE INTO ")
     val dotPos = targetTableName.indexOf('.')
@@ -185,7 +185,7 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
   fun moveIntoTable(
     targetTableName: String,
     whereClause: String?,
-    args: Array<String>? = null
+    args: Array<String>? = null,
   ) {
     replaceIntoTable(targetTableName, whereClause, args)
     performOperation(StringBuilder(), "DELETE FROM ", whereClause, args)
@@ -198,7 +198,7 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
   open fun getNextSorting(
     sortingKey: String,
     primaryKey: String,
-    keyValue: Any
+    keyValue: Any,
   ): T? = queryBuilder()
     .orderBy(sortingKey, false)
     .limit(1L)
@@ -219,7 +219,7 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
   @Throws(java.sql.SQLException::class)
   open fun insert(
     entity: T,
-    tries: Int = BaseDatabase.DEFAULT_INSERT_TRIES
+    tries: Int = BaseDatabase.DEFAULT_INSERT_TRIES,
   ): T = create(entity).let { entity }
 
   /**
@@ -250,7 +250,7 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
     builder: StringBuilder,
     initialCommand: String,
     whereClause: String?,
-    args: Array<String>?
+    args: Array<String>?,
   ) {
     builder.append(initialCommand)
     databaseType.appendEscapedEntityName(builder, tableInfo.tableName)

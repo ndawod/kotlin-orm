@@ -33,7 +33,7 @@ package org.noordawod.kotlin.orm.query
  */
 data class TableSpecification(
   val name: String,
-  val alias: String?
+  val alias: String?,
 ) {
   override fun toString(): String = if (null == alias) name else "$name AS $alias"
 

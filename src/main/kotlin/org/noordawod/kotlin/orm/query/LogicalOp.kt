@@ -39,7 +39,8 @@ enum class LogicalOp(private val value: String) {
   /**
    * Represents the OR operator.
    */
-  OR("OR");
+  OR("OR"),
+  ;
 
   override fun toString(): String = value
 }

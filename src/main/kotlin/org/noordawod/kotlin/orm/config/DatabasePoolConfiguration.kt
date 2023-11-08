@@ -61,7 +61,7 @@ abstract class DatabasePoolConfiguration : DatabaseConfiguration() {
     override val connectTimeout: Long? = DEFAULT_CONNECT_TIMEOUT,
     override val socketTimeout: Long? = null,
     override val pool: PoolConfiguration,
-    override val params: Map<String, String>? = null
+    override val params: Map<String, String>? = null,
   ) : DatabasePoolConfiguration()
 }
 

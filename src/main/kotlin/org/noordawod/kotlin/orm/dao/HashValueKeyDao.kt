@@ -35,7 +35,7 @@ import org.noordawod.kotlin.orm.entity.HashValueKeyEntity
  */
 abstract class HashValueKeyDao<T : HashValueKeyEntity> protected constructor(
   connection: ConnectionSource,
-  dataClass: Class<T>
+  dataClass: Class<T>,
 ) : BaseKeyDao<HashValue, T>(connection, dataClass) {
   /**
    * Returns a random [HashValue] suitable as value to [primaryKey].
@@ -50,7 +50,7 @@ abstract class HashValueKeyDao<T : HashValueKeyEntity> protected constructor(
   @Throws(java.sql.SQLException::class)
   override fun insert(
     entity: T,
-    tries: Int
+    tries: Int,
   ): T {
     var thisTry = tries
     var lastError: java.sql.SQLException?
@@ -67,7 +67,7 @@ abstract class HashValueKeyDao<T : HashValueKeyEntity> protected constructor(
     } while (0 < thisTry)
 
     throw lastError ?: java.sql.SQLException(
-      "Unable to insert a new record of type ${entity::javaClass.name} to database."
+      "Unable to insert a new record of type ${entity::javaClass.name} to database.",
     )
   }
 

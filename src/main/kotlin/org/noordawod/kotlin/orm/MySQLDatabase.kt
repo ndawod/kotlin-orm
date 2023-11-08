@@ -21,7 +21,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-@file:Suppress("unused", "MemberVisibilityCanBePrivate")
+@file:Suppress(
+  "MemberVisibilityCanBePrivate",
+  "LongParameterList",
+  "unused",
+)
 
 package org.noordawod.kotlin.orm
 
@@ -50,13 +54,13 @@ open class MySQLDatabase(
   maxFree: Int = DEFAULT_MAX_FREE,
   healthCheckMillis: Long = DEFAULT_HEALTH_CHECK_INTERVAL,
   val maxRetries: Int = DEFAULT_RECONNECT_TRIES,
-  val retryDelay: Long = DEFAULT_RETRY_MILLIS
+  val retryDelay: Long = DEFAULT_RETRY_MILLIS,
 ) : BaseDatabase(
   config,
   driver,
   ageMillis,
   maxFree,
-  healthCheckMillis
+  healthCheckMillis,
 ) {
   override fun equals(other: Any?): Boolean = other is MySQLDatabase &&
     super.equals(other) &&
@@ -83,7 +87,7 @@ open class MySQLDatabase(
     SINGLE_QUOTE_CHAR,
     DOUBLE_QUOTE_CHAR,
     0x00.toChar(),
-    0x1a.toChar()
+    0x1a.toChar(),
   )
 
   override val uri: String
@@ -112,7 +116,7 @@ open class MySQLDatabase(
     collation = config.collation,
     connectTimeout = config.connectTimeout,
     socketTimeout = config.socketTimeout,
-    params = config.params
+    params = config.params,
   )
 
   override fun initializeConnectionSource(): ConnectionSource {
@@ -190,7 +194,7 @@ open class MySQLDatabase(
       collation: String? = null,
       connectTimeout: Long? = null,
       socketTimeout: Long? = null,
-      params: Map<String, Any>? = null
+      params: Map<String, Any>? = null,
     ): String {
       @Suppress("MagicNumber")
       val eventualParams = mutableMapWith<String, Any>((params?.size ?: 16) + 16)

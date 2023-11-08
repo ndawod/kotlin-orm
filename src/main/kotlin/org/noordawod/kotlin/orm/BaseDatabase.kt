@@ -54,7 +54,7 @@ abstract class BaseDatabase(
   val driver: String? = null,
   val ageMillis: Long = DEFAULT_AGE_MILLIS,
   val maxFree: Int = DEFAULT_MAX_FREE,
-  val healthCheckMillis: Long = DEFAULT_HEALTH_CHECK_INTERVAL
+  val healthCheckMillis: Long = DEFAULT_HEALTH_CHECK_INTERVAL,
 ) {
   private val connectionSourceLock = Object()
   private var connectionSourceInternal: ConnectionSource? = null
@@ -151,7 +151,7 @@ abstract class BaseDatabase(
     runDatabaseConnectionBlock(
       enableRetryOnError = true,
       readWrite = false,
-      block = block
+      block = block,
     )
 
   /**
@@ -164,7 +164,7 @@ abstract class BaseDatabase(
   fun <R> readWriteConnection(block: DatabaseConnectionBlock<R>): R =
     readWriteConnection(
       enableRetryOnError = true,
-      block = block
+      block = block,
     )
 
   /**
@@ -176,11 +176,11 @@ abstract class BaseDatabase(
   @Throws(java.sql.SQLException::class)
   fun <R> readWriteConnection(
     enableRetryOnError: Boolean,
-    block: DatabaseConnectionBlock<R>
+    block: DatabaseConnectionBlock<R>,
   ): R = runDatabaseConnectionBlock(
     enableRetryOnError = enableRetryOnError,
     readWrite = true,
-    block = block
+    block = block,
   )
 
   /**
@@ -192,11 +192,11 @@ abstract class BaseDatabase(
   @Throws(java.sql.SQLException::class)
   fun <R> readOnlyLock(
     tableName: String,
-    block: DatabaseConnectionBlock<R>
+    block: DatabaseConnectionBlock<R>,
   ): R = readOnlyLock(
     tableName = tableName,
     enableRetryOnError = false,
-    block = block
+    block = block,
   )
 
   /**
@@ -209,12 +209,12 @@ abstract class BaseDatabase(
   fun <R> readOnlyLock(
     tableName: String,
     enableRetryOnError: Boolean,
-    block: DatabaseConnectionBlock<R>
+    block: DatabaseConnectionBlock<R>,
   ): R = callWithLock(
     tableName = tableName,
     enableRetryOnError = enableRetryOnError,
     readWrite = false,
-    block = block
+    block = block,
   )
 
   /**
@@ -227,12 +227,12 @@ abstract class BaseDatabase(
   fun <R> readWriteLock(
     tableName: String,
     enableRetryOnError: Boolean,
-    block: DatabaseConnectionBlock<R>
+    block: DatabaseConnectionBlock<R>,
   ): R = callWithLock(
     tableName = tableName,
     enableRetryOnError = enableRetryOnError,
     readWrite = true,
-    block = block
+    block = block,
   )
 
   /**
@@ -248,7 +248,7 @@ abstract class BaseDatabase(
   @Throws(java.sql.SQLException::class)
   fun <R> transactional(block: DatabaseConnectionBlock<R>): R = transactional(
     enableRetryOnError = true,
-    block = block
+    block = block,
   )
 
   /**
@@ -264,10 +264,10 @@ abstract class BaseDatabase(
   @Throws(java.sql.SQLException::class)
   fun <R> transactional(
     enableRetryOnError: Boolean,
-    block: DatabaseConnectionBlock<R>
+    block: DatabaseConnectionBlock<R>,
   ): R = runDatabaseConnectionBlock(
     enableRetryOnError = enableRetryOnError,
-    readWrite = true
+    readWrite = true,
   ) { databaseConnection ->
     var saved = false
 
@@ -302,7 +302,7 @@ abstract class BaseDatabase(
     value = name,
     wrapper = propertyWrapperChar,
     escapePercent = false,
-    escapeLowDash = false
+    escapeLowDash = false,
   )
 
   /**
@@ -313,7 +313,7 @@ abstract class BaseDatabase(
     value = value,
     wrapper = valueWrapperChar,
     escapePercent = false,
-    escapeLowDash = false
+    escapeLowDash = false,
   )
 
   /**
@@ -326,7 +326,7 @@ abstract class BaseDatabase(
     value = value,
     wrapper = wrapper,
     escapePercent = true,
-    escapeLowDash = true
+    escapeLowDash = true,
   )
 
   /**
@@ -358,7 +358,7 @@ abstract class BaseDatabase(
     value: String,
     wrapper: Char?,
     escapePercent: Boolean,
-    escapeLowDash: Boolean
+    escapeLowDash: Boolean,
   ): String {
     @Suppress("MagicNumber")
     val arrayLength = escapeChars.size + 10
@@ -405,10 +405,10 @@ abstract class BaseDatabase(
     tableName: String,
     enableRetryOnError: Boolean,
     readWrite: Boolean,
-    block: DatabaseConnectionBlock<R>
+    block: DatabaseConnectionBlock<R>,
   ): R = runDatabaseConnectionBlock(
     enableRetryOnError = enableRetryOnError,
-    readWrite = readWrite
+    readWrite = readWrite,
   ) { databaseConnection ->
     val isAutoCommit = databaseConnection.isAutoCommit
     val lockType = if (readWrite) "WRITE" else "READ"
@@ -418,7 +418,7 @@ abstract class BaseDatabase(
 
       databaseConnection.executeStatement(
         "LOCK TABLES ${escapeProperty(tableName)} $lockType",
-        DatabaseConnection.DEFAULT_RESULT_FLAGS
+        DatabaseConnection.DEFAULT_RESULT_FLAGS,
       )
 
       val result = block(this, databaseConnection)
@@ -430,7 +430,7 @@ abstract class BaseDatabase(
       // Try to restore if we are in auto-commit mode.
       databaseConnection.executeStatement(
         "UNLOCK TABLES",
-        DatabaseConnection.DEFAULT_RESULT_FLAGS
+        DatabaseConnection.DEFAULT_RESULT_FLAGS,
       )
       databaseConnection.isAutoCommit = isAutoCommit
     }
@@ -441,7 +441,7 @@ abstract class BaseDatabase(
   private fun <R> runDatabaseConnectionBlock(
     enableRetryOnError: Boolean,
     readWrite: Boolean,
-    block: DatabaseConnectionBlock<R>
+    block: DatabaseConnectionBlock<R>,
   ): R {
     var shouldRetryOnError = !enableRetryOnError
     var connectionSource: ConnectionSource? = null
@@ -549,8 +549,8 @@ abstract class BaseDatabase(
         System.err.println(
           colorize(
             "No database drivers are registered!",
-            boldText
-          )
+            boldText,
+          ),
         )
       } else {
         println("Checking registered database drivers against URI: $uri")
@@ -567,8 +567,8 @@ abstract class BaseDatabase(
           println(
             "  Version: " + colorize(
               "${driver.majorVersion}.${driver.minorVersion}",
-              boldText
-            )
+              boldText,
+            ),
           )
           println("  Accepts URL? " + colorize("$acceptsURL", boldText))
         }

@@ -61,6 +61,6 @@ abstract class DatabaseMigrationConfiguration : DatabaseConfiguration() {
     override val connectTimeout: Long? = DEFAULT_CONNECT_TIMEOUT,
     override val socketTimeout: Long? = null,
     override val paths: Collection<String>,
-    override val params: Map<String, String>? = null
+    override val params: Map<String, String>? = null,
   ) : DatabaseMigrationConfiguration()
 }

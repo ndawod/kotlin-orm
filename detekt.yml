@@ -104,7 +104,10 @@ complexity:
     active: true
     threshold: 60
   LongParameterList:
-    active: false
+    active: true
+    functionThreshold: 6
+    constructorThreshold: 6
+    ignoreDefaultParameters: false
   MethodOverloading:
     active: false
   NestedBlockDepth:
@@ -490,7 +493,14 @@ naming:
       - "**/*.Spek.kt"
     maximumVariableNameLength: 32
   VariableMinLength:
-    active: false
+    active: true
+    excludes:
+      - "**/test/**"
+      - "**/androidTest/**"
+      - "**/*.Test.kt"
+      - "**/*.Spec.kt"
+      - "**/*.Spek.kt"
+    minimumVariableNameLength: 3
   VariableNaming:
     active: true
     excludes:
@@ -593,8 +603,13 @@ style:
   ForbiddenComment:
     active: true
     comments:
-      - reason: 'TODO comments follow the pattern: TODO(username): …'
-        value: 'TODO(|\\([a-zA-Z0-9_-]+\\)):'
+      - reason: 'Format: TODO(name): Start with a verb, end with a dot.'
+        value: 'TODO'
+      - reason: 'Format: TODO(name): Start with a verb, end with a dot.'
+        value: 'FIXME'
+      - reason: 'Format: TODO(name): Start with a verb, end with a dot.'
+        value: 'STOPSHIP'
+    allowedPatterns: 'TODO\([a-z0-9_-]+\): [A-Z]{1}[^\.]+\.$'
   ForbiddenImport:
     active: false
     forbiddenPatterns: ""
@@ -635,8 +650,6 @@ style:
     ignoreNamedArgument: true
     ignoreEnums: false
     ignoreRanges: false
-  BracesOnIfStatements:
-    active: true
   MaxLineLength:
     active: true
     maxLineLength: 100
@@ -662,8 +675,10 @@ style:
     active: true
   OptionalUnit:
     active: false
-  OptionalWhenBraces:
+  BracesOnWhenStatements:
     active: true
+    singleLine: "never"
+    multiLine: "necessary"
   PreferToOverPairSyntax:
     active: true
   ProtectedMemberInFinalClass:

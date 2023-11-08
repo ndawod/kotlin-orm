@@ -40,7 +40,7 @@ import org.noordawod.kotlin.orm.entity.BaseKeyEntity
 @Suppress("TooManyFunctions")
 abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
   connection: ConnectionSource,
-  dataClass: Class<T>
+  dataClass: Class<T>,
 ) : BaseDaoImpl<ID, T>(connection, dataClass) {
   /**
    * Returns the field name serving as the primary key of the catalog.
@@ -53,7 +53,7 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
    */
   open fun populateIfNeeded(
     entity: T?,
-    force: Boolean = false
+    force: Boolean = false,
   ): T? = when {
     null == entity -> null
     !force && entity.populated -> entity
@@ -129,7 +129,7 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
 
   override fun queryForEq(
     fieldName: String,
-    value: Any?
+    value: Any?,
   ): List<T>? {
     val result = super.queryForEq(fieldName, value)
 
@@ -211,10 +211,10 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
   @Throws(java.sql.SQLException::class)
   fun queryForFirst(
     fieldName: String,
-    value: Any?
+    value: Any?,
   ): T? = queryForEq(
     fieldName,
-    value
+    value,
   )?.firstOrNull()
 
   /**
@@ -234,12 +234,12 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
   @Throws(java.sql.SQLException::class)
   open fun queryForIds(
     ids: Collection<ID>,
-    orderField: String
+    orderField: String,
   ): List<T>? = queryForIds(
     ids,
     0,
     orderField,
-    true
+    true,
   )
 
   /**
@@ -251,13 +251,13 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
     ids: Collection<ID>,
     limit: Long = 0,
     orderField: String,
-    ascending: Boolean
+    ascending: Boolean,
   ): List<T>? = queryForIds(
     primaryKey,
     ids,
     limit,
     orderField,
-    ascending
+    ascending,
   )?.onEach {
     it.populated = true
   }
@@ -276,12 +276,12 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
   @Throws(java.sql.SQLException::class)
   open fun associateForIds(
     ids: Collection<ID>,
-    orderField: String
+    orderField: String,
   ): Map<ID, T>? = associateForIds(
     ids,
     0,
     orderField,
-    true
+    true,
   )
 
   /**
@@ -293,13 +293,13 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
     ids: Collection<ID>,
     limit: Long = 0,
     orderField: String,
-    ascending: Boolean
+    ascending: Boolean,
   ): Map<ID, T>? = queryForIds(
     primaryKey,
     ids,
     limit,
     orderField,
-    ascending
+    ascending,
   ).toMap()
 
   /**

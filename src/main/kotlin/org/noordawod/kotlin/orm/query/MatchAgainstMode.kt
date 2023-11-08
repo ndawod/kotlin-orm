@@ -43,7 +43,8 @@ enum class MatchAgainstMode(private val value: String) {
    *
    * For more details: https://rdr.to/3K7qOBjwvX9
    */
-  BOOLEAN("BOOLEAN");
+  BOOLEAN("BOOLEAN"),
+  ;
 
   override fun toString(): String = "IN $value MODE"
 }

@@ -37,11 +37,11 @@ class MigrationRunner(private val database: BaseDatabase) {
    */
   fun execute(
     basePath: String,
-    migration: Migration.Dump
+    migration: Migration.Dump,
   ) {
     executeDump(
       basePath = basePath,
-      migrations = listOf(migration)
+      migrations = listOf(migration),
     )
   }
 
@@ -51,11 +51,11 @@ class MigrationRunner(private val database: BaseDatabase) {
    */
   fun execute(
     basePaths: Collection<String>,
-    migration: Migration.Dump
+    migration: Migration.Dump,
   ) {
     executeDump(
       basePaths = basePaths,
-      migrations = listOf(migration)
+      migrations = listOf(migration),
     )
   }
 
@@ -65,14 +65,14 @@ class MigrationRunner(private val database: BaseDatabase) {
    */
   fun executeDump(
     basePaths: Collection<String>,
-    migrations: Collection<Migration.Dump>
+    migrations: Collection<Migration.Dump>,
   ) {
     for (basePath in basePaths) {
       val file = java.io.File(basePath)
       if (file.isDirectory && file.canRead()) {
         return executeDump(
           basePath = basePath,
-          migrations = migrations
+          migrations = migrations,
         )
       }
     }
@@ -85,7 +85,7 @@ class MigrationRunner(private val database: BaseDatabase) {
    */
   fun executeDump(
     basePath: String,
-    migrations: Collection<Migration.Dump>
+    migrations: Collection<Migration.Dump>,
   ) {
     database.readWriteConnection(enableRetryOnError = false) { databaseConnection ->
       try {
@@ -94,7 +94,7 @@ class MigrationRunner(private val database: BaseDatabase) {
           escapeProperty = database::escapeProperty,
           escapeValue = database::escapeValue,
           escapeLike = database::escapeLike,
-          basePath = java.io.File(basePath)
+          basePath = java.io.File(basePath),
         ).executeDump(migrations)
       } finally {
         databaseConnection.closeQuietly()
@@ -108,11 +108,11 @@ class MigrationRunner(private val database: BaseDatabase) {
    */
   fun execute(
     basePath: String,
-    migration: Migration.Versioned
+    migration: Migration.Versioned,
   ) {
     executeVersioned(
       basePath = basePath,
-      migrations = listOf(migration)
+      migrations = listOf(migration),
     )
   }
 
@@ -122,11 +122,11 @@ class MigrationRunner(private val database: BaseDatabase) {
    */
   fun execute(
     basePaths: Collection<String>,
-    migration: Migration.Versioned
+    migration: Migration.Versioned,
   ) {
     executeVersioned(
       basePaths = basePaths,
-      migrations = listOf(migration)
+      migrations = listOf(migration),
     )
   }
 
@@ -136,14 +136,14 @@ class MigrationRunner(private val database: BaseDatabase) {
    */
   fun executeVersioned(
     basePaths: Collection<String>,
-    migrations: Collection<Migration.Versioned>
+    migrations: Collection<Migration.Versioned>,
   ) {
     for (basePath in basePaths) {
       val file = java.io.File(basePath)
       if (file.isDirectory && file.canRead()) {
         return executeVersioned(
           basePath = basePath,
-          migrations = migrations
+          migrations = migrations,
         )
       }
     }
@@ -156,7 +156,7 @@ class MigrationRunner(private val database: BaseDatabase) {
    */
   fun executeVersioned(
     basePath: String,
-    migrations: Collection<Migration.Versioned>
+    migrations: Collection<Migration.Versioned>,
   ) {
     database.readWriteConnection(enableRetryOnError = false) { databaseConnection ->
       try {
@@ -165,7 +165,7 @@ class MigrationRunner(private val database: BaseDatabase) {
           escapeProperty = database::escapeProperty,
           escapeValue = database::escapeValue,
           escapeLike = database::escapeLike,
-          basePath = java.io.File(basePath)
+          basePath = java.io.File(basePath),
         ).executeVersioned(migrations)
       } finally {
         databaseConnection.closeQuietly()

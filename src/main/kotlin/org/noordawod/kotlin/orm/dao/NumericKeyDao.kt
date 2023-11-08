@@ -33,7 +33,7 @@ import org.noordawod.kotlin.orm.entity.BaseKeyEntity
  */
 abstract class NumericKeyDao<ID : Number, T : BaseKeyEntity<ID>> protected constructor(
   connection: ConnectionSource,
-  dataClass: Class<T>
+  dataClass: Class<T>,
 ) : BaseKeyDao<ID, T>(connection, dataClass) {
   /**
    * Returns the primary ID of the last insert operation.

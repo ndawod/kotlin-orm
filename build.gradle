@@ -22,7 +22,7 @@
  */
 
 group = 'org.noordawod.kotlin.orm'
-version = '4.10.7'
+version = '4.11.0'
 description = 'Defines reusable contracts for OrmLite that requires entities and models to exist.'
 buildDir = 'build'
 
@@ -57,16 +57,18 @@ buildscript {
     }
 
     dependencies {
-        classpath "com.github.ben-manes:gradle-versions-plugin:${versions.versions_outdated}"
+        classpath "com.github.ben-manes:gradle-versions-plugin:${versions.plugin_versions_outdated}"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
         classpath "org.jetbrains.kotlin:kotlin-serialization:${versions.kotlin}"
-        classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${versions.detekt}"
+        classpath "io.gitlab.arturbosch.detekt:detekt-gradle-plugin:${versions.plugin_detekt}"
+        classpath "org.jlleitschuh.gradle:ktlint-gradle:${versions.plugin_ktlint}"
     }
 }
 
 apply from: "$rootDir/gradle/jvm.gradle"
 apply from: "$rootDir/gradle/kotlin.gradle"
 apply from: "$rootDir/gradle/detekt.gradle"
+apply from: "$rootDir/gradle/ktlint.gradle"
 
 dependencies {
     implementation "com.github.ndawod:kotlin-core:${versions.ndawod_kotlin_core}"

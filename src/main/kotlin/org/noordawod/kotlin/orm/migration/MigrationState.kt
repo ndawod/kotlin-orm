@@ -28,5 +28,5 @@ internal class MigrationState(
   var preRan: Boolean = false,
   var postRan: Boolean = false,
   var ran: Boolean = false,
-  var error: Throwable? = null
+  var error: Throwable? = null,
 )

@@ -15,8 +15,12 @@ indent_style = space
 ij_kotlin_imports_layout = *
 
 # 2 space indentation for Kotlin and Java.
-[{*.kt,*.java}]
+# noinspection EditorConfigKeyCorrectness
+[{*.kt,*.kts,*.java}]
 indent_size = 2
+ktlint_code_style = intellij_idea
+ij_kotlin_allow_trailing_comma_on_call_site = true
+ij_kotlin_allow_trailing_comma = true
 
 # 2 space indentation for Yaml.
 [{*.yaml,*.yml}]

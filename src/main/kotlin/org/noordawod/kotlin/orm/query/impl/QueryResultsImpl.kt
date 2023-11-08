@@ -30,7 +30,7 @@ import com.j256.ormlite.support.DatabaseResults
 import org.noordawod.kotlin.core.extension.mutableMapWith
 
 internal class QueryResultsImpl(
-  private val statement: CompiledStatement
+  private val statement: CompiledStatement,
 ) : org.noordawod.kotlin.orm.query.QueryResults {
   @Suppress("IdentifierGrammar")
   private val columnsMap: Map<String, Int>

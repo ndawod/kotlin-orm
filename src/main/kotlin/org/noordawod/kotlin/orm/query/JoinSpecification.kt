@@ -33,7 +33,7 @@ package org.noordawod.kotlin.orm.query
  */
 data class JoinSpecification(
   val table: TableSpecification,
-  val key: String
+  val key: String,
 ) {
   fun prefix(escape: EscapeCallback): String = table.prefix(key, escape)
 }

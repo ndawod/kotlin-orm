@@ -109,7 +109,7 @@ abstract class DatabaseConfiguration {
       collation = collation,
       connectTimeout = connectTimeout,
       socketTimeout = socketTimeout,
-      params = params
+      params = params,
     ).apply {
       uriInternal = this
     }
@@ -161,7 +161,7 @@ abstract class DatabaseConfiguration {
     override val collation: String? = null,
     override val connectTimeout: Long? = DEFAULT_CONNECT_TIMEOUT,
     override val socketTimeout: Long? = null,
-    override val params: Map<String, String>? = null
+    override val params: Map<String, String>? = null,
   ) : DatabaseConfiguration()
 
   companion object {
