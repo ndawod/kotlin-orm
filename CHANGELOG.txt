@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+4.11.1 (November 11, 2023)
+    Bump up dependencies versions.
+
 4.11.0 (November 8, 2023)
     Add KtLint, reformat code and fix any linting errors.
 
