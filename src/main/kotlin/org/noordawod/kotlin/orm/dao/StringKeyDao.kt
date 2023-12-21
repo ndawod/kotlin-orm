@@ -36,23 +36,31 @@ abstract class StringKeyDao<T : StringKeyEntity> protected constructor(
   connection: ConnectionSource,
   dataClass: Class<T>,
 ) : BaseKeyDao<String, T>(connection, dataClass) {
-  override fun Collection<T>?.toMap(): Map<String, T>? = this?.let { instances ->
-    mutableMapWith<String, T>(instances.size).apply {
-      for (instance in instances) {
-        this[instance.id] = instance
-      }
+  override fun Collection<T>?.toMap(): Map<String, T>? = if (null == this) {
+    null
+  } else {
+    val map = mutableMapWith<String, T>(size)
+    for (instance in this) {
+      map[instance.id] = instance
     }
+
+    map
   }
 
   /**
    * Fetches the row associated with the supplied [id].
    */
   @Throws(java.sql.SQLException::class)
-  override fun queryForId(id: String): T? = queryBuilder()
-    .where()
-    .eq(primaryKey, id)
-    .queryForFirst()
-    ?.also {
-      it.populated = true
+  override fun queryForId(id: String): T? {
+    val result = queryBuilder()
+      .where()
+      .eq(primaryKey, id)
+      .queryForFirst()
+
+    if (null != result) {
+      result.populated = true
     }
+
+    return result
+  }
 }

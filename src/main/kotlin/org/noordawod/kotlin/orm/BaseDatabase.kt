@@ -82,12 +82,21 @@ abstract class BaseDatabase(
     if (null != driver) {
       try {
         Class.forName(driver).getDeclaredConstructor().newInstance()
-      } catch (e: ClassNotFoundException) {
-        throw java.sql.SQLException("Unable to locale a compatible database driver: $driver", e)
-      } catch (e: IllegalAccessException) {
-        throw java.sql.SQLException("Unable to load database driver: $driver", e)
-      } catch (e: InstantiationException) {
-        throw java.sql.SQLException("Unable to instantiate a database driver: $driver", e)
+      } catch (error: ClassNotFoundException) {
+        throw java.sql.SQLException(
+          "Unable to locale a compatible database driver: $driver",
+          error,
+        )
+      } catch (error: IllegalAccessException) {
+        throw java.sql.SQLException(
+          "Unable to load database driver: $driver",
+          error,
+        )
+      } catch (error: InstantiationException) {
+        throw java.sql.SQLException(
+          "Unable to instantiate a database driver: $driver",
+          error,
+        )
       }
     }
   }
@@ -147,12 +156,11 @@ abstract class BaseDatabase(
    * After [block] is finished, with or without an error, the connection is released.
    */
   @Throws(java.sql.SQLException::class)
-  fun <R> readOnlyConnection(block: DatabaseConnectionBlock<R>): R =
-    runDatabaseConnectionBlock(
-      enableRetryOnError = true,
-      readWrite = false,
-      block = block,
-    )
+  fun <R> readOnlyConnection(block: DatabaseConnectionBlock<R>): R = runDatabaseConnectionBlock(
+    enableRetryOnError = true,
+    readWrite = false,
+    block = block,
+  )
 
   /**
    * Creates a new read-write [DatabaseConnection] to this [database][BaseDatabase] and
@@ -161,11 +169,10 @@ abstract class BaseDatabase(
    * After [block] is finished, with or without an error, the connection is released.
    */
   @Throws(java.sql.SQLException::class)
-  fun <R> readWriteConnection(block: DatabaseConnectionBlock<R>): R =
-    readWriteConnection(
-      enableRetryOnError = true,
-      block = block,
-    )
+  fun <R> readWriteConnection(block: DatabaseConnectionBlock<R>): R = readWriteConnection(
+    enableRetryOnError = true,
+    block = block,
+  )
 
   /**
    * Creates a new read-write [DatabaseConnection] to this [database][BaseDatabase] and
@@ -322,7 +329,10 @@ abstract class BaseDatabase(
    *
    * By default, [wrapper] is null.
    */
-  fun escapeLike(value: String, wrapper: Char? = null): String = escape(
+  fun escapeLike(
+    value: String,
+    wrapper: Char? = null,
+  ): String = escape(
     value = value,
     wrapper = wrapper,
     escapePercent = true,
@@ -332,7 +342,11 @@ abstract class BaseDatabase(
   /**
    * Builds and returns a "LIKE" SQL command for this database server.
    */
-  fun like(word: String, start: Boolean, end: Boolean): String {
+  fun like(
+    word: String,
+    start: Boolean,
+    end: Boolean,
+  ): String {
     var likeQuery = escapeLike(word)
 
     if (start) {

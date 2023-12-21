@@ -64,23 +64,24 @@ internal class Migrator(
   private val commentPrefixes: Collection<String> = DEFAULT_COMMENT_PREFIXES,
 ) {
   private val connection = object : MigrationConnection {
-    override fun execute(statement: String): Int = databaseConnection.executeStatement(
-      statement,
-      DatabaseConnection.DEFAULT_RESULT_FLAGS,
-    )
-
-    override fun query(statement: String): QueryResults =
-      QueryResultsImpl(
-        databaseConnection.compileStatement(
-          statement.trim(),
-          StatementBuilder.StatementType.SELECT_RAW,
-          null,
-          DatabaseConnection.DEFAULT_RESULT_FLAGS,
-          false,
-        ),
+    override fun execute(statement: String): Int = databaseConnection
+      .executeStatement(
+        statement,
+        DatabaseConnection.DEFAULT_RESULT_FLAGS,
       )
 
-    override fun queryForLong(statement: String): Long = databaseConnection.queryForLong(statement)
+    override fun query(statement: String): QueryResults = QueryResultsImpl(
+      databaseConnection.compileStatement(
+        statement.trim(),
+        StatementBuilder.StatementType.SELECT_RAW,
+        null,
+        DatabaseConnection.DEFAULT_RESULT_FLAGS,
+        false,
+      ),
+    )
+
+    override fun queryForLong(statement: String): Long = databaseConnection
+      .queryForLong(statement)
 
     override fun escapeProperty(name: String): String = escapeProperty(name)
 
@@ -195,7 +196,10 @@ internal class Migrator(
           migrationState = migrationState,
           message = " SQL ERROR!",
         )
-      } catch (@Suppress("TooGenericExceptionCaught") error: Throwable) {
+      } catch (
+        @Suppress("TooGenericExceptionCaught")
+        error: Throwable,
+      ) {
         error.capture(
           migrationState = migrationState,
           message = " GENERIC ERROR!",
@@ -293,7 +297,10 @@ internal class Migrator(
           migrationState = migrationState,
           message = " SQL ERROR!",
         )
-      } catch (@Suppress("TooGenericExceptionCaught") error: Throwable) {
+      } catch (
+        @Suppress("TooGenericExceptionCaught")
+        error: Throwable,
+      ) {
         error.capture(
           migrationState = migrationState,
           message = " GENERIC ERROR!",
@@ -563,35 +570,37 @@ internal class Migrator(
     .readAllLines(java.nio.file.Paths.get(toURI()))
 
   @Suppress("LoopWithTooManyJumpStatements")
-  private fun Collection<String>.parseCommands(): Collection<String> =
-    ArrayList<String>(Constants.MEDIUM_BLOCK_SIZE).also { result ->
-      val nextCommand = StringBuilder(Constants.MEDIUM_BLOCK_SIZE)
+  private fun Collection<String>.parseCommands(): Collection<String> {
+    val result = ArrayList<String>(Constants.MEDIUM_BLOCK_SIZE)
+    val nextCommand = StringBuilder(Constants.MEDIUM_BLOCK_SIZE)
 
-      for (command in this) {
-        val normalizedCommand = command.trimOrNull() ?: continue
-        var isComment = false
+    for (command in this) {
+      val normalizedCommand = command.trimOrNull() ?: continue
+      var isComment = false
 
-        // Detect if this line is a comment.
-        // Note: We do not support multiple-line comments.
-        val commentPrefixesIterator = commentPrefixes.iterator()
-        while (!isComment && commentPrefixesIterator.hasNext()) {
-          isComment = normalizedCommand.startsWith(commentPrefixesIterator.next())
-        }
+      // Detect if this line is a comment.
+      // Note: We do not support multiple-line comments.
+      val commentPrefixesIterator = commentPrefixes.iterator()
+      while (!isComment && commentPrefixesIterator.hasNext()) {
+        isComment = normalizedCommand.startsWith(commentPrefixesIterator.next())
+      }
 
-        if (isComment) {
-          continue
-        }
+      if (isComment) {
+        continue
+      }
 
-        if (normalizedCommand.endsWith(';')) {
-          // The command ends with a semicolon; it's the final piece of the command.
-          nextCommand.append(" ${normalizedCommand.substring(0, normalizedCommand.length - 1)}")
-          result.add("$nextCommand")
-          nextCommand.clear()
-        } else {
-          nextCommand.append(" $normalizedCommand")
-        }
+      if (normalizedCommand.endsWith(';')) {
+        // The command ends with a semicolon; it's the final piece of the command.
+        nextCommand.append(" ${normalizedCommand.substring(0, normalizedCommand.length - 1)}")
+        result.add("$nextCommand")
+        nextCommand.clear()
+      } else {
+        nextCommand.append(" $normalizedCommand")
       }
     }
+
+    return result
+  }
 
   @Suppress("VariableMinLength")
   private companion object {

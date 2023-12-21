@@ -71,23 +71,31 @@ abstract class HashValueKeyDao<T : HashValueKeyEntity> protected constructor(
     )
   }
 
-  override fun Collection<T>?.toMap(): ByteArrayMap<T>? = this?.let { instances ->
-    ByteArrayMap<T>().apply {
-      for (instance in instances) {
-        this[instance.id] = instance
-      }
+  override fun Collection<T>?.toMap(): ByteArrayMap<T>? = if (null == this) {
+    null
+  } else {
+    val map = ByteArrayMap<T>()
+    for (instance in this) {
+      map[instance.id] = instance
     }
+
+    map
   }
 
   /**
    * Fetches the row associated with the supplied [id].
    */
   @Throws(java.sql.SQLException::class)
-  override fun queryForId(id: HashValue): T? = queryBuilder()
-    .where()
-    .eq(primaryKey, id)
-    .queryForFirst()
-    ?.also {
-      it.populated = true
+  override fun queryForId(id: HashValue): T? {
+    val result = queryBuilder()
+      .where()
+      .eq(primaryKey, id)
+      .queryForFirst()
+
+    if (null != result) {
+      result.populated = true
     }
+
+    return result
+  }
 }

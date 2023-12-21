@@ -32,37 +32,41 @@ import org.noordawod.kotlin.orm.migration.MigrationConnection
  *
  * @param connection the migrator connection
  */
-fun String.escapeLike(connection: MigrationConnection): String =
-  connection.escapeLike(this)
+fun String.escapeLike(connection: MigrationConnection): String = connection
+  .escapeLike(this)
 
 /**
  * Escapes this database value using the provided migrator connection.
  *
  * @param connection the migrator connection
  */
-fun String.escapeValue(connection: MigrationConnection): String =
-  connection.escapeValue(this)
+fun String.escapeValue(connection: MigrationConnection): String = connection
+  .escapeValue(this)
 
 /**
  * Escapes these database values using the provided migrator connection.
  *
  * @param connection the migrator connection
  */
-fun Collection<String>.escapeValues(connection: MigrationConnection): String =
-  joinToString(separator = ",") { connection.escapeValue(it) }
+fun Collection<String>.escapeValues(connection: MigrationConnection): String = joinToString(
+  separator = ",",
+  transform = connection::escapeValue,
+)
 
 /**
  * Escapes this database property using the provided migrator connection.
  *
  * @param connection the migrator connection
  */
-fun String.escapeProperty(connection: MigrationConnection): String =
-  connection.escapeProperty(this)
+fun String.escapeProperty(connection: MigrationConnection): String = connection
+  .escapeProperty(this)
 
 /**
  * Escapes these database properties using the provided migrator connection.
  *
  * @param connection the migrator connection
  */
-fun Collection<String>.escapeProperties(connection: MigrationConnection): String =
-  joinToString(separator = ",") { connection.escapeProperty(it) }
+fun Collection<String>.escapeProperties(connection: MigrationConnection): String = joinToString(
+  separator = ",",
+  transform = connection::escapeProperty,
+)

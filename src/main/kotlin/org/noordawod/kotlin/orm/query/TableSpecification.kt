@@ -45,6 +45,7 @@ data class TableSpecification(
    */
   inline fun toString(escape: EscapeCallback): String {
     val nameEscaped = escape(name)
+
     return if (null == alias) nameEscaped else "$nameEscaped AS ${escape(alias)}"
   }
 
@@ -62,5 +63,8 @@ data class TableSpecification(
    * @param entity entity to prefix
    * @param escape handler to escape table and alias names
    */
-  fun prefix(entity: String, escape: EscapeCallback): String = "${prefix(escape)}${escape(entity)}"
+  fun prefix(
+    entity: String,
+    escape: EscapeCallback,
+  ): String = "${prefix(escape)}${escape(entity)}"
 }

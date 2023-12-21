@@ -105,15 +105,11 @@ sealed class Condition private constructor(
   class AllOf(
     val values: Collection<Any>,
     parenthesized: Boolean = false,
-  ) : Condition(
-    op = LogicalOp.AND,
-    parenthesized = parenthesized,
-  ) {
+  ) : Condition(op = LogicalOp.AND, parenthesized = parenthesized) {
     override val isValid: Boolean = values.isNotEmpty() && values.none { "$it".isBlank() }
 
-    override fun stringify(): String = values
-      .filterNot { "$it".isBlank() }
-      .joinToString(separator = " $op ")
+    override fun stringify(): String =
+      values.filterNot { "$it".isBlank() }.joinToString(separator = " $op ")
   }
 
   /**
@@ -124,15 +120,11 @@ sealed class Condition private constructor(
   class AnyOf(
     val values: Collection<Any>,
     parenthesized: Boolean = false,
-  ) : Condition(
-    op = LogicalOp.OR,
-    parenthesized = parenthesized,
-  ) {
+  ) : Condition(op = LogicalOp.OR, parenthesized = parenthesized) {
     override val isValid: Boolean = values.isNotEmpty() && values.none { "$it".isBlank() }
 
-    override fun stringify(): String = values
-      .filterNot { "$it".isBlank() }
-      .joinToString(separator = " $op ")
+    override fun stringify(): String =
+      values.filterNot { "$it".isBlank() }.joinToString(separator = " $op ")
   }
 
   /**
@@ -183,6 +175,32 @@ sealed class Condition private constructor(
     override val isValid: Boolean = field.isNotBlank() && values.isNotEmpty()
 
     override fun stringify(): String = "$field NOT IN (${values.joinToString(separator = ",")})"
+  }
+
+  /**
+   * A condition where a field's value evaluates to NULL.
+   *
+   * @param field the field name
+   */
+  class IsNull(
+    val field: String,
+  ) : Condition() {
+    override val isValid: Boolean = field.isNotBlank()
+
+    override fun stringify(): String = "$field IS NULL"
+  }
+
+  /**
+   * A condition where a field's value evaluates to non-NULL.
+   *
+   * @param field the field name
+   */
+  class IsNotNull(
+    val field: String,
+  ) : Condition() {
+    override val isValid: Boolean = field.isNotBlank()
+
+    override fun stringify(): String = "$field IS NOT NULL"
   }
 
   /**

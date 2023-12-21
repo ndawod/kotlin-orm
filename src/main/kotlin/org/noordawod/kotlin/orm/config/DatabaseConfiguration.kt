@@ -98,20 +98,27 @@ abstract class DatabaseConfiguration {
    * Returns the connection URI string for this instance.
    */
   val uri: String
-    get() = uriInternal ?: MySQLDatabase.uri(
-      protocol = protocol,
-      host = host,
-      port = port,
-      user = user,
-      pass = pass,
-      schema = schema,
-      timezone = timezone,
-      collation = collation,
-      connectTimeout = connectTimeout,
-      socketTimeout = socketTimeout,
-      params = params,
-    ).apply {
-      uriInternal = this
+    get() {
+      var uriInternalLocked = uriInternal
+
+      if (null == uriInternalLocked) {
+        uriInternalLocked = MySQLDatabase.uri(
+          protocol = protocol,
+          host = host,
+          port = port,
+          user = user,
+          pass = pass,
+          schema = schema,
+          timezone = timezone,
+          collation = collation,
+          connectTimeout = connectTimeout,
+          socketTimeout = socketTimeout,
+          params = params,
+        )
+        uriInternal = uriInternalLocked
+      }
+
+      return uriInternalLocked
     }
 
   @Transient

@@ -31,8 +31,7 @@ package org.noordawod.kotlin.orm.entity
 abstract class StringKeyEntity protected constructor() : BaseKeyEntity<String>() {
   override fun toString(): String = id
 
-  override fun equals(other: Any?): Boolean =
-    other is StringKeyEntity && id == other.id
+  override fun equals(other: Any?): Boolean = other is StringKeyEntity && id == other.id
 
   @Suppress("RedundantOverride")
   override fun hashCode(): Int = super.hashCode()

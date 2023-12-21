@@ -37,7 +37,8 @@ import org.noordawod.kotlin.orm.BaseDatabase
 abstract class BaseDaoImpl<ID, T> protected constructor(
   connection: ConnectionSource,
   dataClass: Class<T>,
-) : com.j256.ormlite.dao.BaseDaoImpl<T, ID>(connection, dataClass), Dao<T, ID> {
+) : com.j256.ormlite.dao.BaseDaoImpl<T, ID>(connection, dataClass),
+  Dao<T, ID> {
   /**
    * Returns the database name this DAO is currently is attached to.
    */
@@ -57,11 +58,18 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
     orderField: String,
     ascending: Boolean = true,
   ): List<T>? {
-    val builder = queryBuilder().distinct().orderBy(orderField, ascending)
+    val builder = queryBuilder()
+      .distinct()
+      .orderBy(orderField, ascending)
+
     if (0 < limit) {
       builder.limit(limit)
     }
-    val result = builder.where().eq(fieldName, id).query()
+
+    val result = builder
+      .where()
+      .eq(fieldName, id)
+      .query()
 
     return if (result.isNullOrEmpty()) null else result
   }
@@ -94,7 +102,13 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
     ids: Collection<ID>,
     orderField: String,
     ascending: Boolean = true,
-  ): List<T>? = queryForIds(fieldName, ids, 0, orderField, ascending)
+  ): List<T>? = queryForIds(
+    fieldName = fieldName,
+    ids = ids,
+    limit = 0,
+    orderField = orderField,
+    ascending = ascending,
+  )
 
   /**
    * Queries the database for distinct records having the specified IDs equal to the
@@ -141,7 +155,10 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
    */
   @Throws(java.sql.SQLException::class)
   fun replaceIntoDatabase(targetTableName: String) {
-    replaceIntoTable(targetTableName, null)
+    replaceIntoTable(
+      targetTableName = targetTableName,
+      whereClause = null,
+    )
   }
 
   /**
@@ -157,13 +174,27 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
     val builder = StringBuilder("REPLACE INTO ")
     val dotPos = targetTableName.indexOf('.')
     if (0 < dotPos) {
-      databaseType.appendEscapedEntityName(builder, targetTableName.substring(0, dotPos))
+      databaseType.appendEscapedEntityName(
+        builder,
+        targetTableName.substring(0, dotPos),
+      )
       builder.append('.')
-      databaseType.appendEscapedEntityName(builder, targetTableName.substring(1 + dotPos))
+      databaseType.appendEscapedEntityName(
+        builder,
+        targetTableName.substring(1 + dotPos),
+      )
     } else {
-      databaseType.appendEscapedEntityName(builder, targetTableName)
+      databaseType.appendEscapedEntityName(
+        builder,
+        targetTableName,
+      )
     }
-    performOperation(builder, " SELECT * FROM ", whereClause, args)
+    performOperation(
+      builder = builder,
+      initialCommand = " SELECT * FROM ",
+      whereClause = whereClause,
+      args = args,
+    )
   }
 
   /**
@@ -173,7 +204,10 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
    */
   @Throws(java.sql.SQLException::class)
   fun moveIntoDatabase(targetTableName: String) {
-    moveIntoTable(targetTableName, null)
+    moveIntoTable(
+      targetTableName = targetTableName,
+      whereClause = null,
+    )
   }
 
   /**
@@ -187,8 +221,17 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
     whereClause: String?,
     args: Array<String>? = null,
   ) {
-    replaceIntoTable(targetTableName, whereClause, args)
-    performOperation(StringBuilder(), "DELETE FROM ", whereClause, args)
+    replaceIntoTable(
+      targetTableName = targetTableName,
+      whereClause = whereClause,
+      args = args,
+    )
+    performOperation(
+      builder = StringBuilder(),
+      initialCommand = "DELETE FROM ",
+      whereClause = whereClause,
+      args = args,
+    )
   }
 
   /**
@@ -210,7 +253,10 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
    * Creates a new [entity] in the database.
    */
   @Throws(java.sql.SQLException::class)
-  fun insert(entity: T): T = insert(entity, BaseDatabase.DEFAULT_INSERT_TRIES)
+  fun insert(entity: T): T = insert(
+    entity = entity,
+    tries = BaseDatabase.DEFAULT_INSERT_TRIES,
+  )
 
   /**
    * Creates a new [entity] in the database and optionally tries the specified number
@@ -220,14 +266,20 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
   open fun insert(
     entity: T,
     tries: Int = BaseDatabase.DEFAULT_INSERT_TRIES,
-  ): T = create(entity).let { entity }
+  ): T {
+    create(entity)
+
+    return entity
+  }
 
   /**
    * Creates new [entities] in the database.
    */
   @Throws(java.sql.SQLException::class)
-  fun insert(entities: Collection<T>): List<T> =
-    insert(entities, BaseDatabase.DEFAULT_INSERT_TRIES)
+  fun insert(entities: Collection<T>): List<T> = insert(
+    entities = entities,
+    tries = BaseDatabase.DEFAULT_INSERT_TRIES,
+  )
 
   /**
    * Creates new [entities] in the database and optionally tries the specified number
@@ -240,8 +292,14 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
   ): List<T> {
     val results = ArrayList<T>(Constants.DEFAULT_LIST_CAPACITY)
     for (entry in entities) {
-      results.add(insert(entry, tries))
+      results.add(
+        insert(
+          entity = entry,
+          tries = tries,
+        ),
+      )
     }
+
     return results
   }
 

@@ -18,9 +18,18 @@ ij_kotlin_imports_layout = *
 # noinspection EditorConfigKeyCorrectness
 [{*.kt,*.kts,*.java}]
 indent_size = 2
-ktlint_code_style = intellij_idea
 ij_kotlin_allow_trailing_comma_on_call_site = true
 ij_kotlin_allow_trailing_comma = true
+ktlint_code_style = ktlint_official
+ktlint_standard = enabled
+ktlint_experimental = enabled
+ktlint_standard_function-signature = enabled
+ktlint_standard_class-signature = enabled
+ktlint_standard_chain-method-continuation = disabled
+ktlint_standard_multiline-expression-wrapping = disabled
+ktlint_standard_string-template-indent = disabled
+ktlint_function_signature_wrapping_rule_always_with_minimum_parameters = 1
+ktlint_function_signature_body_expression_wrapping = default
 
 # 2 space indentation for Yaml.
 [{*.yaml,*.yml}]

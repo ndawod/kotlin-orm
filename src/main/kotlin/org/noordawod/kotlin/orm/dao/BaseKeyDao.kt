@@ -57,8 +57,10 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
   ): T? = when {
     null == entity -> null
     !force && entity.populated -> entity
-    else -> queryFor(entity)?.also {
-      it.populated = true
+    else -> {
+      val entityUpdated = queryFor(entity)
+      entityUpdated?.populated = true
+      entityUpdated
     }
   }
 
@@ -111,8 +113,11 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
   @Throws(java.sql.SQLException::class)
   open fun exists(ids: Collection<ID>): Boolean = ids.size == queryForIds(ids)?.size
 
-  override fun queryForId(id: ID): T? = super.queryForId(id)?.also {
-    it.populated = true
+  override fun queryForId(id: ID): T? {
+    val result = super.queryForId(id)
+    result?.populated = true
+
+    return result
   }
 
   override fun queryForAll(): List<T>? {
@@ -142,10 +147,12 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
     }
   }
 
-  override fun queryForFirst(preparedQuery: PreparedQuery<T>): T? =
-    super.queryForFirst(preparedQuery)?.also {
-      it.populated = true
-    }
+  override fun queryForFirst(preparedQuery: PreparedQuery<T>): T? {
+    val result = super.queryForFirst(preparedQuery)
+    result?.populated = true
+
+    return result
+  }
 
   override fun queryForFieldValues(fieldValues: Map<String, Any?>): List<T>? {
     val result = super.queryForFieldValues(fieldValues)
@@ -195,8 +202,12 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
     }
   }
 
-  override fun queryForSameId(data: T?): T? =
-    super.queryForSameId(data)?.also { it.populated = true }
+  override fun queryForSameId(data: T?): T? {
+    val result = super.queryForSameId(data)
+    result?.populated = true
+
+    return result
+  }
 
   /**
    * Queries the database for the single record matching the provided [instance].
@@ -213,8 +224,8 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
     fieldName: String,
     value: Any?,
   ): T? = queryForEq(
-    fieldName,
-    value,
+    fieldName = fieldName,
+    value = value,
   )?.firstOrNull()
 
   /**
@@ -222,10 +233,12 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
    * equal to [primaryKey] field.
    */
   @Throws(java.sql.SQLException::class)
-  open fun queryForIds(ids: Collection<ID>): List<T>? =
-    queryForIds(primaryKey, ids)?.onEach {
-      it.populated = true
-    }
+  open fun queryForIds(ids: Collection<ID>): List<T>? = queryForIds(
+    fieldName = primaryKey,
+    ids = ids,
+  )?.onEach {
+    it.populated = true
+  }
 
   /**
    * Queries the database for the specified [identifiers][ids] and sorts the result
@@ -236,10 +249,10 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
     ids: Collection<ID>,
     orderField: String,
   ): List<T>? = queryForIds(
-    ids,
-    0,
-    orderField,
-    true,
+    ids = ids,
+    limit = 0,
+    orderField = orderField,
+    ascending = true,
   )
 
   /**
@@ -253,11 +266,11 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
     orderField: String,
     ascending: Boolean,
   ): List<T>? = queryForIds(
-    primaryKey,
-    ids,
-    limit,
-    orderField,
-    ascending,
+    fieldName = primaryKey,
+    ids = ids,
+    limit = limit,
+    orderField = orderField,
+    ascending = ascending,
   )?.onEach {
     it.populated = true
   }
@@ -278,10 +291,10 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
     ids: Collection<ID>,
     orderField: String,
   ): Map<ID, T>? = associateForIds(
-    ids,
-    0,
-    orderField,
-    true,
+    ids = ids,
+    limit = 0,
+    orderField = orderField,
+    ascending = true,
   )
 
   /**
@@ -295,21 +308,24 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
     orderField: String,
     ascending: Boolean,
   ): Map<ID, T>? = queryForIds(
-    primaryKey,
-    ids,
-    limit,
-    orderField,
-    ascending,
+    fieldName = primaryKey,
+    ids = ids,
+    limit = limit,
+    orderField = orderField,
+    ascending = ascending,
   ).toMap()
 
   /**
    * Converts a list of [T] instances to a Map of keys of [T] and the instance itself.
    */
-  open fun Collection<T>?.toMap(): Map<ID, T>? = this?.let { instances ->
-    mutableMapWith<ID, T>(this.size).apply {
-      for (instance in instances) {
-        this[instance.id] = instance
-      }
+  open fun Collection<T>?.toMap(): Map<ID, T>? = if (null == this) {
+    null
+  } else {
+    val map = mutableMapWith<ID, T>(this.size)
+    for (instance in this) {
+      map[instance.id] = instance
     }
+
+    map
   }
 }

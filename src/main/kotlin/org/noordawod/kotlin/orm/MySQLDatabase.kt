@@ -55,13 +55,7 @@ open class MySQLDatabase(
   healthCheckMillis: Long = DEFAULT_HEALTH_CHECK_INTERVAL,
   val maxRetries: Int = DEFAULT_RECONNECT_TRIES,
   val retryDelay: Long = DEFAULT_RETRY_MILLIS,
-) : BaseDatabase(
-  config,
-  driver,
-  ageMillis,
-  maxFree,
-  healthCheckMillis,
-) {
+) : BaseDatabase(config, driver, ageMillis, maxFree, healthCheckMillis) {
   override fun equals(other: Any?): Boolean = other is MySQLDatabase &&
     super.equals(other) &&
     other.maxRetries == maxRetries &&
@@ -91,8 +85,15 @@ open class MySQLDatabase(
   )
 
   override val uri: String
-    get() = uriInternal ?: uri(config).apply {
-      uriInternal = this
+    get() {
+      var uriInternalLocked = uriInternal
+
+      if (null == uriInternalLocked) {
+        uriInternalLocked = uri(config)
+        uriInternal = uriInternalLocked
+      }
+
+      return uriInternalLocked
     }
 
   private var uriInternal: String? = null

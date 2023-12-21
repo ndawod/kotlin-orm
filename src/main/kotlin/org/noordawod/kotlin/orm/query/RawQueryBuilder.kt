@@ -136,6 +136,7 @@ class RawQueryBuilder(
    */
   fun table(table: TableSpecification): RawQueryBuilder {
     tables.add(table)
+
     return this
   }
 
@@ -146,6 +147,7 @@ class RawQueryBuilder(
    */
   fun select(entity: String): RawQueryBuilder {
     entities.add(entity)
+
     return this
   }
 
@@ -155,8 +157,12 @@ class RawQueryBuilder(
    * @param table table specification
    * @param entity the entity name to fetch, without a table name or alias
    */
-  fun select(table: TableSpecification, entity: String): RawQueryBuilder {
+  fun select(
+    table: TableSpecification,
+    entity: String,
+  ): RawQueryBuilder {
     select(table.prefix(entity, ::escape))
+
     return table(table)
   }
 
@@ -167,6 +173,7 @@ class RawQueryBuilder(
    */
   fun selectAll(table: TableSpecification): RawQueryBuilder {
     select(table.prefix("*", ::escape))
+
     return table(table)
   }
 
@@ -176,8 +183,10 @@ class RawQueryBuilder(
    * @param table the first table
    * @param other other table to join
    */
-  fun leftJoin(table: JoinSpecification, other: JoinSpecification): RawQueryBuilder =
-    leftJoin(table to other)
+  fun leftJoin(
+    table: JoinSpecification,
+    other: JoinSpecification,
+  ): RawQueryBuilder = leftJoin(table to other)
 
   /**
    * Adds a LEFT JOIN to this query between two tables.
@@ -193,6 +202,7 @@ class RawQueryBuilder(
    */
   fun leftJoin(on: Collection<JoinPair>): RawQueryBuilder {
     joinInternal("LEFT ", on)
+
     return this
   }
 
@@ -203,6 +213,7 @@ class RawQueryBuilder(
    */
   fun where(condition: Condition): RawQueryBuilder {
     conditions.add(condition)
+
     return this
   }
 
@@ -212,9 +223,13 @@ class RawQueryBuilder(
    * @param capacity maximum number of rows to return
    * @param offset position at which to return the rows
    */
-  fun limit(capacity: Int, offset: Int = 0): RawQueryBuilder {
+  fun limit(
+    capacity: Int,
+    offset: Int = 0,
+  ): RawQueryBuilder {
     limitInternal = if (0 < capacity) capacity else -1
     offsetInternal = if (-1 < offset) offset else -1
+
     return this
   }
 
@@ -225,6 +240,7 @@ class RawQueryBuilder(
    */
   fun groupBy(clause: String): RawQueryBuilder {
     groupByInternal = clause
+
     return this
   }
 
@@ -234,8 +250,12 @@ class RawQueryBuilder(
    * @param table the table specification to group by
    * @param entity the entity name within [table] to group by
    */
-  fun groupBy(table: TableSpecification, entity: String): RawQueryBuilder {
+  fun groupBy(
+    table: TableSpecification,
+    entity: String,
+  ): RawQueryBuilder {
     groupByInternal = table.prefix(entity, ::escape)
+
     return this
   }
 
@@ -244,7 +264,10 @@ class RawQueryBuilder(
    *
    * @param join the table specification along with its primary key
    */
-  fun groupBy(join: JoinSpecification): RawQueryBuilder = groupBy(join.table, join.key)
+  fun groupBy(join: JoinSpecification): RawQueryBuilder = groupBy(
+    table = join.table,
+    entity = join.key,
+  )
 
   /**
    * Orders the rows using a raw clause.
@@ -252,9 +275,13 @@ class RawQueryBuilder(
    * @param clause the raw order by clause
    * @param ascending whether to order in an ascending (default) or a descending order
    */
-  fun orderBy(clause: String, ascending: Boolean = true): RawQueryBuilder {
+  fun orderBy(
+    clause: String,
+    ascending: Boolean = true,
+  ): RawQueryBuilder {
     orderByInternal = clause
     ascendingInternal = ascending
+
     return this
   }
 
@@ -269,7 +296,10 @@ class RawQueryBuilder(
     table: TableSpecification,
     entity: String,
     ascending: Boolean = true,
-  ): RawQueryBuilder = orderBy(table.prefix(entity, ::escape), ascending)
+  ): RawQueryBuilder = orderBy(
+    clause = table.prefix(entity, ::escape),
+    ascending = ascending,
+  )
 
   /**
    * Orders the rows by a specific table and entity.
@@ -277,16 +307,25 @@ class RawQueryBuilder(
    * @param join the table specification along with its primary key
    * @param ascending whether to order in an ascending (default) or a descending order
    */
-  fun orderBy(join: JoinSpecification, ascending: Boolean = true): RawQueryBuilder =
-    orderBy(join.table, join.key, ascending)
+  fun orderBy(
+    join: JoinSpecification,
+    ascending: Boolean = true,
+  ): RawQueryBuilder = orderBy(
+    table = join.table,
+    entity = join.key,
+    ascending = ascending,
+  )
 
   /**
    * Escapes an entity using the defined [field separator][fieldSeparator].
    *
    * @param entity the entity to escape
    */
-  fun escape(entity: String) =
-    if ("*" == entity) entity else "$fieldSeparator$entity$fieldSeparator"
+  fun escape(entity: String) = if ("*" == entity) {
+    entity
+  } else {
+    "$fieldSeparator$entity$fieldSeparator"
+  }
 
   private fun joinInternal(
     @Suppress("SameParameterValue") type: String,
