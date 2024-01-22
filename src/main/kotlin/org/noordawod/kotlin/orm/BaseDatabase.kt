@@ -460,7 +460,8 @@ abstract class BaseDatabase(
     var shouldRetryOnError = !enableRetryOnError
     var connectionSource: ConnectionSource? = null
     var databaseConnection: DatabaseConnection? = null
-    var latestError: java.sql.SQLException?
+
+    var latestError: java.sql.SQLException? = null
 
     do {
       try {
@@ -476,7 +477,11 @@ abstract class BaseDatabase(
 
         return block(connectionSource, databaseConnection)
       } catch (error: java.sql.SQLException) {
-        latestError = error
+        latestError = if (null == latestError) {
+          error
+        } else {
+          java.sql.SQLTransientConnectionException(error.message, latestError)
+        }
         shouldRetryOnError = !shouldRetryOnError
 
         // Occasionally, the database connection might be stuck and closing it would free

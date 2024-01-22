@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+4.11.4 (January 22, 2024)
+    Throws the right exception in case of an SQL error.
+
 4.11.3 (December 21, 2023)
     Add a method to check for `NULL` columns.
 
