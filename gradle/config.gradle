@@ -24,15 +24,15 @@
 ext.encoding = 'UTF-8'
 ext.versions = [
     jdk: JavaVersion.VERSION_11,
-    plugin_versions_outdated: '0.50.0',
-    plugin_detekt: '1.23.4',
+    plugin_versions_outdated: '0.51.0',
+    plugin_detekt: '1.23.5',
     plugin_ktlint: '12.1.0',
     ktlint: '0.51.0-FINAL',
     kotlin: '1.8.21', // https://kotlinlang.org/docs/releases.html#release-details
     kotlin_coroutines: '1.7.3',
-    kotlin_serialization: '1.6.2',
+    kotlin_serialization: '1.6.3',
     uribuilder_tiny: '2.7.1',
-    ndawod_kotlin_core: '3.6.3',
+    ndawod_kotlin_core: '3.6.5',
     ormlite: '6.1',
     jcolor: '5.5.1'
 ]

@@ -26,6 +26,7 @@ ktlint_experimental = enabled
 ktlint_standard_function-signature = enabled
 ktlint_standard_class-signature = enabled
 ktlint_standard_chain-method-continuation = disabled
+ktlint_standard_indent = disabled
 ktlint_standard_multiline-expression-wrapping = disabled
 ktlint_standard_string-template-indent = disabled
 ktlint_function_signature_wrapping_rule_always_with_minimum_parameters = 1

@@ -181,12 +181,12 @@ class RawQueryBuilder(
    * Adds a LEFT JOIN to this query between two tables.
    *
    * @param table the first table
-   * @param other other table to join
+   * @param on the other table to join
    */
   fun leftJoin(
     table: JoinSpecification,
-    other: JoinSpecification,
-  ): RawQueryBuilder = leftJoin(table to other)
+    on: JoinSpecification,
+  ): RawQueryBuilder = leftJoin(table to on)
 
   /**
    * Adds a LEFT JOIN to this query between two tables.
