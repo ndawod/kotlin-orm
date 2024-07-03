@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+5.1.0 (July 3, 2024)
+    Upgrade to Kotlin version 2.0.0 with K2 compiler.
+
 5.0.0 (July 3, 2024)
     Upgrade to Kotlin version 1.9.24.
 
