@@ -25,7 +25,7 @@
 
 package org.noordawod.kotlin.orm.entity
 
-import org.noordawod.kotlin.core.extension.publicIdOrEmpty
+import org.noordawod.kotlin.core.extension.publicId
 import org.noordawod.kotlin.core.repository.HashValue
 import org.noordawod.kotlin.core.security.ByteArrayStrength
 import org.noordawod.kotlin.core.security.ByteUtils
@@ -34,7 +34,7 @@ import org.noordawod.kotlin.core.security.ByteUtils
  * Generic top-level class for all entities having a key with a [HashValue] value type.
  */
 abstract class HashValueKeyEntity protected constructor() : BaseKeyEntity<HashValue>() {
-  override fun toString(): String = id.publicIdOrEmpty()
+  override fun toString(): String = id.publicId()
 
   override fun equals(other: Any?): Boolean =
     other is HashValueKeyEntity && id.contentEquals(other.id)
