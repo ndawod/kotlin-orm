@@ -82,5 +82,4 @@ private
 local.properties
 lsyncd.log
 .attach_pid*
-detekt-baseline.xml
 .DS_Store
