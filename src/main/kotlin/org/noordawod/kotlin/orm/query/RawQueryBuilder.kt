@@ -25,6 +25,8 @@
 
 package org.noordawod.kotlin.orm.query
 
+import org.noordawod.kotlin.core.extension.mutableListWith
+
 /**
  * A helper class that facilitates building a raw query.
  *
@@ -68,6 +70,7 @@ class RawQueryBuilder(
   private var limitInternal: Int = -1
   private var offsetInternal: Int = -1
   private var groupByInternal: String? = null
+  private var orderByValuesInternal = mutableListWith<Pair<FieldValue, Boolean>>(initialCapacity)
   private var orderByInternal: String? = null
   private var ascendingInternal: Boolean = true
 
@@ -115,8 +118,29 @@ class RawQueryBuilder(
       result.append(" GROUP BY $groupByInternal")
     }
 
-    if (!orderByInternal.isNullOrEmpty()) {
-      result.append(" ORDER BY $orderByInternal ${if (ascendingInternal) "ASC" else "DESC"}")
+    val hasOrderByValue = orderByValuesInternal.isNotEmpty()
+    val hasOrderBy = !orderByInternal.isNullOrEmpty()
+
+    if (hasOrderByValue || hasOrderBy) {
+      result.append(" ORDER BY")
+      var orderSeparator = " "
+
+      if (hasOrderByValue) {
+        for (pair in orderByValuesInternal) {
+          result.append(orderSeparator)
+          orderSeparator = ", "
+
+          result.append(pair.first)
+
+          // The second portion of the pair is "showFirst", and contrary to logical thinking,
+          // to show the matches first in the result set, the order should be "DESC".
+          result.append(" ${if (pair.second) "DESC" else "ASC"}")
+        }
+      }
+
+      if (hasOrderBy) {
+        result.append("$orderSeparator$orderByInternal ${if (ascendingInternal) "ASC" else "DESC"}")
+      }
     }
 
     if (0 < limitInternal) {
@@ -317,6 +341,21 @@ class RawQueryBuilder(
   )
 
   /**
+   * Orders the rows by a field value using a raw clause.
+   *
+   * @param fieldValue the field and value details
+   * @param showFirst whether to show the matched rows first (default) or last in the result set
+   */
+  fun orderBy(
+    fieldValue: FieldValue,
+    showFirst: Boolean = true,
+  ): RawQueryBuilder {
+    orderByValuesInternal.add(fieldValue to showFirst)
+
+    return this
+  }
+
+  /**
    * Escapes an entity using the defined [field separator][fieldSeparator].
    *
    * @param entity the entity to escape
@@ -339,6 +378,9 @@ class RawQueryBuilder(
     }
   }
 
+  /**
+   * Static functions, constants and other values.
+   */
   companion object {
     /**
      * Default initial capacity of internal lists.

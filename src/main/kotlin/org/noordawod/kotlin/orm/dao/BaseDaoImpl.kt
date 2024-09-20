@@ -320,6 +320,9 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
     if (null == args) executeRaw(queryString) else executeRaw(queryString, *args)
   }
 
+  /**
+   * Static functions, constants and other values.
+   */
   companion object {
     /**
      * Returns the catalog (database) name the specified DAO is currently attached to.

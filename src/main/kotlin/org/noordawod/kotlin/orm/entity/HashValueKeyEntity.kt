@@ -42,6 +42,9 @@ abstract class HashValueKeyEntity protected constructor() : BaseKeyEntity<HashVa
   @Suppress("RedundantOverride")
   override fun hashCode(): Int = super.hashCode()
 
+  /**
+   * Static functions, constants and other values.
+   */
   companion object {
     /**
      * Generates a random [HashValue] with a length corresponding with the provided [strength].

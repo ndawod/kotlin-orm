@@ -30,6 +30,9 @@ package org.noordawod.kotlin.orm.entity
  */
 @Suppress("UnnecessaryAbstractClass")
 abstract class BaseEntity protected constructor() {
+  /**
+   * Static functions, constants and other values.
+   */
   companion object {
     /**
      * Default character set for English-only values, such as enums and sets.

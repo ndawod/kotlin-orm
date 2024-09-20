@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2022 Noor Dawod. All rights reserved.
+ * Copyright 2024 Noor Dawod. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -21,44 +21,17 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-@file:Suppress("unused", "MemberVisibilityCanBePrivate")
-
-package org.noordawod.kotlin.orm.entity
+package org.noordawod.kotlin.orm.query
 
 /**
- * Base ORM class for all tables that have a key (primary or unique).
+ * A data class holding a field name and its value.
+ *
+ * @param field the field name, escaped
+ * @param value the field value, escaped
  */
-abstract class BaseKeyEntity<ID> protected constructor() : BaseEntity() {
-  /**
-   * Returns the unique ID of this ORM entity.
-   */
-  @Suppress("VariableMinLength")
-  abstract var id: ID
-
-  /**
-   * Whether this entity has been populated from the database.
-   */
-  var populated: Boolean = false
-
-  override fun toString(): String = id.toString()
-
-  override fun hashCode(): Int = toString().hashCode()
-
-  override fun equals(other: Any?): Boolean = (other as? BaseKeyEntity<*>)?.id == id
-
-  /**
-   * Static functions, constants and other values.
-   */
-  companion object {
-    /**
-     * Just the "id" characters.
-     */
-    @Suppress("VariableMinLength")
-    const val ID: String = "id"
-
-    /**
-     * Just the "_id" characters.
-     */
-    const val ID_SUFFIX: String = "_$ID"
-  }
+data class FieldValue(
+  val field: String,
+  val value: String,
+) {
+  override fun toString(): String = "$field = $value"
 }

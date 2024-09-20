@@ -171,6 +171,9 @@ abstract class DatabaseConfiguration {
     override val params: Map<String, String>? = null,
   ) : DatabaseConfiguration()
 
+  /**
+   * Static functions, constants and other values.
+   */
   companion object {
     /**
      * How long, in milliseconds, until a client can connect to a server.

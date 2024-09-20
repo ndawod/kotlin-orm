@@ -34,6 +34,7 @@ package org.noordawod.kotlin.orm.query
  * @param op optional operator when there are many conditions within this single Condition
  * @param parenthesized whether the eventual query will include surrounding parentheses
  */
+@Suppress("RedundantVisibilityModifier")
 sealed class Condition private constructor(
   val op: LogicalOp? = null,
   val parenthesized: Boolean = false,

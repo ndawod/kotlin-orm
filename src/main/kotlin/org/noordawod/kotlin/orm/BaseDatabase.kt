@@ -496,9 +496,12 @@ abstract class BaseDatabase(
       }
     } while (shouldRetryOnError)
 
-    throw latestError ?: java.sql.SQLTransientConnectionException()
+    throw latestError
   }
 
+  /**
+   * Static functions, constants and other values.
+   */
   companion object {
     /**
      * Default maximum number of retries when inserting a new record.

@@ -148,6 +148,9 @@ open class MySQLDatabase(
     throw java.sql.SQLNonTransientConnectionException(errorMessage, error)
   }
 
+  /**
+   * Static functions, constants and other values.
+   */
   companion object {
     /**
      * The character used to wrap field, table and database names in MySQL.
