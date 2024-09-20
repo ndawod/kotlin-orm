@@ -70,7 +70,7 @@ class RawQueryBuilder(
   private var limitInternal: Int = -1
   private var offsetInternal: Int = -1
   private var groupByInternal: String? = null
-  private var orderByValuesInternal = mutableListWith<Pair<FieldValue, Boolean>>(initialCapacity)
+  private var orderByValuesInternal = mutableListWith<Pair<EntityValue, Boolean>>(initialCapacity)
   private var orderByInternal: String? = null
   private var ascendingInternal: Boolean = true
 
@@ -341,19 +341,35 @@ class RawQueryBuilder(
   )
 
   /**
-   * Orders the rows by a field value using a raw clause.
+   * Orders the rows by a field value.
    *
-   * @param fieldValue the field and value details
+   * @param entityValue the field and value details
    * @param showFirst whether to show the matched rows first (default) or last in the result set
    */
   fun orderBy(
-    fieldValue: FieldValue,
+    entityValue: EntityValue,
     showFirst: Boolean = true,
   ): RawQueryBuilder {
-    orderByValuesInternal.add(fieldValue to showFirst)
+    orderByValuesInternal.add(entityValue to showFirst)
 
     return this
   }
+
+  /**
+   * Orders the rows by a field value.
+   *
+   * @param entity the entity name, escaped
+   * @param value the entity value, escaped
+   * @param showFirst whether to show the matched rows first (default) or last in the result set
+   */
+  fun orderBy(
+    entity: String,
+    value: Any,
+    showFirst: Boolean = true,
+  ): RawQueryBuilder = orderBy(
+    entityValue = EntityValue(entity, value),
+    showFirst = showFirst,
+  )
 
   /**
    * Escapes an entity using the defined [field separator][fieldSeparator].

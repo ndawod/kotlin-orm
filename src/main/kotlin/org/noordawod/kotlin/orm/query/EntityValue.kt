@@ -24,14 +24,14 @@
 package org.noordawod.kotlin.orm.query
 
 /**
- * A data class holding a field name and its value.
+ * A data class holding an entity name and its value.
  *
- * @param field the field name, escaped
- * @param value the field value, escaped
+ * @param field the entity name, escaped
+ * @param value the entity value, escaped
  */
-data class FieldValue(
+data class EntityValue(
   val field: String,
-  val value: String,
+  val value: Any,
 ) {
   override fun toString(): String = "$field = $value"
 }

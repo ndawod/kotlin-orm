@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+5.3.5 (September 20, 2024)
+    Adjust class definition and add new method `orderBy(String, String, Boolean`.
+
 5.3.4 (September 20, 2024)
     Fix lint issues.
 
