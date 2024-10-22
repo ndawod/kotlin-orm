@@ -3,8 +3,10 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
-5.4.0 (October 22, 2024)
+5.4.1 (October 22, 2024)
     Add two methods to enable/disable foreign key checks, remove `getCatalogName` getter.
+
+5.4.0 (DELETED)
 
 5.3.5 (September 20, 2024)
     Adjust class definition and add new method `orderBy(String, String, Boolean`.

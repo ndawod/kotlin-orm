@@ -287,11 +287,15 @@ open class MySQLDatabase(
       connectionSource: ConnectionSource,
       flag: Boolean,
     ) {
-      connectionSource.getReadWriteConnection("").use { databaseConnection ->
+      val databaseConnection = connectionSource.getReadWriteConnection("")
+
+      try {
         databaseConnection.executeStatement(
           "SET FOREIGN_KEY_CHECKS=${if (flag) 1 else 0}",
           DatabaseConnection.DEFAULT_RESULT_FLAGS,
         )
+      } finally {
+        connectionSource.releaseConnection(databaseConnection)
       }
     }
   }
