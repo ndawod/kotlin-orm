@@ -110,12 +110,12 @@ abstract class BaseDatabase(
   /**
    * Enables foreign key checks.
    */
-  abstract fun enableForeignKeyChecks(connectionSource: ConnectionSource)
+  abstract fun enableForeignKeyChecks()
 
   /**
    * Disables foreign key checks.
    */
-  abstract fun disableForeignKeyChecks(connectionSource: ConnectionSource)
+  abstract fun disableForeignKeyChecks()
 
   override fun equals(other: Any?): Boolean = other is BaseDatabase &&
     other.config == config &&

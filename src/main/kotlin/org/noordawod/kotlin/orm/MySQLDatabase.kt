@@ -149,24 +149,12 @@ open class MySQLDatabase(
     throw java.sql.SQLNonTransientConnectionException(errorMessage, error)
   }
 
-  override fun enableForeignKeyChecks(connectionSource: ConnectionSource) {
+  override fun enableForeignKeyChecks() {
     setForeignKeyChecks(connectionSource, true)
   }
 
-  override fun disableForeignKeyChecks(connectionSource: ConnectionSource) {
+  override fun disableForeignKeyChecks() {
     setForeignKeyChecks(connectionSource, false)
-  }
-
-  private fun setForeignKeyChecks(
-    connectionSource: ConnectionSource,
-    flag: Boolean,
-  ) {
-    connectionSource.getReadWriteConnection("").use { databaseConnection ->
-      databaseConnection.executeStatement(
-        "SET FOREIGN_KEY_CHECKS=${if (flag) 1 else 0}",
-        DatabaseConnection.DEFAULT_RESULT_FLAGS,
-      )
-    }
   }
 
   /**
@@ -269,6 +257,42 @@ open class MySQLDatabase(
         .setQueryParameters(eventualParams)
         .build()
         .toString()
+    }
+
+    /**
+     * Disables foreign key checks.
+     *
+     * @param connectionSource the database connection source to use
+     */
+    fun enableForeignKeyChecks(connectionSource: ConnectionSource) {
+      setForeignKeyChecks(connectionSource, true)
+    }
+
+    /**
+     * Enables foreign key checks.
+     *
+     * @param connectionSource the database connection source to use
+     */
+    fun disableForeignKeyChecks(connectionSource: ConnectionSource) {
+      setForeignKeyChecks(connectionSource, false)
+    }
+
+    /**
+     * Changes foreign key checks state.
+     *
+     * @param connectionSource the database connection source to use
+     * @param flag whether to enable checks (true) or not (false)
+     */
+    fun setForeignKeyChecks(
+      connectionSource: ConnectionSource,
+      flag: Boolean,
+    ) {
+      connectionSource.getReadWriteConnection("").use { databaseConnection ->
+        databaseConnection.executeStatement(
+          "SET FOREIGN_KEY_CHECKS=${if (flag) 1 else 0}",
+          DatabaseConnection.DEFAULT_RESULT_FLAGS,
+        )
+      }
     }
   }
 }

@@ -296,21 +296,6 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
     return results
   }
 
-  /**
-   * Enables foreign key checks.
-   */
-  fun enableForeignKeyChecks() {
-    databaseType
-    queryRaw("SET FOREIGN_KEY_CHECKS=1")
-  }
-
-  /**
-   * Disables foreign key checks.
-   */
-  fun disableForeignKeyChecks() {
-    queryRaw("SET FOREIGN_KEY_CHECKS=0")
-  }
-
   @Suppress("SpreadOperator")
   private fun performOperation(
     builder: StringBuilder,
