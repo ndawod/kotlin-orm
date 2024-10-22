@@ -107,6 +107,16 @@ abstract class BaseDatabase(
   @Throws(java.sql.SQLException::class)
   abstract fun initializeConnectionSource(): ConnectionSource
 
+  /**
+   * Enables foreign key checks.
+   */
+  abstract fun enableForeignKeyChecks(connectionSource: ConnectionSource)
+
+  /**
+   * Disables foreign key checks.
+   */
+  abstract fun disableForeignKeyChecks(connectionSource: ConnectionSource)
+
   override fun equals(other: Any?): Boolean = other is BaseDatabase &&
     other.config == config &&
     other.driver == driver &&

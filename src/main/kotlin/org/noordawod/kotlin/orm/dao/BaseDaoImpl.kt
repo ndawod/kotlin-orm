@@ -40,13 +40,6 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
 ) : com.j256.ormlite.dao.BaseDaoImpl<T, ID>(connection, dataClass),
   Dao<T, ID> {
   /**
-   * Returns the database name this DAO is currently is attached to.
-   */
-  val catalogName: String?
-    @Throws(java.sql.SQLException::class)
-    get() = getCatalogName(this)
-
-  /**
    * Queries the database for distinct records having the specified ID equal to the
    * specified field.
    */
@@ -303,6 +296,21 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
     return results
   }
 
+  /**
+   * Enables foreign key checks.
+   */
+  fun enableForeignKeyChecks() {
+    databaseType
+    queryRaw("SET FOREIGN_KEY_CHECKS=1")
+  }
+
+  /**
+   * Disables foreign key checks.
+   */
+  fun disableForeignKeyChecks() {
+    queryRaw("SET FOREIGN_KEY_CHECKS=0")
+  }
+
   @Suppress("SpreadOperator")
   private fun performOperation(
     builder: StringBuilder,
@@ -318,20 +326,5 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
     }
     val queryString = builder.toString()
     if (null == args) executeRaw(queryString) else executeRaw(queryString, *args)
-  }
-
-  /**
-   * Static functions, constants and other values.
-   */
-  companion object {
-    /**
-     * Returns the catalog (database) name the specified DAO is currently attached to.
-     */
-    @Throws(java.sql.SQLException::class)
-    fun getCatalogName(connection: com.j256.ormlite.dao.BaseDaoImpl<*, *>): String? {
-      val values = connection.queryRaw("SELECT DATABASE()")?.firstResult
-
-      return if (null != values && 1 == values.size) values[0] else null
-    }
   }
 }

@@ -32,6 +32,7 @@ package org.noordawod.kotlin.orm
 import com.j256.ormlite.jdbc.JdbcPooledConnectionSource
 import com.j256.ormlite.jdbc.db.MysqlDatabaseType
 import com.j256.ormlite.support.ConnectionSource
+import com.j256.ormlite.support.DatabaseConnection
 import net.moznion.uribuildertiny.URIBuilderTiny
 import org.noordawod.kotlin.core.extension.mutableMapWith
 import org.noordawod.kotlin.orm.config.DatabaseConfiguration
@@ -146,6 +147,26 @@ open class MySQLDatabase(
     val errorMessage = "Unable to connect to database after $retriesDebug: $uri"
 
     throw java.sql.SQLNonTransientConnectionException(errorMessage, error)
+  }
+
+  override fun enableForeignKeyChecks(connectionSource: ConnectionSource) {
+    setForeignKeyChecks(connectionSource, true)
+  }
+
+  override fun disableForeignKeyChecks(connectionSource: ConnectionSource) {
+    setForeignKeyChecks(connectionSource, false)
+  }
+
+  private fun setForeignKeyChecks(
+    connectionSource: ConnectionSource,
+    flag: Boolean,
+  ) {
+    connectionSource.getReadWriteConnection("").use { databaseConnection ->
+      databaseConnection.executeStatement(
+        "SET FOREIGN_KEY_CHECKS=${if (flag) 1 else 0}",
+        DatabaseConnection.DEFAULT_RESULT_FLAGS,
+      )
+    }
   }
 
   /**

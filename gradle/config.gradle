@@ -28,11 +28,11 @@ ext.versions = [
     plugin_detekt: '1.23.7',
     plugin_ktlint: '12.1.1',
     ktlint: '0.51.0-FINAL',
-    kotlin: '2.0.20', // https://kotlinlang.org/docs/releases.html#release-details
+    kotlin: '2.0.21', // https://kotlinlang.org/docs/releases.html#release-details
     kotlin_coroutines: '1.9.0', // https://github.com/Kotlin/kotlinx.coroutines/releases
     kotlin_serialization: '1.7.3', // https://github.com/Kotlin/kotlinx.serialization/releases
     uribuilder_tiny: '2.7.1',
-    ndawod_kotlin_core: '4.3.4',
+    ndawod_kotlin_core: '4.3.5',
     ormlite: '6.1',
     jcolor: '5.5.1'
 ]
