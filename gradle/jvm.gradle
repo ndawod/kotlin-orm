@@ -55,6 +55,8 @@ project.afterEvaluate {
     }
 }
 
+// The JAXB APIs are considered to be Java EE APIs and therefore are no longer contained
+// on the default classpath in Java SE 9. In Java 11, they are completely removed from the JDK.
 dependencies {
     implementation 'javax.xml.bind:jaxb-api:2.3.0'
     implementation 'com.sun.xml.bind:jaxb-core:2.3.0'

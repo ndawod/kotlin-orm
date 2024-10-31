@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+5.4.2 (October 31, 2024)
+    Bump up dependencies versions.
+
 5.4.1 (October 22, 2024)
     Add two methods to enable/disable foreign key checks, remove `getCatalogName` getter.
 
