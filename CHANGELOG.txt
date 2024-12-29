@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+5.6.1 (December 29, 2024)
+    Bump up dependencies versions.
+
 5.6.0 (December 27, 2024)
     Bump up Kotlin version to `2.1.0`, and Gradle version to `7.6.4`.
 
