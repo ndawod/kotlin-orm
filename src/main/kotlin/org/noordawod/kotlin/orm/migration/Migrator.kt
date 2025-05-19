@@ -174,11 +174,14 @@ internal class Migrator(
 
       println()
 
-      val migrationStart = java.util.Date()
-      val migrationState = MigrationState()
-
       // Each migration runs in its own transaction so in case it fails, we can roll back.
       val savePoint = databaseConnection.setSavePoint("DUMP_MIGRATION_$index")
+        ?: throw java.sql.SQLException(
+          "Transaction for dump migration plan #$index cannot be secured…",
+        )
+
+      val migrationStart = java.util.Date()
+      val migrationState = MigrationState()
 
       executedCommands.clear()
 
@@ -202,11 +205,10 @@ internal class Migrator(
       ) {
         error.capture(
           migrationState = migrationState,
-          message = " GENERIC ERROR!",
+          message = " UNKNOWN ERROR!",
         )
       } finally {
-        savePoint?.handleSavePoint(migrationState)
-
+        savePoint.handleSavePoint(migrationState)
         migrationStart.printFooter()
       }
 
@@ -263,11 +265,14 @@ internal class Migrator(
         println("- Running migrations:")
       }
 
+      // Each migration runs in its own transaction so in case it fails, we can roll back.
+      val savePoint = databaseConnection.setSavePoint("VERSIONED_MIGRATION_V$nextVersion")
+        ?: throw java.sql.SQLException(
+          "Transaction for migration plan V$nextVersion cannot be locked…",
+        )
+
       val migrationStart = java.util.Date()
       val migrationState = MigrationState()
-
-      // Each migration runs in its own transaction so in case it fails, we can roll back.
-      val savePoint = databaseConnection.setSavePoint("MIGRATION_V$nextVersion")
 
       executedCommands.clear()
 
@@ -303,11 +308,10 @@ internal class Migrator(
       ) {
         error.capture(
           migrationState = migrationState,
-          message = " GENERIC ERROR!",
+          message = " UNKNOWN ERROR!",
         )
       } finally {
-        savePoint?.handleSavePoint(migrationState)
-
+        savePoint.handleSavePoint(migrationState)
         migrationStart.printFooter()
       }
 
@@ -378,13 +382,15 @@ internal class Migrator(
   }
 
   private fun MigrationState.possiblyHandleError() {
-    val errorLocked = error ?: return
+    if (errors.isEmpty()) {
+      return
+    }
 
     when {
       !preRan ->
         println(
           colorize(
-            "Unexpected error while running pre-migration code.",
+            "Unexpected errors while running pre-migration code.",
             BRIGHT_RED_TEXT,
           ),
         )
@@ -392,7 +398,7 @@ internal class Migrator(
       !ran -> {
         println(
           colorize(
-            "Unexpected error while running migration.",
+            "Unexpected errors while running migration.",
             BRIGHT_RED_TEXT,
           ),
         )
@@ -417,7 +423,7 @@ internal class Migrator(
       !postRan ->
         println(
           colorize(
-            "Unexpected error while running post-migration code.",
+            "Unexpected errors while running post-migration code.",
             BRIGHT_RED_TEXT,
           ),
         )
@@ -425,7 +431,7 @@ internal class Migrator(
       else ->
         println(
           colorize(
-            "Unexpected error while unlocking migrations table.",
+            "Unexpected errors while unlocking migrations table.",
             BRIGHT_RED_TEXT,
           ),
         )
@@ -433,33 +439,32 @@ internal class Migrator(
 
     println()
 
-    throw errorLocked
+    for (error in errors) {
+      error.printStackTrace()
+    }
+
+    throw java.sql.SQLException("Unexpected error while running migrations.")
   }
 
   private fun Throwable.capture(
     migrationState: MigrationState,
     message: String,
   ) {
-    migrationState.error = this
+    migrationState.errors.add(this)
     println(colorize(message, BRIGHT_RED_TEXT))
   }
 
   private fun java.sql.Savepoint.handleSavePoint(migrationState: MigrationState) {
-    val shouldCommit = null == migrationState.error
-    val operationHandler: (java.sql.Savepoint) -> Unit
-    val operation: String
-
-    if (shouldCommit) {
-      operationHandler = databaseConnection::commit
-      operation = "Committing"
-    } else {
-      operationHandler = databaseConnection::releaseSavePoint
-      operation = "Rolling back"
-    }
+    val shouldCommit = migrationState.errors.isEmpty()
+    val operation: String = if (shouldCommit) "Committing" else "Rolling back"
 
     try {
       print("    - $operation…")
-      operationHandler(this)
+      if (shouldCommit) {
+        databaseConnection.commit(this)
+      } else {
+        databaseConnection.releaseSavePoint(this)
+      }
       println(" Done.")
     } catch (ignored: java.sql.SQLException) {
       println()

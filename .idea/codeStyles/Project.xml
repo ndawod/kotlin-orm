@@ -6,6 +6,7 @@
       <option name="USE_FQ_CLASS_NAMES" value="true" />
       <option name="IMPORT_LAYOUT_TABLE">
         <value>
+          <package name="" withSubpackages="true" static="false" module="true" />
           <package name="" withSubpackages="true" static="false" />
         </value>
       </option>
