@@ -265,6 +265,8 @@ internal class Migrator(
         println("- Running migrations:")
       }
 
+      migration.lock()
+
       // Each migration runs in its own transaction so in case it fails, we can roll back.
       val savePoint = databaseConnection.setSavePoint("VERSIONED_MIGRATION_V$nextVersion")
         ?: throw java.sql.SQLException(
@@ -284,8 +286,6 @@ internal class Migrator(
             colorize(migration.description, BOLD_TEXT) +
             ":",
         )
-
-        migration.lock()
 
         migration.performPre()
         migrationState.preRan = true
