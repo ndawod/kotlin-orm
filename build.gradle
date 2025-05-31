@@ -22,7 +22,7 @@
  */
 
 group = 'org.noordawod.kotlin.orm'
-version = '5.6.7'
+version = '5.6.8'
 description = 'Defines reusable contracts for OrmLite that requires entities and models to exist.'
 buildDir = 'build'
 

@@ -25,6 +25,7 @@
 
 package org.noordawod.kotlin.orm.query
 
+import kotlin.collections.forEach
 import org.noordawod.kotlin.core.extension.mutableListWith
 
 /**
@@ -213,6 +214,27 @@ class RawQueryBuilder(
   ): RawQueryBuilder = leftJoin(table to on)
 
   /**
+   * Adds a LEFT JOIN to this query between a few tables.
+   *
+   * @param table the first table
+   * @param on the other tables to join
+   * @param op the logical operation between all other tables, defaults to [AND][LogicalOp.AND]
+   */
+  fun leftJoin(
+    table: JoinSpecification,
+    on: Iterable<JoinPair>,
+    op: LogicalOp = LogicalOp.AND,
+  ): RawQueryBuilder {
+    joinInternal(
+      type = "LEFT ",
+      on = table to on,
+      op = op,
+    )
+
+    return this
+  }
+
+  /**
    * Adds a LEFT JOIN to this query between two tables.
    *
    * @param on tables to join
@@ -225,7 +247,10 @@ class RawQueryBuilder(
    * @param on collection of join details
    */
   fun leftJoin(on: Collection<JoinPair>): RawQueryBuilder {
-    joinInternal("LEFT ", on)
+    joinInternal(
+      type = "LEFT ",
+      on = on,
+    )
 
     return this
   }
@@ -373,8 +398,6 @@ class RawQueryBuilder(
 
   /**
    * Escapes an entity using the defined [field separator][fieldSeparator].
-   *
-   * @param entity the entity to escape
    */
   fun escape(entity: String) = if ("*" == entity) {
     entity
@@ -387,12 +410,32 @@ class RawQueryBuilder(
     on: Collection<JoinPair>,
   ) {
     on.forEach { join ->
-      joins.add(
-        "${type}JOIN ${join.first.table.toString(::escape)} " +
-          "ON ${join.first.prefix(::escape)}=${join.second.prefix(::escape)}",
-      )
+      joins.add("${type}JOIN ${join.first.table.toString(::escape)} ON ${join.stringify()}")
     }
   }
+
+  /**
+   * Adds a LEFT JOIN to this query between a few tables.
+   */
+  private fun joinInternal(
+    @Suppress("SameParameterValue") type: String,
+    on: JoinPairs,
+    op: LogicalOp,
+  ) {
+    val buffer = StringBuilder(MINIMUM_BLOCK_SIZE)
+    var operator = "ON"
+
+    buffer.append("${type}JOIN ${on.first.table.toString(::escape)}")
+
+    on.second.forEach { table ->
+      buffer.append(" $operator ${table.stringify()}")
+      operator = "$op"
+    }
+
+    joins.add("$buffer")
+  }
+
+  private fun JoinPair.stringify(): String = "${first.prefix(::escape)}=${second.prefix(::escape)}"
 
   /**
    * Static functions, constants and other values.

@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+5.6.8 (May 31, 2025)
+    Add a new method to allow joining multiple tables.
+
 5.6.7 (May 19, 2025)
     Make sure that rolling back doesn't remove the entry in migration table.
 

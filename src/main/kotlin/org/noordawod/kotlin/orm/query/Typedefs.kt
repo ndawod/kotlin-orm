@@ -36,6 +36,11 @@ typealias QueryCommands = ArrayList<String>
 typealias JoinPair = Pair<JoinSpecification, JoinSpecification>
 
 /**
+ * A signature of a [Pair] of a base [JoinSpecification] and other [JoinPair]s.
+ */
+typealias JoinPairs = Pair<JoinSpecification, Iterable<JoinPair>>
+
+/**
  * A signature of a function that accepts a String and returns a String.
  */
 typealias EscapeCallback = (String) -> String
