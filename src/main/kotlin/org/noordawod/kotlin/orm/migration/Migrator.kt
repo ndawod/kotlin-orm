@@ -36,7 +36,7 @@ import com.diogonunes.jcolor.Ansi.colorize
 import com.diogonunes.jcolor.Attribute
 import com.j256.ormlite.stmt.StatementBuilder
 import com.j256.ormlite.support.DatabaseConnection
-import org.noordawod.kotlin.core.Constants
+import org.noordawod.kotlin.core.MEDIUM_BLOCK_SIZE
 import org.noordawod.kotlin.core.extension.secondsSinceEpoch
 import org.noordawod.kotlin.core.extension.trimOrNull
 import org.noordawod.kotlin.orm.query.QueryCommands
@@ -96,7 +96,7 @@ internal class Migrator(
   private val escapedFileProperty = escapeProperty(FILE)
   private val escapedCreatedProperty = escapeProperty(CREATED)
   private val asciiCollation = "CHARACTER SET ascii COLLATE ascii_general_ci"
-  private val executedCommands = QueryCommands(Constants.MEDIUM_BLOCK_SIZE)
+  private val executedCommands = QueryCommands(MEDIUM_BLOCK_SIZE)
 
   private val isLocked: Boolean
     get() = try {
@@ -387,13 +387,14 @@ internal class Migrator(
     }
 
     when {
-      !preRan ->
+      !preRan -> {
         println(
           colorize(
             "Unexpected errors while running pre-migration code.",
             BRIGHT_RED_TEXT,
           ),
         )
+      }
 
       !ran -> {
         println(
@@ -420,21 +421,23 @@ internal class Migrator(
         }
       }
 
-      !postRan ->
+      !postRan -> {
         println(
           colorize(
             "Unexpected errors while running post-migration code.",
             BRIGHT_RED_TEXT,
           ),
         )
+      }
 
-      else ->
+      else -> {
         println(
           colorize(
             "Unexpected errors while unlocking migrations table.",
             BRIGHT_RED_TEXT,
           ),
         )
+      }
     }
 
     println()
@@ -576,8 +579,8 @@ internal class Migrator(
 
   @Suppress("LoopWithTooManyJumpStatements")
   private fun Collection<String>.parseCommands(): Collection<String> {
-    val result = ArrayList<String>(Constants.MEDIUM_BLOCK_SIZE)
-    val nextCommand = StringBuilder(Constants.MEDIUM_BLOCK_SIZE)
+    val result = ArrayList<String>(MEDIUM_BLOCK_SIZE)
+    val nextCommand = StringBuilder(MEDIUM_BLOCK_SIZE)
 
     for (command in this) {
       val normalizedCommand = command.trimOrNull() ?: continue
@@ -609,6 +612,7 @@ internal class Migrator(
 
   @Suppress("VariableMinLength")
   private companion object {
+    @Suppress("CanConvertToMultiDollarString")
     const val TABLE_NAME = "\$migration"
     const val ID: String = "migration_id"
     const val DESCRIPTION: String = "migration_description"

@@ -27,7 +27,7 @@ package org.noordawod.kotlin.orm.dao
 
 import com.j256.ormlite.dao.Dao
 import com.j256.ormlite.support.ConnectionSource
-import org.noordawod.kotlin.core.Constants
+import org.noordawod.kotlin.core.DEFAULT_LIST_CAPACITY
 import org.noordawod.kotlin.orm.BaseDatabase
 
 /**
@@ -283,7 +283,7 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
     entities: Collection<T>,
     tries: Int = BaseDatabase.DEFAULT_INSERT_TRIES,
   ): List<T> {
-    val results = ArrayList<T>(Constants.DEFAULT_LIST_CAPACITY)
+    val results = ArrayList<T>(DEFAULT_LIST_CAPACITY)
     for (entry in entities) {
       results.add(
         insert(

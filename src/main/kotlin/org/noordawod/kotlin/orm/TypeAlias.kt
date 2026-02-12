@@ -41,3 +41,8 @@ typealias EscapePropertyHandler = (property: String) -> String
  * as a query value, for example: to insert or update rows, or for field comparison.
  */
 typealias EscapeValueHandler = (value: String) -> String
+
+/**
+ * An alias for a Map of String to String entries.
+ */
+typealias FieldValues = Map<String, String>

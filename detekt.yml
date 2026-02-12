@@ -677,8 +677,16 @@ style:
     active: false
   BracesOnWhenStatements:
     active: true
-    singleLine: "never"
-    multiLine: "necessary"
+    singleLine: "consistent"
+    multiLine: "consistent"
+    excludes:
+      - "**/gen/**"
+      - "**/.gradle/**"
+      - "**/test/**"
+      - "**/androidTest/**"
+      - "**/*.Test.kt"
+      - "**/*.Spec.kt"
+      - "**/*.Spek.kt"
   PreferToOverPairSyntax:
     active: true
   ProtectedMemberInFinalClass:

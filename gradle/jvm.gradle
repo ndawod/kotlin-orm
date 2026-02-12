@@ -39,6 +39,9 @@ java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of("${versions.jdk}".toInteger()))
     }
+    sourceCompatibility = versions.jdk
+    targetCompatibility = versions.jdk
+
     withJavadocJar()
     withSourcesJar()
 }

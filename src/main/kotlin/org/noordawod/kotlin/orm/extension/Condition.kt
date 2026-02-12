@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2022 Noor Dawod. All rights reserved.
+ * Copyright 2026 Noor Dawod. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -21,18 +21,50 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-plugins {
-    id 'org.gradle.toolchains.foojay-resolver' version '1.0.0'
-}
+@file:Suppress("unused")
 
-toolchainManagement {
-    jvm {
-        javaRepositories {
-            repository('foojay') {
-                resolverClass = org.gradle.toolchains.foojay.FoojayToolchainResolver
-            }
-        }
-    }
-}
+package org.noordawod.kotlin.orm.extension
 
-rootProject.name = 'kotlin-orm'
+import org.noordawod.kotlin.core.util.ComparisonOp
+import org.noordawod.kotlin.orm.query.Condition
+
+/**
+ * Returns a [Condition] based on a numerical value for this [ComparisonOp].
+ *
+ * @param field the target field for comparison
+ * @param value the numeric value for comparison
+ */
+fun ComparisonOp?.toCondition(
+  field: String,
+  value: Number,
+): Condition = when (this) {
+  ComparisonOp.EQUAL, null -> Condition.Equals(
+    field = field,
+    value = value,
+  )
+
+  ComparisonOp.NOT_EQUAL -> Condition.NotEquals(
+    field = field,
+    value = value,
+  )
+
+  ComparisonOp.LESS_THAN -> Condition.LessThan(
+    field = field,
+    value = value,
+  )
+
+  ComparisonOp.LESS_THAN_OR_EQUAL -> Condition.LessThanOrEqual(
+    field = field,
+    value = value,
+  )
+
+  ComparisonOp.GREATER_THAN -> Condition.GreaterThan(
+    field = field,
+    value = value,
+  )
+
+  ComparisonOp.GREATER_THAN_OR_EQUAL -> Condition.GreaterThanOrEqual(
+    field = field,
+    value = value,
+  )
+}

@@ -27,7 +27,7 @@ package org.noordawod.kotlin.orm.dao
 
 import com.j256.ormlite.stmt.PreparedQuery
 import com.j256.ormlite.support.ConnectionSource
-import org.noordawod.kotlin.core.Constants
+import org.noordawod.kotlin.core.DEFAULT_LIST_CAPACITY
 import org.noordawod.kotlin.core.extension.mutableMapWith
 import org.noordawod.kotlin.orm.entity.BaseKeyEntity
 
@@ -79,7 +79,7 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
    */
   @Throws(java.sql.SQLException::class)
   open fun insertIfNew(instances: Collection<T>): List<T>? {
-    val results = ArrayList<T>(Constants.DEFAULT_LIST_CAPACITY)
+    val results = ArrayList<T>(DEFAULT_LIST_CAPACITY)
     for (instance in instances) {
       if (!exists(instance.id)) {
         results.add(insert(instance))
