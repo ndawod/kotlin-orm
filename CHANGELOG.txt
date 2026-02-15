@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+5.7.3 (February 15, 2026)
+    Bump up dependencies versions.
+
 5.7.2 (February 14, 2026)
     Bump up dependencies versions.
 
