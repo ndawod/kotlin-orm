@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2022 Noor Dawod. All rights reserved.
+ * Copyright 2026 Noor Dawod. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -21,18 +21,18 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-ext.encoding = 'UTF-8'
-ext.versions = [
-    jdk: JavaVersion.VERSION_17,
-    plugin_versions_outdated: '0.53.0',
-    plugin_detekt: '1.23.8',
-    plugin_ktlint: '14.2.0',
-    ktlint: '0.51.0-FINAL',
-    kotlin: '2.3.20', // https://kotlinlang.org/docs/releases.html#release-details
-    kotlin_coroutines: '1.10.2', // https://github.com/Kotlin/kotlinx.coroutines/releases
-    kotlin_serialization: '1.10.0', // https://github.com/Kotlin/kotlinx.serialization/releases
-    uribuilder_tiny: '2.7.1',
-    ndawod_kotlin_core: '4.7.2',
-    ormlite: '6.1',
-    jcolor: '5.5.1'
-]
+@file:Suppress("unused")
+
+package org.noordawod.kotlin.orm.extension
+
+import com.j256.ormlite.dao.GenericRawResults
+
+/**
+ * Iterates over the results inside this [GenericRawResults] without returning a value.
+ */
+fun <T> GenericRawResults<T>.iterate() {
+  val iterator = iterator()
+  while (iterator.hasNext()) {
+    iterator.next()
+  }
+}
