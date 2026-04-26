@@ -55,8 +55,14 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
     entity: T?,
     force: Boolean = false,
   ): T? = when {
-    null == entity -> null
-    !force && entity.populated -> entity
+    null == entity -> {
+      null
+    }
+
+    !force && entity.populated -> {
+      entity
+    }
+
     else -> {
       val entityUpdated = queryFor(entity)
       entityUpdated?.populated = true
