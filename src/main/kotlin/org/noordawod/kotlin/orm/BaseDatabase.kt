@@ -56,7 +56,7 @@ abstract class BaseDatabase(
   val maxFree: Int = DEFAULT_MAX_FREE,
   val healthCheckMillis: Long = DEFAULT_HEALTH_CHECK_INTERVAL,
 ) {
-  private val connectionSourceLock = Object()
+  private val connectionSourceLock = Any()
   private var connectionSourceInternal: ConnectionSource? = null
 
   /**
