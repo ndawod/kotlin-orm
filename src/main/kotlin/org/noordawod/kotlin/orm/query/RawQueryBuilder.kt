@@ -25,7 +25,6 @@
 
 package org.noordawod.kotlin.orm.query
 
-import kotlin.collections.forEach
 import org.noordawod.kotlin.core.extension.mutableListWith
 
 /**
@@ -69,7 +68,7 @@ class RawQueryBuilder(
   private val conditions = LinkedHashSet<Condition>(initialCapacity)
 
   private var limitInternal: Int = -1
-  private var offsetInternal: Int = -1
+  private var offsetInternal: Long = -1L
   private var groupByInternal: String? = null
   private var orderByValuesInternal = mutableListWith<Pair<EntityValue, Boolean>>(initialCapacity)
   private var orderByInternal: String? = null
@@ -146,7 +145,7 @@ class RawQueryBuilder(
 
     if (0 < limitInternal) {
       result.append(" LIMIT $limitInternal")
-      if (0 < offsetInternal) {
+      if (0L < offsetInternal) {
         result.append(" OFFSET $offsetInternal")
       }
     }
@@ -274,10 +273,37 @@ class RawQueryBuilder(
    */
   fun limit(
     capacity: Int,
-    offset: Int = 0,
+    offset: Long = 0L,
   ): RawQueryBuilder {
     limitInternal = if (0 < capacity) capacity else -1
-    offsetInternal = if (-1 < offset) offset else -1
+
+    return offset(offset)
+  }
+
+  /**
+   * Imposes a limit on how many rows should be returned by using a page number.
+   *
+   * Note: Minimum page number is 1.
+   *
+   * @param capacity maximum number of rows to return
+   * @param page the page number at which to return the rows
+   */
+  fun page(
+    capacity: Int,
+    page: Long = 1L,
+  ): RawQueryBuilder {
+    limitInternal = if (0 < capacity) capacity else -1
+
+    return offset(if (0L < page) capacity.times(page - 1L) else 0L)
+  }
+
+  /**
+   * Imposes a limit on how many rows should be returned.
+   *
+   * @param offset position at which to return the rows
+   */
+  fun offset(offset: Long = 0L): RawQueryBuilder {
+    offsetInternal = if (-1L < offset) offset else -1L
 
     return this
   }
