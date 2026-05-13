@@ -54,6 +54,7 @@ abstract class HashValueKeyDao<T : HashValueKeyEntity> protected constructor(
   ): T {
     var thisTry = tries
     var lastError: java.sql.SQLException?
+
     do {
       try {
         entity.id = randomId(entity)
@@ -66,9 +67,7 @@ abstract class HashValueKeyDao<T : HashValueKeyEntity> protected constructor(
       }
     } while (0 < thisTry)
 
-    throw lastError ?: java.sql.SQLException(
-      "Unable to insert a new record of type ${entity::javaClass.name} to database.",
-    )
+    throw lastError
   }
 
   override fun Collection<T>?.toMap(): ByteArrayMap<T>? = if (null == this) {
