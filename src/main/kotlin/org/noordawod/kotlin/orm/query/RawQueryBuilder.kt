@@ -71,8 +71,7 @@ class RawQueryBuilder(
   private var offsetInternal: Long = -1L
   private var groupByInternal: String? = null
   private var orderByValuesInternal = mutableListWith<Pair<EntityValue, Boolean>>(initialCapacity)
-  private var orderByInternal: String? = null
-  private var ascendingInternal: Boolean = true
+  private var orderByInternal = mutableListWith<Pair<String, Boolean>>(initialCapacity)
 
   @Suppress("NestedBlockDepth", "ComplexFunction", "CyclomaticComplexMethod")
   override fun toString(): String {
@@ -119,27 +118,25 @@ class RawQueryBuilder(
     }
 
     val hasOrderByValue = orderByValuesInternal.isNotEmpty()
-    val hasOrderBy = !orderByInternal.isNullOrEmpty()
+    val hasOrderBy = orderByInternal.isNotEmpty()
 
+    @Suppress("AssignedValueIsNeverRead")
     if (hasOrderByValue || hasOrderBy) {
       result.append(" ORDER BY")
-      var orderSeparator = " "
+      var orderSeparator = ""
 
       if (hasOrderByValue) {
-        for (pair in orderByValuesInternal) {
-          result.append(orderSeparator)
-          orderSeparator = ", "
-
-          result.append(pair.first)
-
-          // The second portion of the pair is "showFirst", and contrary to logical thinking,
-          // to show the matches first in the result set, the order should be "DESC".
-          result.append(" ${if (pair.second) "DESC" else "ASC"}")
-        }
+        orderSeparator = result.appendOrderBy(
+          list = orderByValuesInternal,
+          initialSeparator = orderSeparator,
+        )
       }
 
       if (hasOrderBy) {
-        result.append("$orderSeparator$orderByInternal ${if (ascendingInternal) "ASC" else "DESC"}")
+        orderSeparator = result.appendOrderBy(
+          list = orderByInternal,
+          initialSeparator = orderSeparator,
+        )
       }
     }
 
@@ -347,6 +344,8 @@ class RawQueryBuilder(
   /**
    * Orders the rows using a raw clause.
    *
+   * Call multiple times to order by many clauses.
+   *
    * @param clause the raw order by clause
    * @param ascending whether to order in an ascending (default) or a descending order
    */
@@ -354,8 +353,7 @@ class RawQueryBuilder(
     clause: String,
     ascending: Boolean = true,
   ): RawQueryBuilder {
-    orderByInternal = clause
-    ascendingInternal = ascending
+    orderByInternal.add(clause to ascending)
 
     return this
   }
@@ -440,9 +438,6 @@ class RawQueryBuilder(
     }
   }
 
-  /**
-   * Adds a LEFT JOIN to this query between a few tables.
-   */
   private fun joinInternal(
     @Suppress("SameParameterValue") type: String,
     on: JoinPairs,
@@ -462,6 +457,20 @@ class RawQueryBuilder(
   }
 
   private fun JoinPair.stringify(): String = "${first.prefix(::escape)}=${second.prefix(::escape)}"
+
+  private fun StringBuilder.appendOrderBy(
+    list: Iterable<Pair<*, Boolean>>,
+    initialSeparator: String,
+  ): String {
+    var orderSeparator = initialSeparator
+
+    for (pair in list) {
+      append("$orderSeparator ${pair.first} ${if (pair.second) "DESC" else "ASC"}")
+      orderSeparator = ","
+    }
+
+    return orderSeparator
+  }
 
   /**
    * Static functions, constants and other values.

@@ -26,6 +26,7 @@
 package org.noordawod.kotlin.orm.extension
 
 import com.j256.ormlite.dao.GenericRawResults
+import com.j256.ormlite.misc.IOUtils
 
 /**
  * Iterates over the results inside this [GenericRawResults] without returning a value.
@@ -35,4 +36,13 @@ fun <T> GenericRawResults<T>.iterate() {
   while (iterator.hasNext()) {
     iterator.next()
   }
+}
+
+/**
+ * Iterates over the results inside this [GenericRawResults] without returning a value,
+ * and closes this results instance.
+ */
+fun <T> GenericRawResults<T>.iterateAndClose() {
+  iterate()
+  IOUtils.closeThrowSqlException(this, "raw results iterator")
 }

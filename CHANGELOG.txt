@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+5.9.1 (June 8, 2026)
+    Allow multiple clauses for `ORDER BY` statement.
+
 5.9.0 (May 13, 2026)
     Assume `offset` and `page` are Long values, not Int.
 
