@@ -34,5 +34,5 @@ ext.versions = [
     uribuilder_tiny: '2.7.1',
     ndawod_kotlin_core: '4.9.1',
     ormlite: '6.1',
-    jcolor: '6.0.1'
+    jcolor: '5.5.1', // DO NOT BUMP BECAUSE NEWER USE JDK 25!!!
 ]
