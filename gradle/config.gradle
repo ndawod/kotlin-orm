@@ -32,7 +32,7 @@ ext.versions = [
     kotlin_coroutines: '1.11.0', // https://github.com/Kotlin/kotlinx.coroutines/releases
     kotlin_serialization: '1.12.0', // https://github.com/Kotlin/kotlinx.serialization/releases
     uribuilder_tiny: '2.7.1',
-    ndawod_kotlin_core: '4.10.0',
+    ndawod_kotlin_core: '4.10.1',
     ormlite: '6.1',
-    jcolor: '5.5.1', // DO NOT BUMP BECAUSE NEWER USE JDK 25!!!
+    jcolor: '5.5.1', // DO NOT BUMP BECAUSE 6.* USES JDK 25!!!
 ]

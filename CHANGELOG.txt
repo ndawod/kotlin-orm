@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+5.11.1 (November 2, 2026)
+    Fix a bug when preparing javadoc .jar for publication.
+
 5.11.0 (November 2, 2026)
     Bump up versions of dependencies, Gradle, and Kotlin language.
 

@@ -46,14 +46,13 @@ java {
     withSourcesJar()
 }
 
-project.afterEvaluate {
-    publishing {
-        publications {
+// DO NOT wrap the following in project.afterEvaluate!
+publishing {
+    publications {
+        // noinspection GroovyAssignabilityCheck
+        maven(MavenPublication) {
             // noinspection GroovyAssignabilityCheck
-            maven(MavenPublication) {
-                // noinspection GroovyAssignabilityCheck
-                from components.java
-            }
+            from components.java
         }
     }
 }
