@@ -30,9 +30,7 @@ package org.noordawod.kotlin.orm.query
  *
  * @param value the textual representation of the mode
  */
-enum class MatchAgainstMode(
-  private val value: String,
-) {
+enum class MatchAgainstMode(private val value: String) {
   /**
    * Searches for a value in a natural language mode.
    *

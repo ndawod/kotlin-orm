@@ -73,7 +73,12 @@ class RawQueryBuilder(
   private var orderByValuesInternal = mutableListWith<Pair<EntityValue, Boolean>>(initialCapacity)
   private var orderByInternal = mutableListWith<Pair<String, Boolean>>(initialCapacity)
 
-  @Suppress("NestedBlockDepth", "ComplexFunction", "CyclomaticComplexMethod")
+  @Suppress(
+    "NestedBlockDepth",
+    "ComplexFunction",
+    "CyclomaticComplexMethod",
+    "LongMethod",
+  )
   override fun toString(): String {
     val result = StringBuilder(MINIMUM_BLOCK_SIZE)
 

@@ -28,10 +28,9 @@ package org.noordawod.kotlin.orm.query.impl
 import com.j256.ormlite.support.CompiledStatement
 import com.j256.ormlite.support.DatabaseResults
 import org.noordawod.kotlin.core.extension.mutableMapWith
+import org.noordawod.kotlin.orm.query.QueryResults
 
-internal class QueryResultsImpl(
-  private val statement: CompiledStatement,
-) : org.noordawod.kotlin.orm.query.QueryResults {
+internal class QueryResultsImpl(private val statement: CompiledStatement) : QueryResults {
   @Suppress("IdentifierGrammar")
   private val columnsMap: Map<String, Int>
   private val results: DatabaseResults

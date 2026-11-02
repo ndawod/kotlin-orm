@@ -30,9 +30,7 @@ package org.noordawod.kotlin.orm.query
  *
  * @param value the string representation of the logical operator
  */
-enum class LogicalOp(
-  private val value: String,
-) {
+enum class LogicalOp(private val value: String) {
   /**
    * Represents the AND operator.
    */

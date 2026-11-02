@@ -77,9 +77,7 @@ sealed class Condition private constructor(
    *
    * @param field the field name
    */
-  class True(
-    val field: String,
-  ) : Condition() {
+  class True(val field: String) : Condition() {
     override val isValid: Boolean = field.isNotBlank()
 
     override fun stringify(): String = "$field = true"
@@ -90,9 +88,7 @@ sealed class Condition private constructor(
    *
    * @param field the field name
    */
-  class False(
-    val field: String,
-  ) : Condition() {
+  class False(val field: String) : Condition() {
     override val isValid: Boolean = field.isNotBlank()
 
     override fun stringify(): String = "$field = false"
@@ -183,9 +179,7 @@ sealed class Condition private constructor(
    *
    * @param field the field name
    */
-  class IsNull(
-    val field: String,
-  ) : Condition() {
+  class IsNull(val field: String) : Condition() {
     override val isValid: Boolean = field.isNotBlank()
 
     override fun stringify(): String = "$field IS NULL"
@@ -196,9 +190,7 @@ sealed class Condition private constructor(
    *
    * @param field the field name
    */
-  class IsNotNull(
-    val field: String,
-  ) : Condition() {
+  class IsNotNull(val field: String) : Condition() {
     override val isValid: Boolean = field.isNotBlank()
 
     override fun stringify(): String = "$field IS NOT NULL"

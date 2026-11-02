@@ -30,9 +30,7 @@ import org.noordawod.kotlin.orm.BaseDatabase
 /**
  * Provides a database migration runner.
  */
-class MigrationRunner(
-  private val database: BaseDatabase,
-) {
+class MigrationRunner(private val database: BaseDatabase) {
   /**
    * Executes a single [migration][Migration.Dump] found in
    * the specified [path][basePath].

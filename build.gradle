@@ -22,11 +22,11 @@
  */
 
 group = 'org.noordawod.kotlin.orm'
-version = '5.10.2'
+version = '5.11.0'
 description = 'Defines reusable contracts for OrmLite that requires entities and models to exist.'
 
 apply plugin: 'kotlinx-serialization'
-apply plugin: 'com.github.ben-manes.versions'
+apply plugin: 'io.github.ben-manes.versions'
 
 repositories {
     mavenCentral()
