@@ -27,12 +27,12 @@ apply plugin: 'java'
 apply plugin: 'java-library'
 apply plugin: 'maven-publish'
 
-javadoc {
-    // noinspection GroovyAssignabilityCheck
-    options {
-        charSet = encoding
-        docEncoding = encoding
-    }
+// The JAXB APIs are considered to be Java EE APIs and therefore are no longer contained
+// on the default classpath in Java SE 9. In Java 11, they are completely removed from the JDK.
+dependencies {
+    implementation 'javax.xml.bind:jaxb-api:2.3.0'
+    implementation 'com.sun.xml.bind:jaxb-core:2.3.0'
+    implementation 'com.sun.xml.bind:jaxb-impl:2.3.0'
 }
 
 java {
@@ -42,8 +42,16 @@ java {
     sourceCompatibility = versions.jdk
     targetCompatibility = versions.jdk
 
-    withJavadocJar()
     withSourcesJar()
+    withJavadocJar()
+}
+
+javadoc {
+    // noinspection GroovyAssignabilityCheck
+    options {
+        charSet = encoding
+        docEncoding = encoding
+    }
 }
 
 // DO NOT wrap the following in project.afterEvaluate!
@@ -57,10 +65,6 @@ publishing {
     }
 }
 
-// The JAXB APIs are considered to be Java EE APIs and therefore are no longer contained
-// on the default classpath in Java SE 9. In Java 11, they are completely removed from the JDK.
-dependencies {
-    implementation 'javax.xml.bind:jaxb-api:2.3.0'
-    implementation 'com.sun.xml.bind:jaxb-core:2.3.0'
-    implementation 'com.sun.xml.bind:jaxb-impl:2.3.0'
+tasks.withType(GenerateModuleMetadata).configureEach {
+    enabled = false
 }
