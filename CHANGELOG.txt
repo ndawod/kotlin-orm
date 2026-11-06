@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+5.11.2 (November 6, 2026)
+    Bump up dependencies versions.
+
 5.11.1 (November 2, 2026)
     Fix a bug when preparing javadoc .jar for publication.
 
