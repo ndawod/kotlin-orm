@@ -3,6 +3,9 @@ Description: Defines reusable contracts for OrmLite that requires entities and m
 
 This documents the changes between versions:
 
+5.13.0 (November 16, 2026)
+    Change the type of row order arguments.
+
 5.12.2 (November 15, 2026)
     Bump up dependencies versions.
 

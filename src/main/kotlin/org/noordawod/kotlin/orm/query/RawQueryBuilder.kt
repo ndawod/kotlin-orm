@@ -70,8 +70,8 @@ class RawQueryBuilder(
   private var limitInternal: Int = -1
   private var offsetInternal: Long = -1L
   private var groupByInternal: String? = null
-  private var orderByValuesInternal = mutableListWith<Pair<EntityValue, Boolean>>(initialCapacity)
-  private var orderByInternal = mutableListWith<Pair<String, Boolean>>(initialCapacity)
+  private var orderByValuesInternal = mutableListWith<Pair<EntityValue, RowOrder>>(initialCapacity)
+  private var orderByInternal = mutableListWith<Pair<String, RowOrder>>(initialCapacity)
 
   @Suppress(
     "NestedBlockDepth",
@@ -352,13 +352,13 @@ class RawQueryBuilder(
    * Call multiple times to order by many clauses.
    *
    * @param clause the raw order by clause
-   * @param ascending whether to order in an ascending (default) or a descending order
+   * @param order the order of the rows
    */
   fun orderBy(
     clause: String,
-    ascending: Boolean = true,
+    order: RowOrder,
   ): RawQueryBuilder {
-    orderByInternal.add(clause to ascending)
+    orderByInternal.add(clause to order)
 
     return this
   }
@@ -368,43 +368,53 @@ class RawQueryBuilder(
    *
    * @param table the table specification to order by
    * @param entity the entity name within [table] to order by
-   * @param ascending whether to order in an ascending (default) or a descending order
+   * @param order the order of the rows
    */
   fun orderBy(
     table: TableSpecification,
     entity: String,
-    ascending: Boolean = true,
+    order: RowOrder,
   ): RawQueryBuilder = orderBy(
     clause = table.prefix(entity, ::escape),
-    ascending = ascending,
+    order = order,
   )
 
   /**
    * Orders the rows by a specific table and entity.
    *
    * @param join the table specification along with its primary key
-   * @param ascending whether to order in an ascending (default) or a descending order
+   * @param order the order of the rows
    */
   fun orderBy(
     join: JoinSpecification,
-    ascending: Boolean = true,
+    order: RowOrder,
   ): RawQueryBuilder = orderBy(
     table = join.table,
     entity = join.key,
-    ascending = ascending,
+    order = order,
   )
 
   /**
    * Orders the rows by a field value.
    *
+   * A word about the ordering of field values:
+   *
+   * A database engine evaluates `column=value` as `1` for a match, `0` for
+   * a non-match, or `NULL` if the column is `NULL`.
+   *
+   * Sp, passing [RowOrder.DESC] puts the `1`s at the top – which is normally what one
+   * wants.
+   *
    * @param entityValue the field and value details
-   * @param showFirst whether to show the matched rows first (default) or last in the result set
+   * @param order the order of the matched rows (first if [RowOrder.ASC], last otherwise)
    */
   fun orderBy(
     entityValue: EntityValue,
-    showFirst: Boolean = true,
+    order: RowOrder,
   ): RawQueryBuilder {
-    orderByValuesInternal.add(entityValue to showFirst)
+    // We reverse the order because "name = value" evaluates to 1, while "name != value"
+    // evaluates to 0, so we want the 1's to be first
+    orderByValuesInternal.add(entityValue to order)
 
     return this
   }
@@ -414,15 +424,15 @@ class RawQueryBuilder(
    *
    * @param entity the entity name, escaped
    * @param value the entity value, escaped
-   * @param showFirst whether to show the matched rows first (default) or last in the result set
+   * @param order the order of the matched rows (first if [RowOrder.ASC], last otherwise)
    */
   fun orderBy(
     entity: String,
     value: Any,
-    showFirst: Boolean = true,
+    order: RowOrder,
   ): RawQueryBuilder = orderBy(
     entityValue = EntityValue(entity, value),
-    showFirst = showFirst,
+    order = order,
   )
 
   /**
@@ -464,13 +474,13 @@ class RawQueryBuilder(
   private fun JoinPair.stringify(): String = "${first.prefix(::escape)}=${second.prefix(::escape)}"
 
   private fun StringBuilder.appendOrderBy(
-    list: Iterable<Pair<*, Boolean>>,
+    list: Iterable<Pair<*, RowOrder>>,
     initialSeparator: String,
   ): String {
     var orderSeparator = initialSeparator
 
-    for (pair in list) {
-      append("$orderSeparator ${pair.first} ${if (pair.second) "DESC" else "ASC"}")
+    for ((first, second) in list) {
+      append("$orderSeparator $first $second")
       orderSeparator = ","
     }
 

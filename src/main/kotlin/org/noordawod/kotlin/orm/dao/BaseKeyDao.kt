@@ -30,6 +30,7 @@ import com.j256.ormlite.support.ConnectionSource
 import org.noordawod.kotlin.core.DEFAULT_LIST_CAPACITY
 import org.noordawod.kotlin.core.extension.mutableMapWith
 import org.noordawod.kotlin.orm.entity.BaseKeyEntity
+import org.noordawod.kotlin.orm.query.RowOrder
 
 /**
  * All DAO instances which have primary keys must extend this base class.
@@ -258,7 +259,7 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
     ids = ids,
     limit = 0,
     orderField = orderField,
-    ascending = true,
+    order = RowOrder.ASC,
   )
 
   /**
@@ -270,13 +271,13 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
     ids: Collection<ID>,
     limit: Long = 0,
     orderField: String,
-    ascending: Boolean,
+    order: RowOrder,
   ): List<T>? = queryForIds(
     fieldName = primaryKey,
     ids = ids,
     limit = limit,
     orderField = orderField,
-    ascending = ascending,
+    order = order,
   )?.onEach {
     it.populated = true
   }
@@ -300,7 +301,7 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
     ids = ids,
     limit = 0,
     orderField = orderField,
-    ascending = true,
+    order = RowOrder.ASC,
   )
 
   /**
@@ -312,13 +313,13 @@ abstract class BaseKeyDao<ID, T : BaseKeyEntity<ID>> protected constructor(
     ids: Collection<ID>,
     limit: Long = 0,
     orderField: String,
-    ascending: Boolean,
+    order: RowOrder,
   ): Map<ID, T>? = queryForIds(
     fieldName = primaryKey,
     ids = ids,
     limit = limit,
     orderField = orderField,
-    ascending = ascending,
+    order = order,
   ).toMap()
 
   /**

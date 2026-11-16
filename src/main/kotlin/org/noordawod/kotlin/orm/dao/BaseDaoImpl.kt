@@ -29,6 +29,7 @@ import com.j256.ormlite.dao.Dao
 import com.j256.ormlite.support.ConnectionSource
 import org.noordawod.kotlin.core.DEFAULT_LIST_CAPACITY
 import org.noordawod.kotlin.orm.BaseDatabase
+import org.noordawod.kotlin.orm.query.RowOrder
 
 /**
  * Base DAO for all others to extend from. Includes helper methods for all DAOs.
@@ -49,11 +50,11 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
     id: ID,
     limit: Long = 0,
     orderField: String,
-    ascending: Boolean = true,
+    order: RowOrder,
   ): List<T>? {
     val builder = queryBuilder()
       .distinct()
-      .orderBy(orderField, ascending)
+      .orderBy(orderField, order.isAscending)
 
     if (0 < limit) {
       builder.limit(limit)
@@ -94,13 +95,13 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
     fieldName: String,
     ids: Collection<ID>,
     orderField: String,
-    ascending: Boolean = true,
+    order: RowOrder,
   ): List<T>? = queryForIds(
     fieldName = fieldName,
     ids = ids,
     limit = 0,
     orderField = orderField,
-    ascending = ascending,
+    order = order,
   )
 
   /**
@@ -113,12 +114,16 @@ abstract class BaseDaoImpl<ID, T> protected constructor(
     ids: Collection<ID>,
     limit: Long = 0,
     orderField: String,
-    ascending: Boolean = true,
+    order: RowOrder,
   ): List<T>? {
-    val builder = queryBuilder().distinct().orderBy(orderField, ascending)
+    val builder = queryBuilder()
+      .distinct()
+      .orderBy(orderField, order.isAscending)
+
     if (0 < limit) {
       builder.limit(limit)
     }
+
     val result = builder.where().`in`(fieldName, ids).query()
 
     return if (result.isNullOrEmpty()) null else result
